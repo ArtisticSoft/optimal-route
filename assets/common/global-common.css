@@ -1,0 +1,69 @@
+/*
+глобальные стили для всего сайта
+*/
+
+html, body{
+  /*высота страницы во весь экран даже если недостаточно контента*/
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  /*высота страницы во весь экран даже если недостаточно контента*/
+  height: 100%;
+  /*для отладки*/
+/*  background-color: DarkSlateGray;*/
+}
+
+body {
+  /*высота страницы во весь экран даже если недостаточно контента*/
+  min-height: 100%;
+  /*Note: bootstrap: Large devices Desktops (?1200px)*/
+  /*в bootstrap существует похожая функциональность class="container"*/
+  /*
+  max-width: 1500px;
+  margin: 0 auto;/*центрирование по горизонтали*/
+  
+  /*для отладки*/
+/*  background-color: gray;*/
+  background-color: lightgray;
+  background-color: var(--page-outside-background-clr);
+}
+
+/*не помогло сделать пробел неразрывным*/
+/*label {
+  white-space: nowrap;
+}*/
+
+.page-wrapper {
+  background-color: white;
+  background-color: var(--page-background-clr);
+}
+
+header {
+  width: 100%;
+}
+
+a {
+  text-decoration: none;
+}
+
+li {
+  list-style: none;
+}
+ol, ul {
+  padding-left: 0;/*actual default = 40px and i can't figure out why*/
+}
+
+.anchor-for-absolute-child {
+  position: relative;/*необходимо чтобы иметь вложенные элементы с position: absolute;*/
+  width: 100%;/*необходимо если anchor внутри flex*/
+  /*чтобы anchor не был виден*/
+  padding: 0;
+  margin: 0;
+  height: 0;
+}
+
+.dnd-parent {
+  height: 0;
+}

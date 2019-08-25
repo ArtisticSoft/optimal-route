@@ -1,0 +1,15 @@
+header > p, nav {
+  display: inline-block;
+  line-height: var(--regular-line-height);
+}
+header > p {
+/*  padding: 0 var(--regular-padding);/*не совместимо с bootstrap*/
+}
+header > nav {
+  float: right;
+}
+
+.project-name {
+  font-size: 120%;
+  padding-left: var(--regular-padding);
+}

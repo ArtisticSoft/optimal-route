@@ -1,0 +1,43 @@
+/*
+breakpoints должны совпадать с используемой версией bootstrap 
+эти копированы из bootstrap 4.3.1
+*/
+
+.nav-responsive > ul {
+  display: flex;
+  flex-direction: column;/*расположить в одну колонку*/
+  align-items: center;
+/*  background-color: LightBlue;*/
+}
+.nav-responsive > ul > li > a {
+  padding: 0 var(--regular-padding);
+}
+
+@media (min-width: 576px) {
+  .nav-responsive > ul {
+    flex-direction: row;/*расположить в один ряд*/
+  }
+  /*сепараторы между элементами - имеют смысл только для расположения в одну строку*/
+  .nav-responsive > ul > li + li:before {
+      content: "|";
+  }
+}
+
+@media (min-width: 768px) {
+}
+
+@media (min-width: 992px) {
+  .address-list-buttons-wrapper {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 1200px) {
+  /*
+  расположить поле ввода и кнопку в одну строку возможно только на достаточно широких экранах
+  альтернатива = flex-wrap: wrap;
+  */
+  label.address {
+    flex-direction: row;
+  }
+}

@@ -1,0 +1,184 @@
+/*===========================================================================*/
+.content-row {
+  position: relative;
+  min-height:100vh !important;
+/*  z-index: 1;*/
+}
+/*
+.content-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width:100%;
+}
+*/
+/*---------------------------------------------------------------------------*/
+/*ввод адреса с подсказками, кнопка добавления адреса*/
+/*---------------------------------------------------------------------------*/
+
+label.address {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;/*тот же эффект что назначить каждому вложенному элементу width: 100%;*/
+/*  flex-wrap: wrap;/*похоже на responsive НО иногда накладывается на следующую область справа*/
+  /*без этого ширина = ширина самого широкого элемента (input) -> может накладываться на следующую область справа*/
+/*  width: 100%;*/
+
+  /*для отладки*/
+/*  background-color: lightgray;*/
+}
+label.address > input {
+/*  margin-right: var(--regular-padding);/*имеет смысл только для более широких экранов*/
+  padding-left: var(--regular-padding);/*должно быть как у списка подсказок*/
+}
+label.address > input.value-from-suggestion {
+  background-color: var(--suggestions-background-clr);
+  background-color: lightgreen;
+}
+label.address > button {
+  flex: initial;
+}
+
+/*
+переместить address-suggestions по вертикали вплотную к input
+для этого необходимо компенсировать label.margin-bottom = 0.5rem по умолчанию из bootstrap-reboot
+*/
+.address-wrapper > .anchor-for-absolute-child {
+  top: -0.5rem;
+}
+
+.address-suggestions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /*max-width: 630px;/*не слишком необходимо*/
+  z-index: 10;
+  
+/*скрыть список - по умолчанию*/
+  opacity: 0;
+  transform: scaleY(0);
+
+/*для отладки - показать список*/
+/*  opacity: 1;
+  transform: scaleY(1);*/
+
+  transform-origin: top;
+/*  transition: transform .15s ease-in-out,opacity .15s ease-in-out;*/
+  transition: transform 1.0s ease-in-out, opacity 1.0s ease-in-out;
+
+  border-radius: var(--regular-border-radius);
+  border: var(--regular-border);
+
+  box-shadow: var(--regular-shadow);
+  
+  padding: 0 var(--regular-padding);
+
+  /*по умолчанию фон прозрачный. эта строчка нужна чтобы сделать фон сплошным*/
+  background-color: lightgreen;
+  background-color: var(--suggestions-background-clr);
+/*  background-color: inherit;/*not works :( background-color inherited from body and it is transparent by default*/
+}
+
+/*
+with this class it is possible to switch the drop-down on\off from JS
+in a more abstract way
+*/
+.address-suggestions[data-is-visible] {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.address-suggestions .suggestion {
+/*  padding: .5rem;*/
+/*  color: #3b435c;*/
+/*  font-weight: 400;
+  font-size: 16px;*/
+}
+
+.address-suggestions .suggestion:hover {
+  cursor: pointer;
+  background-color: white;
+  background-color: var(--suggestions-hover-clr);
+}
+
+/*keyboard hover*/
+.address-suggestions .suggestion[data-is-hovered] {
+  background-color: white;
+  background-color: var(--suggestions-hover-clr);
+}
+
+/*---------------------------------------------------------------------------*/
+/*список адресов*/
+/*---------------------------------------------------------------------------*/
+
+.address-list {
+  /*для отладки*/
+/*  background-color: lightgray;*/
+}
+
+.address-list li {
+  cursor: pointer;
+/*  background-color: var(--page-background-clr);/*useful then dragging without re-assign to thr new parent*/
+  /*для отладки*/
+/*  border-color: violet;*/
+  padding: 10px 0;
+}
+
+.address-list .placeholder {
+  /*trello style*/
+  background-color: rgba(9, 30, 66, .04);
+/*  background-color: darkgray;*/
+}
+
+/*  background-color: violet;/*too rough solution*/
+
+.address-list .drag-target-over-before {
+/*  border-top-color: var(--address-list-drag-over-clr);*/
+}
+.address-list .drag-target-over-after {
+/*  border-bottom-color: var(--address-list-drag-over-clr);*/
+}
+
+.dragged {
+  cursor: grabbing;
+  z-index: 1000;
+  background-color: var(--page-background-clr);
+  /*trello style*/
+  border-radius: 3px;
+  box-shadow: 0 12px 24px -6px rgba(9, 30, 66, .25), 0 0 0 1px rgba(9, 30, 66, .08);
+  transform: rotate(4deg)
+}
+
+/*---------------------------------------------------------------------------*/
+/*кнопки Оптимизировать маршрут, Поделиться*/
+/*---------------------------------------------------------------------------*/
+
+.address-list-buttons-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+/*  flex-wrap: wrap;/*похоже на responsive НО иногда накладывается на следующую область справа*/
+
+  /*для отладки*/
+/*  background-color: lightgray;*/
+}
+
+/*---------------------------------------------------------------------------*/
+/*карта LeafLet*/
+/*---------------------------------------------------------------------------*/
+
+.map-wrapper {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.map-wrapper .map {
+  width: 100%;
+  height: 100%;
+}
+
+/*===========================================================================*/

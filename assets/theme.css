@@ -1,0 +1,26 @@
+/*
+стили оформления. тема
+*/
+
+:root {
+  --page-outside-background-clr: lightgray;
+  --page-background-clr: white;
+  
+  --global-padding: 10px;
+  --regular-padding: 20px;
+  --regular-line-height: 4rem;
+  --regular-hover-bg-clr: white;
+  
+  --regular-shadow: 0 2px 10px rgba(0,0,0,.2);
+  --regular-border-radius: 4px;
+  --regular-border: 1px solid #ebecf7;
+  
+  --theme-separator-clr: darkgray;
+  
+  --suggestions-background-clr: lightgreen;
+  --suggestions-hover-clr: white;
+
+  --address-list-drag-over-clr: violet;
+  --address-list-placeholder-clr: lightgray;
+}
+

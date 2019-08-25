@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <!-- Required by bootstrap -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <title>Optimal route</title>
+    <!-- <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico"> -->
+  
+    <!-- ====================================================================== -->
+    <!-- Bootstrap CSS full-fledged -->
+    <!-- 
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    -->
+    <!-- Bootstrap CSS partial non-minified -->
+    <link rel="stylesheet" href="./assets/common/bootstrap-partial/bootstrap-reboot.css" type="text/css">
+    <link rel="stylesheet" href="./assets/common/bootstrap-partial/bootstrap-grid.css" type="text/css">
+    <!-- Bootstrap CSS partial minified -->
+    <!-- 
+    <link rel="stylesheet" href="./assets/common/bootstrap-partial/bootstrap-reboot.min.css" type="text/css">
+    <link rel="stylesheet" href="./assets/common/bootstrap-partial/bootstrap-grid.min.css" type="text/css">
+    -->
+    
+    <!-- ====================================================================== -->
+    <!-- стили сайта -->
+    <link rel="stylesheet" href="./assets/common/bootstrap-override.css" type="text/css">
+    <link rel="stylesheet" href="./assets/common/global-common.css" type="text/css">
+
+    <link rel="stylesheet" href="./assets/theme.css" type="text/css">
+    <link rel="stylesheet" href="./assets/common.css" type="text/css">
+    <link rel="stylesheet" href="./assets/overlay-and-popup.css" type="text/css">
+
+    <link rel="stylesheet" href="./assets/header.css" type="text/css">
+    <link rel="stylesheet" href="./assets/main.css" type="text/css">
+    <link rel="stylesheet" href="./assets/footer.css" type="text/css">
+    
+    <!-- этот файл должен быть последним среди стилей сайта-->
+    <link rel="stylesheet" href="./assets/responsive.css" type="text/css">
+    
+    <!-- ====================================================================== -->
+    <!-- LeafLet map lib - with an integrity 
+      FireFox bug: JS loading will fail 
+      error: None of the “sha512” hashes in the integrity attribute match the content of the subresource.
+    -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+    
+    <!-- LeafLet map lib - local fallback. this is for FireFox -->
+    <script>
+      (function() {
+        if (!window.L) {
+          var el = document.createElement('script');
+          el.src = './assets/common/leaflet/leaflet.js';
+          el.async = true;
+          document.head.appendChild(el);
+          console.log('using local fallback for leaflet.js');
+        }
+      })();
+    </script>
+    
+    <!-- my additions to LeafLet map lib -->
+    <script src="./assets/common/leaflet-my/leaflet-my.js"></script>
+    
+  </head>
+
+  <body>
+    <!-- 
+    <div class="container-fluid">
+    -->
+    <div id="page-wrapper" class="container height-grow page-wrapper">
+
+    <!-- ====================================================================== -->
+    <!-- заголовок (header) -->
+    
+      <div class="row">
+        <header class="col-xs-12">
+          <p class="project-name">Optimal route</p>
+          
+          <nav class="nav-responsive">
+            <ul>
+                <li><a href="">О&nbsp;проекте</a></li>
+                <li><a href="">Контакты</a></li>
+                <li><a href="">Помощь</a></li>
+            </ul>
+          </nav>
+          
+        </header>
+      </div>
+      
+    <!-- ====================================================================== -->
+    <!-- контент -->
+    
+      <div class="row content-row">
+        <!-- не допустимы промежуточные обёртки между row и col-... -->
+        <div class="col-xs-12 col-sm-5">
+        
+          <!-- необходимо для позиционирования address-suggestions-dropdown -->
+          <div class="address-wrapper">
+          
+            <label class="address">
+              <!-- желательно size="..." больше чем ширина button например size="25" -->
+              <input type="text" id="address-input" size="25" class="width-grow">
+              <button disabled id="address-add-btn" type="button" class="btn btn-primary my-btn">Добавить&nbsp;адрес</button>
+            </label>
+            
+            <div class="anchor-for-absolute-child">
+              <div id="address-suggestions" class="address-suggestions">
+                <ul>
+                  <li>suggestion A</li>
+                  <li>suggestion B</li>
+                </ul>
+              </div>
+            </div>
+            
+          </div>
+          <div class="address-list">
+            <p class="my-btn">Адреса</p>
+            <div class="separator-h"></div>
+            <ul id="address-list" "js_droppable"="">
+              <!-- 
+              <li>1. садовая</li>
+              <li>2. егорова</li>
+              <li>3. невский</li>
+              -->
+            </ul>
+          </div>
+          
+          <!-- для flex позиционирования кнопок -->
+          <div class="address-list-buttons-wrapper">
+            <!-- is it good to use &nbsp; ? -->
+            <button disabled id="route-optimize-btn" type="button" class="my-btn width-grow">Оптимизировать маршрут</button>
+            <button disabled id="share-link-btn" type="button" class="my-btn-link-alike">Поделиться</button>
+          </div>
+          
+        </div>
+        
+        <main class="col-xs-12 col-sm-7">
+          <div class="map-wrapper">
+            <div id="map" class="map"></div>
+          </div>
+        </main>
+        
+        <div class="clearfix hidden-xs"></div>
+      </div>
+      
+    <!-- ====================================================================== -->
+    <!-- подвал (footer) -->
+    
+      <div class="row">
+        <footer class="col-xs-12">
+          <p><br></p>
+        </footer>
+      </div>
+    </div>
+    
+    <!-- ====================================================================== -->
+    <!-- оверлей и поп-апы -->
+    
+    <div id="overlay" class="overlay"></div>
+    
+    <div id="popup-link-share" class="popup">
+      <p>Отправить ссылку</p>
+      <p>ВКонтакте Facebook Одноклассники</p>
+      <div class="link-to-share">
+        <p id="link-to-share">https://placeholder</p>
+        <button id="link-copy-btn" type="button" class="my-btn">Копировать</button>
+      </div>
+    </div>
+
+  </body>
+
+<!-- ====================================================================== -->
+<!-- скрипты локальные -->
+
+  <script src="./assets/common/myUtils.js"></script>
+  <script src="./assets/common/base-classes.js"></script>
+  <script src="./assets/common/XHRClass.js"></script>
+  
+  <script src="./assets/back-end.js"></script>
+  <script src="./assets/search-with-suggestons.js"></script>
+  <script src="./assets/map-with-marker-list.js"></script>
+  
+  <script src="./assets/optimal-route-app.js"></script>
+  
+</html>
+    <!-- 
+    -->

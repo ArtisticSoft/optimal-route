@@ -1,0 +1,49 @@
+
+.overlay {
+  /*core Overlay functionality*/
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 10000;
+  background-color: rgba(0, 0, 0, 0.5);
+  
+  /*don't show by default*/
+  display: none;
+}
+
+/*can have an arbitrary WH*/
+.popup {
+  /*core Popup functionality*/
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10100;
+/*  background-color: white;*/
+  
+  padding: var(--regular-padding);
+
+  /*don't show by default*/
+  display: none;
+}
+.popup > * {
+/*  padding: 0 var(--regular-padding);/*смотрится плохо*/
+}
+
+.link-to-share {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  /*line-height: var(--regular-line-height);*/
+/*  background-color: lightgray;*/
+}
+
+.link-to-share > button {
+  float: right;/*может пригодиться если поп-ап будет большой фиксированной ширины*/
+  margin-left: var(--regular-padding);
+}
+.link-to-share > p {
+  padding-left: var(--regular-padding);
+}

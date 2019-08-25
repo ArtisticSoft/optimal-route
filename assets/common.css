@@ -1,0 +1,30 @@
+.my-btn {
+  padding: 0 var(--regular-padding);
+  text-transform: uppercase;
+}
+
+.my-btn-link-alike {
+  display: inline-block;
+  text-transform: uppercase;
+  padding: 0 var(--regular-padding);
+}
+.my-btn-link-alike:hover {
+  cursor: pointer;
+  background-color: var(--regular-hover-bg-clr);
+}
+
+.width-grow {
+  flex: auto;
+}
+
+.separator-h {
+	border: 3px solid var(--theme-separator-clr);
+	border-radius: 3px;
+  margin: var(--regular-padding) 0;
+}
+
+body .min-h-100vh {
+/*  position: relative;*/
+  min-height: 100vh;
+/*  min-height: 100%;*/
+}

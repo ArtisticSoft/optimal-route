@@ -1,0 +1,27 @@
+p {
+/*  margin: 0;*/
+  margin-bottom: 0;
+}
+
+ol, ul {
+  margin-bottom: 0;
+/*  padding-left: 0;*/
+}
+
+.row > header {
+  padding-right: 0;
+}
+
+.row > * {
+  /*для отладки*/
+/*  border: 1px solid white;*/
+}
+.row > .clearfix {
+  border: 0;
+}
+
+.container > * {
+  /*для отладки*/
+/*  border: 1px solid violet;*/
+/*  background-color: darkgray;*/
+}
