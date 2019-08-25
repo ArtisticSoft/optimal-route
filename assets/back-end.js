@@ -5,6 +5,9 @@ BackEnd
 
 minor mis-inforamation: md_address is actually address_md
 
+//NOTE: if site uses HTTPS then BackEnd must use HTTPS too, 
+//else XHR requests will be blocked by the Browser (FireFox at least)
+
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 Подбор адреса - отображаем в списке адресов - address2
 
@@ -82,12 +85,12 @@ minor mis-inforamation: md_address is actually address_md
 function BackEndClass() {
   //this.C = this.constructor;
   this.C = BackEndClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
-  //this.SuperClass.static_properties_init.call(this);//can be called only in a special way
+  this.SuperClass.static_properties_init.call(this);//can be called only in a special way
   
   //Подбор адреса
   this.AddressSuggestions = {
     name: 'addr_suggestions',
-    url: 'http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/',
+    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/',
     method: 'GET',
     params: {address: null},
     accept_only_latest: true,
@@ -97,7 +100,7 @@ function BackEndClass() {
   //Геокодинг адреса
   this.AddressGeocode = {
     name: 'addr_geocode',
-    url: 'http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/geocode/',
+    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/geocode/',
     method: 'GET',
     params: {address: null, save: null}
   };
@@ -106,7 +109,7 @@ function BackEndClass() {
   //POST - запрос 
   this.DistributionAddress = {
     name: 'distribution_address',
-    url: 'http://testtest01.itlogist.ru/api/v1/all/distribution_address/',
+    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_address/',
     method: 'POST',
     //переменная address содержит список md_address через запятую 
     params: {address: null}
@@ -226,6 +229,14 @@ BackEndClass.prototype.XHR_Finish = function (xhr_obj, is_success) {
       }
     }
   }
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+BackEndClass.prototype._static_properties_init = function () {
+  this.log('BackEndClass._static_properties_init');
+  
+  this.C.protocol = 'https';
 };
 
 //=============================================================================

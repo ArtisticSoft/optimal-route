@@ -70,7 +70,8 @@ GenericBaseClass.prototype.static_properties_init = function () {
 
 //to be overriden in descendants
 GenericBaseClass.prototype._static_properties_init = function () {
-  this.log('GenericBaseClass._static_properties_init');
+  console.log('GenericBaseClass._static_properties_init');
+  //this.log('GenericBaseClass._static_properties_init');
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 

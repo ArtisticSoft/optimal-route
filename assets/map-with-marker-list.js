@@ -590,7 +590,9 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
   if (this.MapExists()) {
     this.map_obj = new L.Map(map_id);
 
-    L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //NOTE: if site uses HTTPS then tileLayer must use HTTPS too, 
+    //else XHR requests for tiles will be blocked by the Browser (FireFox at least)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
       maxZoom: 18
     }).addTo(this.map_obj);
