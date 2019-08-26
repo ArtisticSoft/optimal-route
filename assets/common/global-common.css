@@ -10,14 +10,12 @@ html, body{
 
 html {
   /*высота страницы во весь экран даже если недостаточно контента*/
-  height: 100%;
+  /*height: 100%;/*не помогает растянуть страницу по вертикали*/
   /*для отладки*/
 /*  background-color: DarkSlateGray;*/
 }
 
 body {
-  /*высота страницы во весь экран даже если недостаточно контента*/
-  min-height: 100%;
   /*Note: bootstrap: Large devices Desktops (?1200px)*/
   /*в bootstrap существует похожая функциональность class="container"*/
   /*

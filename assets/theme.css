@@ -6,13 +6,12 @@
   --page-outside-background-clr: lightgray;
   --page-background-clr: white;
   
-  --global-padding: 10px;
-  --regular-padding: 20px;
-  --regular-line-height: 4rem;
+  --global-padding: 0.5rem;
+  --regular-padding: 1rem;
   --regular-hover-bg-clr: white;
   
   --regular-shadow: 0 2px 10px rgba(0,0,0,.2);
-  --regular-border-radius: 4px;
+  --regular-border-radius: 0.2rem;
   --regular-border: 1px solid #ebecf7;
   
   --theme-separator-clr: darkgray;

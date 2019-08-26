@@ -1,0 +1,6 @@
+footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  overflow: auto;/*не помогло сделать чтобы навигация не выезжала за футер сверху*/
+}

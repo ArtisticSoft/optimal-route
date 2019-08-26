@@ -17,14 +17,9 @@
   flex: auto;
 }
 
+/*margin\pagging will be set individually*/
 .separator-h {
 	border: 3px solid var(--theme-separator-clr);
 	border-radius: 3px;
-  margin: var(--regular-padding) 0;
 }
 
-body .min-h-100vh {
-/*  position: relative;*/
-  min-height: 100vh;
-/*  min-height: 100%;*/
-}

@@ -13,16 +13,16 @@ function MapWithMarkerListClass(options) {
   this.back_end = options.back_end;
   
   //ключевой объект на странице. карта
+  this.marker_add_zoom_default = options.map.marker_add_zoom_default;
   this.map_obj;
   this.MapCreate(options.map.id);
-  this.marker_add_zoom_default = options.map.marker_add_zoom_default;
   
   //иконки маркерами с нарисованным номером 0..99
   this.IconsPoolCreate();
 
   //---ключевой объект на странице. список адресов
   this.address_list_html = document.getElementById(options.address_list_id);
-  myUtils.Element_Clear(this.address_list_html);
+  this.PageAllAddressesRemove();
   //homebrewed DnD 
   this.DragAndDrop = {
     saved: {
@@ -111,62 +111,71 @@ MapWithMarkerListClass.prototype.OptimizeRouteFulfilled = function (json) {
   this.log('OptimizeRouteFulfilled');
   this.log(json);
 
-  this.address_list_reorder(json.address);
-  
-  //debug version - revert the list
-  /*
-  var addr_id_list = [];
-  var children = this.address_list_html.childNodes;
-  var child;
-  for (var i = 0; i < children.length; i++) {
-    addr_id_list.push(children[i].id);
-  }
-  addr_id_list.reverse();
-  this.address_list_reorder(addr_id_list);
-  */
+  this.address_list_fill_from_id_lst(json.address);
 };
 
-MapWithMarkerListClass.prototype.address_list_reorder = function (addr_id_list) {
-  this.log('address_list_reorder');
+MapWithMarkerListClass.prototype.address_list_fill_from_id_lst = function (addr_id_lst) {
+  this.log('address_list_fill_from_id_lst');
   
-  var children = this.address_list_html.childNodes;
-  var child;
-  var child_wanted;
-  
-  var keys = Object.keys(addr_id_list);
+  //внутреннее представление списка: назначить новые Label
+  //+ создать массив id сортированый по возрастанию Label
+  var id_sorted = [];
+  var keys = Object.keys(addr_id_lst);
+  var k;
   var id;
+  var addr;
   for (var i = 0; i < keys.length; i++) {
-    id = addr_id_list[keys[i]];
-    child = children[i];
-    if (child && child.id != id) {
-      child_wanted = document.getElementById(id);//this may differ in the future
-      if (child_wanted) {
-        //переместить child с id из addr_id_list по текущему индексу
-        child.parentNode.insertBefore(child_wanted, child);
-      }
+    k = keys[i];
+    id = addr_id_lst[k];
+    addr = this.address_list[id];
+    if (addr) {
+      addr.label = k;//1,2,3... но в будущем может стать например A,B,C...
+      id_sorted[k] = id;
+    }
+  }
+  //скорректировать локальный счётчик Label чтобы следующий адрес добавленый вручную получил корректную Label
+  this.address_label_idx_to_assign = k + 1;
+  
+  //this.log('---this.address_list');
+  //this.log(this.address_list);
+  //this.log('---id_sorted');
+  //this.log(id_sorted);
+
+  //очистить существующие представления в HTML и на карте
+  this.PageAllAddressesRemove();
+  this.MapAllMarkersRemove();
+  
+  //отобразить новый список адресов в порядке возрастания Label
+  for (var i = 0; i < id_sorted.length; i++) {
+    id = id_sorted[i];
+    addr = this.address_list[id];
+    //массив начинается с индекса=0 а Label с 1 так что addr может оказаться пустым
+    if (addr) {
+      this.AddressPublishToMap(addr);
+      this.AddressPublishToPage(addr, id);
     }
   }
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//объединить все адреса из списка в строку
+//объединить заданное поле для всех адресов из списка в строку
+//поле может = 'id'
+
 MapWithMarkerListClass.prototype.address_list_concatenate = function (property) {
   var concatenated = '';
-  var children = this.address_list_html.childNodes;
-  var child;
+  var ids = Object.keys(this.address_list);
+  var id;
   var v;
   
-  for (var i = 0; i < children.length; i++) {
+  for (var i = 0; i < ids.length; i++) {
+    id = ids[i];
     if (concatenated.length) {
       concatenated += ',';
     }
-    child = children[i];
-    //this.log('child.innerHTML['+child.innerHTML+']');
-    //this.log('child.id['+child.id+']');
     if (property == 'id') {
-      v = child.id;
+      v = id;
     } else {
-      v = this.address_list[child.id][property];
+      v = this.address_list[id][property];
     }
     concatenated += v;
   }
@@ -220,16 +229,18 @@ label - метка идентифицирующая маркер в UI напр�
 title - адрес или часть адреса, будет отображаться в PopUp
 */
 
-MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title, id) {
+MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title, id, label) {
   //this.log('MarkerAddFromLatLng lat lng['+lat+']['+lng+'] title['+title+']');
   
   id = id || 'address-list-item-' + this.C.address_id_to_assign;
+  label = label || this.address_label_idx_to_assign;
   
   var addr = {
     lat: lat,
     lng: lng,
-    label: this.address_label_idx_to_assign, 
-    title: title
+    label: label, 
+    title: title,
+    map_marker: null
   };
   
   this.address_list[id] = addr;
@@ -240,24 +251,30 @@ MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title
   //this.log('id=['+id+']');
   //this.log(addr);
   
-  this.MarkerAddToMap(addr);
-  this.MarkerAddToHtml(addr, id);
+  this.AddressPublishToMap(addr, true);
+  this.AddressPublishToPage(addr, id);
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-добавить маркер в список на странице
-marker - внутреннее представление маркера = элемент this.address_list
-*/
-MapWithMarkerListClass.prototype.MarkerAddToHtml = function (marker, id) {
+//добавить адрес в представление на странице
+//marker - внутреннее представление маркера = элемент this.address_list
+
+MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
   var li = document.createElement('li');
   li.id = id;
   li.setAttribute('js_draggable', '');
-  li.innerHTML = marker.label + '. ' + marker.title;
+  li.innerHTML = address.label + '. ' + address.title;
 
   this.address_list_html.appendChild(li);
   
   this.address_list_changed();
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//удалить все адреса из представления на странице
+
+MapWithMarkerListClass.prototype.PageAllAddressesRemove = function () {
+  myUtils.Element_Clear(this.address_list_html);
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -544,49 +561,53 @@ MapWithMarkerListClass.prototype.MapExists = function () {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 /*
 добавить маркер на карту
-marker - внутреннее представление маркера = элемент this.address_list
+address - внутреннее представление маркера = элемент this.address_list
 */
-MapWithMarkerListClass.prototype.MarkerAddToMap = function (marker) {
+MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, map_pan) {
   if (this.MapExists()) {
 
-    //var m = markerLabelled([marker.lat, marker.lng], {label: marker.label});//custom Label
-    //var m = markerLabelled([marker.lat, marker.lng], {title: marker.label});//custom title - will become a tooltip. Works
-
-    //var m = L.marker([marker.lat, marker.lng]);//default icon. Works
-    //var m = L.marker([marker.lat, marker.lng], {icon: myTestIcon});//custom icon. Works
-    var m = L.marker([marker.lat, marker.lng], {icon: this.icons_pool[marker.label]});//custom icon pool. Works
+    //добавить на карту маркер для адреса
+    var m = L.marker([address.lat, address.lng], {icon: this.icons_pool[address.label]});//custom icon pool. Works
     
-    m.bindTooltip(String(marker.title), {}).openTooltip();//tooltip = address
-    //m.bindTooltip(String(marker.label), {permanent: true}).openTooltip();//just permanent tooltip
-    //m.bindTooltip(String(marker.label), {offset: [-30, 0], direction: 'right', permanent: true}).openTooltip();//force direction and offset
-    m.bindPopup(marker.title);
+    m.bindTooltip(String(address.title), {}).openTooltip();//tooltip = address
+    //m.bindPopup(address.title);
     m.addTo(this.map_obj);
+    address.map_marker = m;
 
-    var lat_lng = new L.LatLng(marker.lat, marker.lng); 
-    //this.map_obj.setView(lat_lng, 20);//very zoomed. streets are clearly visible
-    //this.map_obj.setView(lat_lng, 5);//medium zoom. nearby cities are visible
-    this.map_obj.setView(lat_lng, this.marker_add_zoom_default);//medium zoom. nearby cities are visible
+    if (map_pan) {
+      //прокрутить вид карты к расположению нового маркера
+      var lat_lng = new L.LatLng(address.lat, address.lng); 
+
+      //this.map_obj.setView(lat_lng, 20);//very zoomed. streets are clearly visible
+      //this.map_obj.setView(lat_lng, 5);//medium zoom. nearby cities are visible
+      this.map_obj.setView(lat_lng, this.marker_add_zoom_default);
+    }
   }
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-/*
-добавить все маркеры на карту
-marker - внутреннее представление маркера = элемент this.address_list
-*/
-MapWithMarkerListClass.prototype.MarkerListToMap = function () {
+//удалить маркер с карты для заданного адреса из внутреннего списка
+
+MapWithMarkerListClass.prototype.AddressRemoveFromMap = function (address) {
   if (this.MapExists()) {
-    var marker;
-    for (var i = 0; i < this.address_list.length; i++) {
-      this.MarkerAddToMap(this.address_list[i]);
-    }
+    address.map_marker.remove();
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//удалить все маркеры с карты
+
+MapWithMarkerListClass.prototype.MapAllMarkersRemove = function () {
+  var ids = Object.keys(this.address_list);
+  for (var i = 0; i < ids.length; i++) {
+    this.AddressRemoveFromMap(this.address_list[ids[i]]);
   }
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
 MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
-  this.log('-----MapCreate');
+  this.log('MapCreate');
   if (this.MapExists()) {
     this.map_obj = new L.Map(map_id);
 
@@ -601,7 +622,9 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     var london = new L.LatLng(51.5056,-0.1213); 
     var moscow = new L.LatLng(55.755814,37.617635); 
     
-    this.map_obj.setView(moscow, 13);//без этой строки карта пустая
+    //без этой строки карта пустая
+    this.map_obj.setView(moscow, this.marker_add_zoom_default);
+    //this.map_obj.setView(moscow, 13);
     
     this.log('-----finished ok');
   } else {
@@ -654,7 +677,7 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
 */
 
 MapWithMarkerListClass.prototype.test_AddSeveralMarkers = function () {
-  myUtils.Element_Clear(this.address_list_html);
+  this.PageAllAddressesRemove();
 
   this.MarkerAddFromLatLng(51.5006728, -0.1244324, "Big Ben");
   this.MarkerAddFromLatLng(51.503308, -0.119623, "London Eye");
@@ -663,7 +686,7 @@ MapWithMarkerListClass.prototype.test_AddSeveralMarkers = function () {
 };
 
 MapWithMarkerListClass.prototype.test_AddSeveralMarkersB = function () {
-  myUtils.Element_Clear(this.address_list_html);
+  this.PageAllAddressesRemove();
   
   this.MarkerAddFromAddress('микрорайон Сходня, Химки, Московская область, Россия');
   this.MarkerAddFromAddress('Долгопрудный, Московская область, Россия');

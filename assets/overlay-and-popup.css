@@ -36,7 +36,6 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  /*line-height: var(--regular-line-height);*/
 /*  background-color: lightgray;*/
 }
 

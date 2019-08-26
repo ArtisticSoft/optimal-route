@@ -29,6 +29,16 @@ function RouteAppClass() {
   //this.SearchWithSuggestons.test_inp_val();
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//навигация адаптивная
+
+  this.nav_icon = document.getElementById('nav-icon');
+  this.nav_responsive = document.getElementById('nav-responsive');
+  //@media (min-width: 576px) {
+  if (document.documentElement.clientWidth >= 576 ) {
+    this.nav_icon.parentNode.replaceChild(this.nav_responsive, this.nav_icon);
+  }
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //глобальные переменные
 
   this.overlay = document.getElementById('overlay');

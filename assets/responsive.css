@@ -3,8 +3,28 @@ breakpoints должны совпадать с используемой верс
 эти копированы из bootstrap 4.3.1
 */
 
+/*
+крупноблочная раскладка страницы
+*/
+header {
+  min-height: 5vh;
+}
+.map-section {
+  min-height: 90vh;
+}
+/*
+неудачное решение. на небольшом экране получается много пустого места под списком адресов т.к он такой-же высоты как карта
+main {
+  min-height: 90vh;
+}
+*/
+footer {
+  min-height: 5vh;
+}
+
 .nav-responsive > ul {
   display: flex;
+/*  flex-direction: row;/*временное решение - всегда в одну строку*/
   flex-direction: column;/*расположить в одну колонку*/
   align-items: center;
 /*  background-color: LightBlue;*/
@@ -13,7 +33,25 @@ breakpoints должны совпадать с используемой верс
   padding: 0 var(--regular-padding);
 }
 
+/*
+>>>>> 
+the Main breakpoint on the page sits between xs & sm
+>>>>> 
+*/
+
+/*bootstrap: col-xs-...*/
 @media (min-width: 576px) {
+/*bootstrap: col-sm-...*/
+
+  .page-wrapper {
+    /*
+    на основном брейкпойнте страницы
+    высота страницы во весь экран даже если недостаточно контента
+    */
+    min-height: 100vh;
+    /*min-height: 100%;/*не работает*/
+  }
+
   .nav-responsive > ul {
     flex-direction: row;/*расположить в один ряд*/
   }
@@ -21,23 +59,47 @@ breakpoints должны совпадать с используемой верс
   .nav-responsive > ul > li + li:before {
       content: "|";
   }
+
+  /*
+  поле ввода и кнопка должна быть в одну строку на экране w360 (retina w720)
+  НО на немного бОльших экранах левая колонка страницы занимает приблизительно половину < 360
+  так что после перестройки страницы на Больший формат поле ввода и кнопка должны быть в одну колонку
+  пока страница не станет около 900. при этом левая колонка ~360
+  */
+  label.address {
+    flex-direction: column;
+    /*альтернатива = flex-wrap: wrap;*/
+  }
+  
+  .address-list-buttons-wrapper {
+    flex-direction: column;
+  }
+  
 }
 
 @media (min-width: 768px) {
+/*bootstrap: col-md-...*/
+
+  label.address {
+    flex-direction: row;
+  }
+
 }
 
 @media (min-width: 992px) {
+/*bootstrap: col-lg-...*/
+
   .address-list-buttons-wrapper {
     flex-direction: row;
   }
+
 }
 
 @media (min-width: 1200px) {
-  /*
-  расположить поле ввода и кнопку в одну строку возможно только на достаточно широких экранах
-  альтернатива = flex-wrap: wrap;
-  */
-  label.address {
-    flex-direction: row;
+/*bootstrap: col-xl-...*/
+  label.address > input {
+    /*имеет смысл только для более широких экранов*/
+  /*  margin-right: var(--regular-padding);*/
+      padding-left: var(--regular-padding);/*должно быть как у списка подсказок*/
   }
 }

@@ -1,15 +1,25 @@
-header > p, nav {
-  display: inline-block;
-  line-height: var(--regular-line-height);
-}
-header > p {
-/*  padding: 0 var(--regular-padding);/*не совместимо с bootstrap*/
-}
-header > nav {
-  float: right;
+header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .project-name {
+  flex-basis: auto;
   font-size: 120%;
   padding-left: var(--regular-padding);
+}
+
+.nav-icon {
+  flex-basis: 1.5rem;
+  margin-left: auto;/*simulate float:right*/
+}
+.nav-icon img {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 1rem;/*adjusted visually*/
+}
+
+.nav-responsive {
+  margin-left: auto;/*simulate float:right*/
 }
