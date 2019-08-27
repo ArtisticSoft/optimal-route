@@ -10,6 +10,7 @@ minor mis-inforamation: md_address is actually address_md
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 Подбор адреса - отображаем в списке адресов - address2
+Note: может возвращать пустой список = [] - массив а не объект {...} как в случае не-пустого списка
 
     URL http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/
     Пример http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/?address=%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%B0%D1%8F%2012
@@ -36,6 +37,19 @@ minor mis-inforamation: md_address is actually address_md
     }
 
 }
+
+---kinda ODD case: 
+enter
+Невский пр 13
+select from suggestions
+Невский проезд, 13, Саратов, Россия
+enter Space, Backspace
+BackEnd returns an empty list
+  value [Невский проезд, 13, Саратов, Россия]
+  {"result":1,"address_list":[]}
+  
+the same for
+Невский проезд, 13, Саратов
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 Геокодинг адреса

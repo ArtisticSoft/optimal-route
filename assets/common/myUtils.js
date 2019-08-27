@@ -28,6 +28,17 @@ myUtilsClass.KeyboardEvent = {
   Space: 'Space', Enter: 'Enter', Escape: 'Escape'
 };
 
+myUtilsClass.touch = {
+  ToMouseEvent: {
+    TypeMap: {
+      'touchstart': 'mousedown',
+      'touchmove':  'mousemove',
+      'touchend':   'mouseup',
+      'touchcancel':'mouseup',//!special handing required. where is no direct Mouse analog
+    }
+  }
+};
+
 //-----------------------------------------------------------------------------
 /*
 Object. добавить св-ва из другого объекта. одноимённые св-ва будут перезаписаны
@@ -142,9 +153,52 @@ myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {
 /*
 Node. получить соседний эл-т по индексу
 */
-myUtilsClass.prototype.Node_gatSiblingByIdx = function (node, idx) {
+myUtilsClass.prototype.Node_getSiblingByIdx = function (node, idx) {
   return (idx == 0) ? target.previousSibling : target.nextSibling;
 };
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/*
+Abandoned!
+insertBefore
+If referenceNode is null, the newNode is inserted at the end of the list of child nodes.
+
+Node. вставить эл-т перед указанным. отличается от insertBefore - если указан пустой 
+
+*/
+/*
+myUtilsClass.prototype.Node_insertBefore = function (parent, new_node, ref_node) {
+  var sibling = ref_node.nextSibling;
+  if (sibling) {
+    parent.insertBefore(new_node, sibling);
+  } else {
+    parent.appendChild(new_node);
+  }
+};
+*/
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+/*
+Abandoned!
+
+Node. вставить эл-т после указанного. дополняет insertBefore
+*/
+/*
+myUtilsClass.prototype.Node_insertBefore = function (parent, new_node, ref_node) {
+  var sibling = ref_node.nextSibling;
+  if (sibling) {
+    parent.insertBefore(new_node, sibling);
+  } else {
+    parent.appendChild(new_node);
+  }
+};
+*/
+//-----------------------------------------------------------------------------
+
+myUtilsClass.prototype.touch_isIdValid = function (id) {
+  var invalid_types = ['null', 'boolean', 'object'];
+  return !(id === undefined || id === null || invalid_types.indexOf(typeof id) >= 0);
+};
+
 //-----------------------------------------------------------------------------
 /*
 координаты = любой объект со св-вами x и y

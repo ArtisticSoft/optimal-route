@@ -18,7 +18,8 @@ function RouteAppClass() {
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.log_enabled = true;
-  this.MapWithMarkerList.test_AddSeveralMarkersB();
+  //this.MapWithMarkerList.test_AddSeveralMarkersB();
+  this.MapWithMarkerList.test_AddSeveralMarkers();
 
   this.SearchWithSuggestons = new SearchWithSuggestonsClass({
     back_end: this.BackEnd,

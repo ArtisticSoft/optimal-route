@@ -19,9 +19,6 @@ function SearchWithSuggestonsClass(options) {
   
   this.back_end = options.back_end;
 
-  //параметры для разбора JSON
-  this.json_suggestion_key = 'address2';
-  
   //константа. минимальное кол-во символов для которого будет выполнен XHR запрос
   this.length_min = options.length_min || 5;
   //константа. через какое время после последнего введённого символа выполнится XHR запрос
@@ -52,8 +49,14 @@ function SearchWithSuggestonsClass(options) {
   this.suggestions_set_visible(false);
   //последний выбранный стрелками на клавиатуре эл-т. нужно чтобы восстанавливать hover после мыши
   this.suggestion_selected_with_keys;
-  //валиден ли текущий список? нужно чтобы снова показать список при нажатии клавиш-стрелок не запрашивая его заново
-  this.suggestions_valid;
+  //состояние списка
+  //  null - список не валиден
+  //  'valid' список валиден. нужно чтобы снова показать список при нажатии клавиш-стрелок не запрашивая его заново
+  //  'empty' список пуст. XHR вернул пустой список
+  this.suggestions_state = null;
+  //самый свежий запрос использованный для получения suggestions
+  //используется чтобы выяснить редактировалось ли поле ввода пока выполнялся запрос suggestions
+  this.suggestions_query_last = null;
   
   //---run-time vars
   this.timeout;
@@ -149,27 +152,33 @@ value [велик]
 
 //этот обработчик нужен прежде всего для 
 //предотвращения модификации строки поиска при нажатии некоторых клавиш например Space
+//если список suggestions раскрыт
 SearchWithSuggestonsClass.prototype.input_onKeydown = function (e) {
   var evt_consts = myUtilsClass.KeyboardEvent;
   this.log('input_onKeydown key ['+e[evt_consts.key_prop]+']');
-  //this.KeyEventDump(e);
+
+  if (this.suggestions_get_navigatable()) {
+    this._input_onKeydown(e);
+  }
+};
+
+SearchWithSuggestonsClass.prototype._input_onKeydown = function (e) {
+  var evt_consts = myUtilsClass.KeyboardEvent;
   
   //value before modification
   //this.log('value ['+this.input_html.value+']');
   
-  var need_preventDefault = true;
+  var need_preventDefault = false;
   
   switch (e[evt_consts.key_prop]) {
     case evt_consts.Enter:
     case evt_consts.Space:
     case evt_consts.Escape:
-      if (!this.suggestions_get_visible()) {
-        need_preventDefault = false;
-      }
+      need_preventDefault = true;
       break;
 
-    default:
-      need_preventDefault = false;
+    //default:
+    //  need_preventDefault = false;
   }
 
   if (need_preventDefault) {
@@ -178,12 +187,15 @@ SearchWithSuggestonsClass.prototype.input_onKeydown = function (e) {
 
 };
 
+//XHR request will start at certain conditions
 SearchWithSuggestonsClass.prototype.input_onInput = function (e) {
   this.log('input_onInput');
   //value after modification
   this.log('value ['+this.input_html.value+']');
   
-  this.suggestions_valid = false;
+  this.suggestions_state = null;
+  this.suggestions_query_last = this.input_html.value;
+  
   this._setState('manual');
   if (this.input_html.value.length >= this.length_min) {
     window.clearTimeout(this.timeout);//Passing an invalid ID to clearTimeout() silently does nothing; no exception is thrown.
@@ -206,7 +218,13 @@ SearchWithSuggestonsClass.prototype.input_onKeyup = function (e) {
   var evt_consts = myUtilsClass.KeyboardEvent;
   this.log('input_onKeyup key ['+e[evt_consts.key_prop]+']');
   
-  //this.KeyEventDump(e);
+  if (this.suggestions_get_navigatable()) {
+    this._input_onKeyup(e);
+  }
+};
+
+SearchWithSuggestonsClass.prototype._input_onKeyup = function (e) {
+  var evt_consts = myUtilsClass.KeyboardEvent;
   
   //value after modification
   //this.log('value ['+this.input_html.value+']');
@@ -289,37 +307,73 @@ SearchWithSuggestonsClass.prototype.input_onBlur = function (e) {
 //Suggestions list  HTML element and it's events
 //-----------------------------------------------------------------------------
 
+//XHR request fulfilled
 SearchWithSuggestonsClass.prototype.suggestions_populate = function (address_list) {
   this.log('suggestions_populate');
   
+  var consts = this.C.SuggestionList;
+  
   this.suggestion_selected_with_keys = null;
   
-  //while XHR request in progress - text might become too short
-  //this is the reason for this check
-  if (this.input_html.value.length >= this.length_min) {
-    myUtils.Element_Clear(this.suggestion_list_html);
-    
-    var item;
-    var k;
-    var keys = Object.keys(address_list)
-    for (var i = 0; i < keys.length; i++) {
-      k = keys[i];
-      item = document.createElement('li');
-      item.id = 'suggestion-' + k;
-      item.classList.add('suggestion');
-      item.innerHTML = address_list[k][this.json_suggestion_key];
-      this.suggestion_list_html.appendChild(item);
-    }
+  //suggestiond Might be not found. in this case an empty array [] returned
+  var keys = (typeof address_list == 'object') ? Object.keys(address_list) : null;//IE not support keys for arrays
+  if (keys && keys.length) {
+    //while XHR request in progress - text might become too short 
+    //Or can just be changed from the one what suggestions queried for
+    //this is the reason for this check
+    if (this.input_html.value.length >= this.length_min && this.suggestions_query_last == this.input_html.value) {
+      myUtils.Element_Clear(this.suggestion_list_html);
+      
+      var k;
+      for (var i = 0; i < keys.length; i++) {
+        k = keys[i];
+        this.suggestions_append(k, 'suggestion', address_list[k][consts.json.suggestion_key]);
+      }
 
-    this.suggestions_valid = true;
-    this.suggestions_set_visible(true);
+      this.suggestions_state = 'valid';
+      this.suggestions_set_visible(true);
+    } else {
+      this.suggestions_state = null;
+      this.suggestions_set_visible(false);
+    }
+    
   } else {
-    this.suggestions_set_visible(false);
+    //if suggestions not found
+    myUtils.Element_Clear(this.suggestion_list_html);
+    this.suggestions_append('info', 'suggestion', 'ничего не найдено');
+    this.suggestions_state = 'empty';
+    this.suggestions_set_visible(true);
+    //set up auto-hide
+    this.timeout = window.setTimeout(this.suggestions_autohide.bind(this),
+      consts.delay_autohide
+    );
   }
   
 };
 
+SearchWithSuggestonsClass.prototype.suggestions_append = function (id, css_class, text) {
+  var item;
+  item = document.createElement('li');
+  item.id = 'suggestion-' + id;
+  item.classList.add(css_class);
+  item.innerHTML = text;
+  this.suggestion_list_html.appendChild(item);
+};
+
+SearchWithSuggestonsClass.prototype.suggestions_autohide = function () {
+//за время задерки состояние могло измениться. 
+//скрыть список только если состояние по прежнему = empty
+  if (this.suggestions_state == 'empty') {
+    this.suggestions_set_visible(false);
+    this.suggestions_state = null;
+  }
+};
+
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+
+SearchWithSuggestonsClass.prototype.suggestions_get_navigatable = function () {
+  return this.suggestions_get_visible() && this.suggestions_state == 'valid';
+};
 
 SearchWithSuggestonsClass.prototype.suggestions_get_visible = function () {
   return this.suggestion_dropdown_html.hasAttribute(this.C.SuggestionList.visible_attr);
@@ -329,7 +383,7 @@ SearchWithSuggestonsClass.prototype.suggestions_set_visible = function (visible)
   //suggestions_valid на случай если список делается видимым клавишами-стрелками
   myUtils.Element_setAttributeBoolean(
     this.suggestion_dropdown_html, 
-    this.C.SuggestionList.visible_attr, visible && this.suggestions_valid
+    this.C.SuggestionList.visible_attr, visible && this.suggestions_state !== null
   );
 };
 
@@ -405,7 +459,7 @@ SearchWithSuggestonsClass.prototype._static_properties_init = function () {
   this.log('SearchWithSuggestonsClass._static_properties_init');
   
   //constants related to suggestions HTML 
-  var lst = this.C.SuggestionList = {item: {}};
+  var lst = this.C.SuggestionList = {json: {}, item: {}};
   lst.value_from_suggestion = 'value-from-suggestion';
   lst.visible_attr = 'data-is-visible';
   lst.item.tag_name = 'LI';
@@ -413,6 +467,13 @@ SearchWithSuggestonsClass.prototype._static_properties_init = function () {
   //lst.item.selected_sel = '[' + lst.item.selected_attr_name + ']';
   lst.item.hovered_attr = 'data-is-hovered';
   lst.item.hovered_sel = '[' + lst.item.hovered_attr + ']';
+  
+  //параметры для разбора JSON
+  lst.json.suggestion_key = 'address2';
+  
+  //
+  lst.delay_autohide = 5000;
+
 };
 
 //-----------------------------------------------------------------------------

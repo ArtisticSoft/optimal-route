@@ -25,29 +25,44 @@ function MapWithMarkerListClass(options) {
   this.PageAllAddressesRemove();
   //homebrewed DnD 
   this.DragAndDrop = {
+    dragged_node: null,
+    initial_offset: {x: 0, y: 0},
+    placeholder: null,
     saved: {
       focus: null,
       parent: null,
       style: null,
+      nextSibling: null
     },
-    dragged_node: null,
-    initial_offset: {x: 0, y: 0},
-    placeholder: null,
-    droppable_moved_over: null //используется для определения входа\выхода мыши из droppable
+    droppable_moved_over: null, //используется для определения входа\выхода мыши из droppable
+    touch: {
+      //ref-to-object Might be non-reliable because touch objects re-created in some browsers
+      tracked_id: null
+    }
   };
+  //the following handler might be assigned to either the Draggable element or the whole page 
   this.address_list_html.addEventListener('mousedown', this.draggable_onMouseDown.bind(this));
-  this.address_list_html.addEventListener('mousemove', this.droppable_onMouseMove.bind(this));
+  this.address_list_html.addEventListener('touchstart', this.draggable_onTouchStart.bind(this));
+  //the following handlers must be assigned to the whole page
+  document.addEventListener('mousemove', this.document_onMouseMove.bind(this));
+  document.addEventListener('touchmove', this.document_onTouchMove.bind(this));
+  document.addEventListener('mouseup', this.document_onMouseUp.bind(this));
+  document.addEventListener('touchend', this.document_onTouchEnd.bind(this));
+  document.addEventListener('touchcancel', this.document_onTouchCancel.bind(this));
+  
+  //Abandoned
+  //the following handler(s) must be assigned to Droppable.
+  //this is a special handler, for synthetic events generated in the page's onMouseMove
+  //it is nearly equal to a sub-routine for the page's onMouseMove
+  //this.address_list_html.addEventListener('mousemove', this.droppable_onMouseMove.bind(this));
+
   //DnD native. draggable. prevent it
   this.address_list_html.addEventListener('dragstart', this.draggable_onDragstart.bind(this));
-  //this.address_list_html.addEventListener('dragend', this.draggable_onDragend.bind(this));
   //prevent some default behaviors
   this.address_list_html.addEventListener('click', this.draggable_onClick.bind(this));
   this.address_list_html.addEventListener('dblclick', this.draggable_onDblClick.bind(this));
-  
-  //the following handlers must be assigned to the whole page
-  document.addEventListener('mousemove', this.document_onMouseMove.bind(this));
-  document.addEventListener('mouseup', this.document_onMouseUp.bind(this));
  
+
   //---ключевой объект на странице. кнопка Оптимизировать маршрут
   this.route_optimize_btn = document.getElementById(options.route_optimize_btn_id);
   this.route_optimize_btn.addEventListener('click', this.route_optimize_btn_onClick.bind(this));
@@ -57,12 +72,13 @@ function MapWithMarkerListClass(options) {
   /*
   ключевой массив 
   внутреннее представление адресов из списка
-  отсюда данные будут отображаться на карте как маркеры и в списке адресов как "Label. Title"
+  отсюда данные будут отображаться одновременно на карте как маркеры и на странице
   */
   this.address_list = {};
-  //Index для эл-тов списка адресов. после добавления э-та в список будет увеличиваться
+  //Index для меток списка адресов. после добавления э-та в список будет увеличиваться
   //в будущем возможно отображение этого инекса на символы например A B C
   //может изменяться произвольно после оптимизации маршрута
+  //этот механизм работает только для адресов добавленных вручную без использования BackEnd.distribution_address
   this.address_label_idx_to_assign = 1;
 }
 
@@ -71,6 +87,8 @@ MapWithMarkerListClass.prototype.SuperClass = GenericBaseClass.prototype;
 
 //авто-увеличивающийся ID для эл-тов списка адресов
 //начальное значение большое чтобы не спутать с порядковым номером эл-та в списке
+//этот механизм работает только для адресов добавленных без использования BackEnd.geocode
+//т.е. только для отладки
 MapWithMarkerListClass.address_id_to_assign = 1000;
 
 //-----------------------------------------------------------------------------
@@ -278,7 +296,7 @@ MapWithMarkerListClass.prototype.PageAllAddressesRemove = function () {
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//homebrewed DnD 
+//DnD crafted
 /*
 ---MouseEvent 
 MouseEvent.button Read only
@@ -303,144 +321,190 @@ MouseEvent.movementY Read only
 
 MapWithMarkerListClass.prototype.draggable_onMouseDown = function (e) {
   this.log('draggable_onMouseDown');
-  
-  if (e.button == myUtilsClass.mouse.button.main) {
-    if (e.target.hasAttribute('js_draggable')) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();//not sure this is neceassary
-      
-      //lose focus, if any. focus IS interfer with DnD
-      this.DragAndDrop.saved.focus = myUtils.Document_Blur();
-      
-      //get a ref to the Dragged
-      var dragged = this.DragAndDrop.dragged_node = e.target;
-      var parent = this.DragAndDrop.saved.parent = dragged.parentNode;
-      //save the current inline style props, if any
-      var saved_style = this.DragAndDrop.saved.style = {};
-      saved_style.position = dragged.style.position;
-      saved_style.left = dragged.style.left;
-      saved_style.top = dragged.style.top;
-      saved_style.width = dragged.style.width;
-      saved_style.height = dragged.style.height;
-      
-      //read the curent Dragged style. this is useful to 
-      //  copy styles to a placeholder
-      //  to set fixed WH so WH will not be affected by a new parent
-      var dragged_style = window.getComputedStyle(dragged);
-      dragged.style.width = dragged_style.width;
-      dragged.style.height = dragged_style.height;
-
-      //latch the initial offset between mouse and TL corner. this helps avoid Dragged to "jump" on the start-drag
-      this.DragAndDrop.initial_offset = myUtils.xy_subtract(
-        {x: dragged.getBoundingClientRect().left, y: dragged.getBoundingClientRect().top},
-        {x: event.clientX, y: event.clientY}
-      );
-      
-      //create a placeholder
-      var placeholder = this.DragAndDrop.placeholder = document.createElement('li');
-      placeholder.classList.add('placeholder');
-      placeholder.style.height = dragged_style.height;
-      
-      //replace Dragged with Placeholder and attach Dragged to the whole Document
-      var new_parent = document.body;
-      //var new_parent = document.getElementById('dnd-parent');
-      parent.replaceChild(placeholder, dragged);
-      new_parent.appendChild(dragged);
-
-      //set some inline styles
-      dragged.style.position = 'absolute';
-      this.Dragged_setPos(dragged, e);
-
-      dragged.classList.add('dragged');
-    }
+  if (e.button == myUtilsClass.mouse.button.main && this.crafted_DnD_isDraggable(e.target)) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();//not sure this is neceassary
+    this.crafted_DnD_onDragStart(e);
   }
 };
+
+MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e) {
+  this.log('crafted_DnD_onDragStart');
+  
+  //lose focus, if any. focus IS interfer with DnD
+  var dnd = this.DragAndDrop;
+  dnd.saved.focus = myUtils.Document_Blur();
+  
+  //get a ref to the Dragged
+  var dragged = dnd.dragged_node = e.target;
+  var parent = dnd.saved.parent = dragged.parentNode;
+  dnd.saved.nextSibling = dragged.nextSibling;
+  //save the current inline style props, if any
+  var saved_style = dnd.saved.style = {};
+  saved_style.position = dragged.style.position;
+  saved_style.left = dragged.style.left;
+  saved_style.top = dragged.style.top;
+  saved_style.width = dragged.style.width;
+  saved_style.height = dragged.style.height;
+  
+  //read the curent Dragged style. this is useful to 
+  //  copy styles to a placeholder
+  //  to set fixed WH so WH will not be affected by a new parent
+  var dragged_style = window.getComputedStyle(dragged);
+  dragged.style.width = dragged_style.width;
+  dragged.style.height = dragged_style.height;
+
+  //latch the initial offset between mouse and TL corner. 
+  //this helps avoid Dragged to "jump" on the start-drag
+  var rect = dragged.getBoundingClientRect();
+  this.DragAndDrop.initial_offset = myUtils.xy_subtract(
+    {x: rect.left, y: rect.top}, {x: e.clientX, y: e.clientY}
+  );
+  
+  //create a placeholder
+  var placeholder = dnd.placeholder = document.createElement('li');
+  placeholder.classList.add('placeholder');
+  placeholder.style.height = dragged_style.height;
+  
+  //replace Dragged with Placeholder and attach Dragged to the whole Document
+  var new_parent = document.body;
+  //var new_parent = document.getElementById('dnd-parent');
+  parent.replaceChild(placeholder, dragged);
+  new_parent.appendChild(dragged);
+
+  //set some inline styles
+  dragged.style.position = 'absolute';
+  this.Dragged_setPos(dragged, e);
+
+  dragged.classList.add('dragged');
+  
+  //this.log('this.DragAndDrop.dragged_node['+this.DragAndDrop.dragged_node+']');
+  //this.log('this.DragAndDrop.saved.parent['+this.DragAndDrop.saved.parent+']');
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
 MapWithMarkerListClass.prototype.document_onMouseMove = function (e) {
   //this.log('document_onMouseMove');
-  
   //! important to check isTrusted. this prevents infinite recursion 
   //because synthetic 'mousemove' event is created in this handler
-  if (this.DragAndDrop.dragged_node && e.isTrusted) {
+  if (this.crafted_DnD_isDragging() && e.isTrusted) {
     e.preventDefault();
-      
-    var dragged = this.DragAndDrop.dragged_node;
-    this.Dragged_setPos(dragged, e);
-    
-    //---synthetic event for the element below the Mouse = potential drop target
-    dragged.hidden = true;//without this elementFromPoint will always return Draggable
-
-    //DAMNED e.clientX\Y = undefined in FireFox. let's fallback
-    var x = e.clientX || e.x;
-    var y = e.clientY || e.y;
-
-    var below = document.elementFromPoint(x, y);
-    if (below) {
-      //this event can be easy dintinguished from native events by .isTrusted = undefined = false
-      var mouseEventInit = {
-        bubbles: true,
-        screenX:  e.screenX,
-        screenY:  e.screenY, 
-        clientX:  e.clientX || e.x, 
-        clientY:  e.clientY || e.y, 
-        ctrlKey:  e.ctrlKey, 
-        shiftKey: e.shiftKey,
-        altKey:   e.altKey,
-        metaKey:  e.metaKey,
-        button:   e.button, 
-        buttons:  e.buttons
-      };
-      
-      //this way not works :(
-      //var mouseEventInit = {};
-      //myUtils.Object_AppendFrom(mouseEventInit, e);
-      //mouseEventInit.clientX = mouseEventInit.clientX || e.x;
-      //mouseEventInit.clientY = mouseEventInit.clientY || e.y; 
-      //mouseEventInit.bubbles = true;
-      
-      //this.log('mouseEventInit');
-      //this.log(mouseEventInit);
-      
-      var synth_event = new MouseEvent('mousemove', mouseEventInit);
-      below.dispatchEvent(synth_event);
-    }
-    dragged.hidden = false;
+    this.crafted_DnD_onDragMove(e);
   }
 };
 
+//closest native method named 'DragOver' but it has different meaning
+MapWithMarkerListClass.prototype.crafted_DnD_onDragMove = function (e) {
+  this.log('crafted_DnD_onDragMove');
+  var dnd = this.DragAndDrop;
+
+  //e.preventDefault();//this must be done outside because this can't be done for synthetic evt
+    
+  var dragged = dnd.dragged_node;
+  this.Dragged_setPos(dragged, e);
+  
+  //---synthetic event for the element below the Mouse = potential drop target
+  dragged.hidden = true;//without this elementFromPoint will always return Draggable
+
+  //DAMNED e.clientX\Y = undefined in FireFox. let's fallback
+  var x = e.clientX || e.x;
+  var y = e.clientY || e.y;
+
+  var below = document.elementFromPoint(x, y);
+  if (below) {
+    //this event can be easy dintinguished from native events by .isTrusted = undefined = false
+    var mouseEventInit = {
+      bubbles:  true,
+      target:   below,
+
+      screenX:  e.screenX,
+      screenY:  e.screenY, 
+      clientX:  x, 
+      clientY:  y, 
+      ctrlKey:  e.ctrlKey, 
+      shiftKey: e.shiftKey,
+      altKey:   e.altKey,
+      metaKey:  e.metaKey,
+      button:   e.button, 
+      buttons:  e.buttons
+    };
+    
+    //this way not works :(
+    //var mouseEventInit = {};
+    //myUtils.Object_AppendFrom(mouseEventInit, e);
+    //mouseEventInit.clientX = mouseEventInit.clientX || e.x;
+    //mouseEventInit.clientY = mouseEventInit.clientY || e.y; 
+    //mouseEventInit.bubbles = true;
+    
+    //this.log('mouseEventInit');
+    //this.log(mouseEventInit);
+    
+    //Abanodoned
+    //var synth_event = new MouseEvent('mousemove', mouseEventInit);
+    //below.dispatchEvent(synth_event);
+    this.crafted_DnD_Droppable_onDragOver(mouseEventInit);
+  }
+  dragged.hidden = false;
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
 MapWithMarkerListClass.prototype.document_onMouseUp = function (e) {
   this.log('document_onMouseUp');
-  
-  if (this.DragAndDrop.dragged_node) {
+  if (this.crafted_DnD_isDragging()) {
     e.preventDefault();
-    
-    //replace Placeholder with Dragged
-    var dragged = this.DragAndDrop.dragged_node;
-    var saved_parent = this.DragAndDrop.saved.parent;
-    saved_parent.replaceChild(dragged, this.DragAndDrop.placeholder);
-
-    //restore saved styles
-    myUtils.Object_AppendFrom(dragged.style, this.DragAndDrop.saved.style);
-
-    //var saved_style = this.DragAndDrop.saved.style;
-    //var keys = Object.keys();
-    //var k;
-    //for (var i = 0; i < keys.length; i++) {
-    //  k = keys[i];
-    //  [k] = saved_style[k];
-    //}
-
-    dragged.classList.remove('dragged');
-    this.DragAndDrop.dragged_node = null;
-    
-    //restore focus
-    this.DragAndDrop.saved.focus.focus();
+    this.crafted_DnD_onDragEnd(e);
   }
+};
+
+//created specially to call from touchCancel
+MapWithMarkerListClass.prototype.crafted_DnD_onDragCancel = function (e) {
+  if (this.crafted_DnD_isDragging()) {
+    e.preventDefault();
+    this.crafted_DnD_onDragEnd(e, true);
+  }
+};
+
+//several native methods exists 'DragEnd' 'Drop' etc
+MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancelled) {
+  this.log('crafted_DnD_onDragEnd');
+  var dnd = this.DragAndDrop;
+
+  //e.preventDefault();//this must be done outside because this can't be done for synthetic evt
+    
+  if (is_cancelled) {
+    //move placeholder to the original position where Drag was started
+    dnd.saved.parent.insertBefore(dnd.placeholder, dnd.saved.nextSibling);
+  }
+  
+  //replace Placeholder with Dragged
+  var dragged = dnd.dragged_node;
+  dnd.saved.parent.replaceChild(dragged, dnd.placeholder);
+
+  //restore saved styles
+  myUtils.Object_AppendFrom(dragged.style, dnd.saved.style);
+
+  dragged.classList.remove('dragged');
+  dnd.dragged_node = null;
+  
+  //restore focus
+  dnd.saved.focus.focus();
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //utils 
+
+//this might be used by another technologies for example Touch
+MapWithMarkerListClass.prototype.crafted_DnD_isDraggable = function (target) {
+  return target.hasAttribute('js_draggable');
+};
+
+//this might be used by another technologies for example Touch
+MapWithMarkerListClass.prototype.crafted_DnD_isDragging = function (target) {
+  return this.DragAndDrop.dragged_node !== null;
+};
 
 MapWithMarkerListClass.prototype.Dragged_setPos = function (dragged, e) {
   var pos = myUtils.xy_add(this.MouseEvent_getPos(e), this.DragAndDrop.initial_offset);
@@ -478,6 +542,8 @@ MapWithMarkerListClass.prototype.draggable_onDragstart = function (e) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //DnD for target
 
+/*
+Abandoned
 MapWithMarkerListClass.prototype.droppable_onMouseMove = function (e) {
   //this.log('droppable_onMouseMove');
   
@@ -490,62 +556,207 @@ MapWithMarkerListClass.prototype.droppable_onMouseMove = function (e) {
     e.stopImmediatePropagation();//not sure this is neceassary
     
     e.preventDefault();
-    var dragged = this.DragAndDrop.dragged_node;
-    var item_moved_over = e.target;
-    var placeholder = this.DragAndDrop.placeholder;
-    
-    if (item_moved_over != placeholder) {
-    
-      //--- detect at which half of item_moved_over the mouse is
-      //.offsetTop is Wrong choice 
-      //it returns Y _relative_ to the closest offsetParent while e.clientY relative to the window
-      var parent = item_moved_over.parentNode;
-      var height = item_moved_over.offsetHeight;
-      var target_rect = item_moved_over.getBoundingClientRect();
-      var placeholder_relY = placeholder.offsetTop - item_moved_over.offsetTop;
-      var placeholder_place = placeholder_relY < 0 ? 'before' : 'after';
+    this.crafted_DnD_Droppable_onDragOver(e);
+  }
+};
+*/
 
-      var placement;
-      if (
-        e.clientX >= target_rect.left && e.clientX <= target_rect.right && 
-        e.clientY >= target_rect.top && e.clientY <= target_rect.bottom
-      ) {
-        var relY = e.clientY - target_rect.top;
-        placement = (relY < height / 2) ? 'before' : 'after';
-      }
+MapWithMarkerListClass.prototype.crafted_DnD_Droppable_onDragOver = function (e) {
+  var dnd = this.DragAndDrop;
+  var dragged = dnd.dragged_node;
+  var placeholder = dnd.placeholder;
+  var item_moved_over = e.target;
+  
+  if (item_moved_over != placeholder) {
+  
+    //--- detect at which half of item_moved_over the mouse is
+    //.offsetTop is Wrong choice 
+    //it returns Y _relative_ to the closest offsetParent while e.clientY relative to the window
+    var parent = item_moved_over.parentNode;
+    var height = item_moved_over.offsetHeight;
+    var target_rect = item_moved_over.getBoundingClientRect();
+    var placeholder_relY = placeholder.offsetTop - item_moved_over.offsetTop;
+    var placeholder_place = placeholder_relY < 0 ? 'before' : 'after';
 
-      if (placement) {
-        //this.log('placement['+placement +'] placeholder_place['+placeholder_place +']');
+    var placement;
+    if (
+      //убедиться что курсор в пределах эл-та 
+      e.clientX >= target_rect.left && e.clientX <= target_rect.right && 
+      e.clientY >= target_rect.top && e.clientY <= target_rect.bottom
+    ) {
+      //принять решение в какой половине эл-та находится курсор
+      var relY = e.clientY - target_rect.top;
+      placement = (relY < height / 2) ? 'before' : 'after';
+    }
 
-        if (placement != placeholder_place) {
-        
-          //переместить placeholder перед\после item_moved_over
-          parent.removeChild(placeholder);
-          if (placement == 'before') {
-            parent.insertBefore(placeholder, item_moved_over);
-          } else {
-            var sibling = item_moved_over.nextSibling;
-            if (sibling) {
-              parent.insertBefore(placeholder, sibling);
-            } else {
-              parent.appendChild(placeholder);
-            }
-          }
-          
+    if (placement) {
+      //this.log('placement['+placement +'] placeholder_place['+placeholder_place +']');
+
+      if (placement != placeholder_place) {
+      
+        //переместить placeholder перед\после item_moved_over
+        parent.removeChild(placeholder);
+        if (placement == 'before') {
+          parent.insertBefore(placeholder, item_moved_over);
+        } else {
+          //If referenceNode is null, the newNode is inserted at the end of the list of child nodes.
+          parent.insertBefore(placeholder, item_moved_over.nextSibling);
         }
+        
       }
+    }
 
-      //--- detect mouse enter\leave
-      //var item_moved_over_old = this.DragAndDrop.item_moved_over_moved_over;
-      //if (item_moved_over != item_moved_over_old) {
-      //  if (item_moved_over_old) {
-      //    item_moved_over_old.style.backgroundColor = '';
-      //  }
-      //  this.DragAndDrop.item_moved_over_moved_over = item_moved_over;
-      //  item_moved_over.style.backgroundColor = 'violet';
-      //}
+    //--- detect mouse enter\leave
+    //var item_moved_over_old = this.DragAndDrop.item_moved_over_moved_over;
+    //if (item_moved_over != item_moved_over_old) {
+    //  if (item_moved_over_old) {
+    //    item_moved_over_old.style.backgroundColor = '';
+    //  }
+    //  this.DragAndDrop.item_moved_over_moved_over = item_moved_over;
+    //  item_moved_over.style.backgroundColor = 'violet';
+    //}
+  }
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//DnD crafted. touch support
+//используется прямой вызов обработчиков предназначенных для мыши
+//с передачей искуственно скомпонованного Event-a напрямую
+//без использования dispatchEvent(...), во избежание побочных эффектов
+
+MapWithMarkerListClass.prototype.draggable_onTouchStart = function (e) {
+  this.log('draggable_onTouchStart');
+  //this.TouchEvent_dump(e);
+  
+  var touches = e.changedTouches;
+  if (touches.length && this.crafted_DnD_isDraggable(e.target)) {
+    e.preventDefault();
+    //this.log('about to call hadnler for mouse...');
+    this.DragAndDrop.touch.tracked_id = touches[0].identifier;
+    this.crafted_DnD_onDragStart(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
+  }
+};
+
+MapWithMarkerListClass.prototype.document_onTouchMove = function (e) {
+  this.log('document_onTouchMove');
+  //this.TouchEvent_dump(e);
+  //=0
+  //this.log('tracked_id['+this.DragAndDrop.touch.tracked_id+']');
+  //=false
+  //this.log('instanceof Number['+(this.DragAndDrop.touch.tracked_id instanceof Number)+']');
+  //=number
+  //this.log('typeof tracked_id['+(typeof this.DragAndDrop.touch.tracked_id )+']');
+
+  if (myUtils.touch_isIdValid(this.DragAndDrop.touch.tracked_id)) {
+    e.preventDefault();
+    //this.log('about to call hadnler for mouse...');
+    this.crafted_DnD_onDragMove(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
+  }
+};
+
+MapWithMarkerListClass.prototype.document_onTouchEnd = function (e) {
+  this.log('document_onTouchEnd');
+  //this.TouchEvent_dump(e);
+
+  if (myUtils.touch_isIdValid(this.DragAndDrop.touch.tracked_id)) {
+    e.preventDefault();
+    //this.log('about to call hadnler for mouse...');
+    this.crafted_DnD_onDragEnd(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
+  }
+  this.DragAndDrop.touch.tracked_id = null;
+};
+
+MapWithMarkerListClass.prototype.document_onTouchCancel = function (e) {
+  this.log('document_onTouchCancel');
+  //this.TouchEvent_dump(e);
+
+  if (myUtils.touch_isIdValid(this.DragAndDrop.touch.tracked_id)) {
+    e.preventDefault();
+    //this.log('about to call hadnler for mouse...');
+    this.crafted_DnD_onDragCancel(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
+  }
+  this.DragAndDrop.touch.tracked_id = null;
+};
+
+/*
+//---sample touch obj
+clientX: 113
+​​clientY: 176
+​​force: 0
+​​identifier: 0
+​​pageX: 113
+​​pageY: 176
+​​radiusX: 1
+​​radiusY: 1
+​​rotationAngle: 0
+​​screenX: 1051
+​​screenY: 310
+​​target: <li id="93c6c7590475e6ad865f3bd63e823319" js_draggable="">
+​​*/
+//this is Not 100% correct implementation
+MapWithMarkerListClass.prototype.TouchEvent_toMouseEvent = function (e, touch_id) {
+  var mouse_evt = null;
+
+  //fetch the desired touch obj
+  var touches = e.touches;
+  var touch;
+  for (var i = 0; i < touches.length; i++) {
+    if (touches[i].identifier == touch_id) {
+      touch = touches[i];
+      break;
     }
   }
+  //this.log('touch ['+touch+'] touch_id['+touch_id+']');
+
+  //transform touch evt to mouse evt
+  if (touch) {
+    //this event can be easy dintinguished from native events by .isTrusted = undefined = false
+    var mouseEventInit = {
+      bubbles: true,
+      button: myUtilsClass.mouse.button.main,
+      
+      target:   e.target,
+      currentTarget: e.currentTarget,
+      //--poor option for .target
+      //the Element on which the touch point started when it was first placed on the surface, 
+      //even if the touch point has since moved outside the interactive area of that element 
+      //or even been removed from the document.
+      //target:   touch.target, 
+
+      screenX:  touch.screenX,
+      screenY:  touch.screenY, 
+      clientX:  touch.clientX, 
+      clientY:  touch.clientY, 
+      pageX:    touch.pageX, 
+      pageY:    touch.pageY, 
+    };
+    
+    //this.log('mouseEventInit');
+    //this.log(mouseEventInit);
+    
+    //Abanodoned
+    //var mouse_evt = new MouseEvent(
+    //  myUtilsClass.touch.ToMouseEvent.TypeMap[e.type], 
+    //  mouseEventInit
+    //);
+  }
+  //this.log('e.target['+e.target+'] e.currentTarget['+e.currentTarget+']');
+  //this.log('mouseEventInit.target['+mouseEventInit.target+'] mouseEventInit.currentTarget['+mouseEventInit.currentTarget+']');
+
+  return mouseEventInit;
+  //return mouse_evt;//Abanodoned
+};
+
+MapWithMarkerListClass.prototype.TouchEvent_dump = function (e) {
+  this.log('---TouchEvent_dump');
+  e.preventDefault();
+  this.log('changedTouches.length['+e.changedTouches.length+']');
+  this.log(e.changedTouches);
+  this.log('targetTouches.length['+e.targetTouches.length+']');
+  this.log(e.targetTouches);
+  this.log('touches.length['+e.touches.length+']');
+  this.log(e.touches);
+  this.log('target.id['+e.target.id+'] target.tagName['+e.target.tagName+']');
 };
 
 //-----------------------------------------------------------------------------

@@ -69,8 +69,9 @@ label.address > button {
   transform: scaleY(1);*/
 
   transform-origin: top;
-/*  transition: transform .15s ease-in-out,opacity .15s ease-in-out;*/
-  transition: transform 1.0s ease-in-out, opacity 1.0s ease-in-out;
+/*  transition: transform .15s ease-in-out,opacity .15s ease-in-out;/*Fast*/
+  transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;/*Medium*/
+/*  transition: transform 1.0s ease-in-out, opacity 1.0s ease-in-out;/*Slow*/
 
   border-radius: var(--regular-border-radius);
   border: var(--regular-border);
