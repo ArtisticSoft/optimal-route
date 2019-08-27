@@ -41,14 +41,17 @@ function MapWithMarkerListClass(options) {
     }
   };
   //the following handler might be assigned to either the Draggable element or the whole page 
+  //{passive: false} requred to be able to call preventDefault
+  //without passive: false preventDefault will be ignored:
+  //Ignoring ‘preventDefault()’ call on event of type ‘touchmove’ from a listener registered as ‘passive’.
   this.address_list_html.addEventListener('mousedown', this.draggable_onMouseDown.bind(this));
-  this.address_list_html.addEventListener('touchstart', this.draggable_onTouchStart.bind(this));
+  this.address_list_html.addEventListener('touchstart', this.draggable_onTouchStart.bind(this), {passive: false});
   //the following handlers must be assigned to the whole page
   document.addEventListener('mousemove', this.document_onMouseMove.bind(this));
-  document.addEventListener('touchmove', this.document_onTouchMove.bind(this));
+  document.addEventListener('touchmove', this.document_onTouchMove.bind(this), {passive: false});
   document.addEventListener('mouseup', this.document_onMouseUp.bind(this));
-  document.addEventListener('touchend', this.document_onTouchEnd.bind(this));
-  document.addEventListener('touchcancel', this.document_onTouchCancel.bind(this));
+  document.addEventListener('touchend', this.document_onTouchEnd.bind(this), {passive: false});
+  document.addEventListener('touchcancel', this.document_onTouchCancel.bind(this), {passive: false});
   
   //Abandoned
   //the following handler(s) must be assigned to Droppable.
@@ -61,6 +64,7 @@ function MapWithMarkerListClass(options) {
   //prevent some default behaviors
   this.address_list_html.addEventListener('click', this.draggable_onClick.bind(this));
   this.address_list_html.addEventListener('dblclick', this.draggable_onDblClick.bind(this));
+  this.address_list_html.addEventListener('contextmenu', this.draggable_onContextMenu.bind(this));
  
 
   //---ключевой объект на странице. кнопка Оптимизировать маршрут
@@ -531,6 +535,12 @@ MapWithMarkerListClass.prototype.draggable_onDblClick = function (e) {
   e.preventDefault();
   return false;
 };
+MapWithMarkerListClass.prototype.draggable_onContextMenu = function (e) {
+  this.log('draggable_onContextMenu');
+  e.preventDefault();
+  e.stopPropagation();
+  return false;
+};
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //DnD native. prevent it
@@ -636,6 +646,7 @@ MapWithMarkerListClass.prototype.draggable_onTouchStart = function (e) {
     this.DragAndDrop.touch.tracked_id = touches[0].identifier;
     this.crafted_DnD_onDragStart(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
   }
+  return false;
 };
 
 MapWithMarkerListClass.prototype.document_onTouchMove = function (e) {
@@ -653,6 +664,7 @@ MapWithMarkerListClass.prototype.document_onTouchMove = function (e) {
     //this.log('about to call hadnler for mouse...');
     this.crafted_DnD_onDragMove(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
   }
+  return false;
 };
 
 MapWithMarkerListClass.prototype.document_onTouchEnd = function (e) {
@@ -665,6 +677,7 @@ MapWithMarkerListClass.prototype.document_onTouchEnd = function (e) {
     this.crafted_DnD_onDragEnd(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
   }
   this.DragAndDrop.touch.tracked_id = null;
+  return false;
 };
 
 MapWithMarkerListClass.prototype.document_onTouchCancel = function (e) {
@@ -677,6 +690,7 @@ MapWithMarkerListClass.prototype.document_onTouchCancel = function (e) {
     this.crafted_DnD_onDragCancel(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
   }
   this.DragAndDrop.touch.tracked_id = null;
+  return false;
 };
 
 /*
