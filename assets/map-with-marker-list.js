@@ -386,7 +386,7 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e) {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
 MapWithMarkerListClass.prototype.document_onMouseMove = function (e) {
-  //this.log('document_onMouseMove');
+  this.log('document_onMouseMove');
   //! important to check isTrusted. this prevents infinite recursion 
   //because synthetic 'mousemove' event is created in this handler
   if (this.crafted_DnD_isDragging() && e.isTrusted) {
@@ -397,7 +397,8 @@ MapWithMarkerListClass.prototype.document_onMouseMove = function (e) {
 
 //closest native method named 'DragOver' but it has different meaning
 MapWithMarkerListClass.prototype.crafted_DnD_onDragMove = function (e) {
-  this.log('crafted_DnD_onDragMove');
+  //this.log('crafted_DnD_onDragMove');//!uncomment this only for debug
+  
   var dnd = this.DragAndDrop;
 
   //e.preventDefault();//this must be done outside because this can't be done for synthetic evt
