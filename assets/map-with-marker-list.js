@@ -166,20 +166,8 @@ MapWithMarkerListClass.prototype.address_list_fill_from_id_lst = function (addr_
   //this.log('---id_sorted');
   //this.log(id_sorted);
 
-  //очистить существующие представления в HTML и на карте
-  this.PageAllAddressesRemove();
-  this.MapAllMarkersRemove();
-  
-  //отобразить новый список адресов в порядке возрастания Label
-  for (var i = 0; i < id_sorted.length; i++) {
-    id = id_sorted[i];
-    addr = this.address_list[id];
-    //массив начинается с индекса=0 а Label с 1 так что addr может оказаться пустым
-    if (addr) {
-      this.AddressPublishToMap(addr, id);
-      this.AddressPublishToPage(addr, id);
-    }
-  }
+  this.AddressesAllPublishTo('all', id_sorted);
+
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
@@ -292,15 +280,21 @@ MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
   li.classList.add('address');
   li.setAttribute('js_draggable', '');
 
+  //<span>1. </span>
   var label = document.createElement('span');
-  label.innerHTML = address.label;
+  label.innerHTML = this.PageLabelFormat(address.label);
   li.appendChild(label);
   
-  var txt = document.createTextNode('. ' + address.title);
+  var txt = document.createTextNode(address.title);
   li.appendChild(txt);
 
   //li.innerHTML = address.label + '. ' + address.title + '<img src = "./assets/images/hamburger-gray.svg"/>';
 
+  var spacer = document.createElement('span');
+  spacer.classList.add('spacer-r');
+  spacer.innerHTML = '&nbsp;';
+  li.appendChild(spacer );
+  
   var img = document.createElement('img');
   img.src = "./assets/images/hamburger-gray.svg";
   li.appendChild(img);
@@ -310,10 +304,23 @@ MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+MapWithMarkerListClass.prototype.PageLabelFormat = function (label_val) {
+  return label_val + '&nbsp;.&nbsp;';
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//удалить все адреса из представления на странице
+
+MapWithMarkerListClass.prototype.PageAllAddressesRemove = function () {
+  myUtils.Element_Clear(this.address_list_html);
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //перенумеровать адреса в том порядке как они расположены в представлении на странице
 
-MapWithMarkerListClass.prototype.PageAllAddressesRenumber = function () {
-  this.log('PageAllAddressesRenumber');
+MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
+  this.log('AddressesAllRenumber');
   var children = this.address_list_html.childNodes;
   
   for (var i = 0; i < children.length; i++) {
@@ -322,15 +329,50 @@ MapWithMarkerListClass.prototype.PageAllAddressesRenumber = function () {
     this.address_list[item.id].label = v;//update internal list
     //update the presentation on page
     var label = item.childNodes[0];
-    label.innerHTML = v;
+    label.innerHTML = this.PageLabelFormat(v);
   }
+  
+  //update map markers
+  this.AddressesAllPublishTo('map');
 };
 
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//удалить все адреса из представления на странице
 
-MapWithMarkerListClass.prototype.PageAllAddressesRemove = function () {
-  myUtils.Element_Clear(this.address_list_html);
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//отобразить внутренний список адресов 
+
+MapWithMarkerListClass.prototype.AddressesAllPublishTo = function (destination, addr_id_lst) {
+  this.log('AddressesAllPublishTo');
+  
+  var destination_map = {
+    'all':   {page: true, map: true},
+    'page':   {page: true},
+    'map':    {map: true}
+  };
+
+  var addr_id_lst = addr_id_lst || Object.keys(this.address_list);
+  
+  //clear presentations
+  if (destination_map[destination].page) {
+    this.PageAllAddressesRemove();
+  }
+  if (destination_map[destination].map) {
+    this.MapAllMarkersRemove();
+  }
+
+  //populate presentations
+  for (var i = 0; i < addr_id_lst.length; i++) {
+    var id = addr_id_lst[i];
+    var addr = this.address_list[id];
+    //массив начинается с индекса=0 а Label с 1 так что addr может оказаться пустым
+    if (addr) {
+      if (destination_map[destination].page) {
+        this.AddressPublishToPage(addr, id);
+      }
+      if (destination_map[destination].map) {
+        this.AddressPublishToMap(addr, id);
+      }
+    }
+  }
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -530,7 +572,7 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
   //restore saved styles
   myUtils.Object_AppendFrom(dragged.style, dnd.saved.style);
   
-  this.PageAllAddressesRenumber();
+  this.AddressesAllRenumber();
 
   dragged.classList.remove('dragged');
   dnd.dragged_node = null;

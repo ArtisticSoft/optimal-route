@@ -144,11 +144,14 @@ li.address {
   padding: 0.3rem 0;
   vertical-align: middle;
 }
-li.address > img {
-/*  float: right;*/
+li.address > .spacer-r {
   margin-left: auto;
+}
+li.address > img {
+/*  margin-left: auto;*/
   width: 1rem;
   height: 1rem;
+  /*padding-left:0.5rem;/*poor :(*/
 }
 
 .address-list .placeholder {
