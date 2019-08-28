@@ -35,10 +35,14 @@ label.address {
 /*  background-color: lightgray;*/
 }
 label.address > input {
+  border: var(--input-border);
+/*  border-style: solid;*/
+  border-radius: 0;
+  
+  background-color: var(--page-background-clr);
 }
 label.address > input.value-from-suggestion {
-  background-color: var(--suggestions-background-clr);
-  background-color: lightgreen;
+  background-color: var(--input-fromlist-background-clr);
 }
 label.address > button {
   flex: initial;
@@ -73,16 +77,19 @@ label.address > button {
   transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;/*Medium*/
 /*  transition: transform 1.0s ease-in-out, opacity 1.0s ease-in-out;/*Slow*/
 
-  border-radius: var(--regular-border-radius);
   border: var(--regular-border);
+  border-radius: 0;
+/*  border-radius: var(--regular-border-radius);*/
+  border-color: var(--suggestions-border-clr);
 
-  box-shadow: var(--regular-shadow);
+/*  box-shadow: var(--regular-shadow);*/
   
   padding: 0 var(--regular-padding);
 
   /*по умолчанию фон прозрачный. эта строчка нужна чтобы сделать фон сплошным*/
-  background-color: lightgreen;
+/*  background-color: lightgreen;*/
   background-color: var(--suggestions-background-clr);
+
 /*  background-color: inherit;/*not works :( background-color inherited from body and it is transparent by default*/
 }
 
@@ -96,7 +103,7 @@ in a more abstract way
 }
 
 .address-suggestions .suggestion {
-/*  padding: .5rem;*/
+  padding: .2rem;
 /*  color: #3b435c;*/
 /*  font-weight: 400;
   font-size: 16px;*/

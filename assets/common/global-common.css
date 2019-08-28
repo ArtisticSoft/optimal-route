@@ -118,12 +118,16 @@ button::-moz-focus-inner,
   border-style: none;
 }
 
-/*-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+button.disabled, button:disabled {
+  opacity: 0.6;
+}
 
+/*-  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+/*
 .btn {
   display: inline-block;
   font-weight: 400;
-/*  color: #212529;*/
+  color: #212529;
   text-align: center;
   vertical-align: middle;
   -webkit-user-select: none;
@@ -147,13 +151,10 @@ button::-moz-focus-inner,
 .btn.disabled, .btn:disabled {
   opacity: 0.65;
 }
-button.disabled, button:disabled {
-  opacity: 0.6;
-}
 
 a.btn.disabled,
 fieldset:disabled a.btn {
   pointer-events: none;
 }
-
+*/
 /*===========================================================================*/
