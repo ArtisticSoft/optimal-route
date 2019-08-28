@@ -12,12 +12,6 @@ header {
 .map-section {
   min-height: 90vh;
 }
-/*
-неудачное решение. на небольшом экране получается много пустого места под списком адресов т.к он такой-же высоты как карта
-main {
-  min-height: 90vh;
-}
-*/
 footer {
   min-height: 5vh;
 }
@@ -43,13 +37,20 @@ the Main breakpoint on the page sits between xs & sm
 @media (min-width: 576px) {
 /*bootstrap: col-sm-...*/
 
+  /*скрыть футер*/
+  .map-section {
+    min-height: 95vh;
+  }
+  footer {
+    min-height: 0vh;
+  }
+
   .page-wrapper {
     /*
     на основном брейкпойнте страницы
     высота страницы во весь экран даже если недостаточно контента
     */
     min-height: 100vh;
-    /*min-height: 100%;/*не работает*/
   }
 
   .nav-responsive > ul {
