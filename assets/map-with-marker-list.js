@@ -115,6 +115,8 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     )
     
     this.addresses_last_optimized = addresses;
+  } else {
+    this.log('ignored. input data looks the same as previous one');
   }
 };
 
@@ -174,7 +176,7 @@ MapWithMarkerListClass.prototype.address_list_fill_from_id_lst = function (addr_
     addr = this.address_list[id];
     //массив начинается с индекса=0 а Label с 1 так что addr может оказаться пустым
     if (addr) {
-      this.AddressPublishToMap(addr);
+      this.AddressPublishToMap(addr, id);
       this.AddressPublishToPage(addr, id);
     }
   }
@@ -210,7 +212,6 @@ MapWithMarkerListClass.prototype.address_list_changed = function (e) {
   var disabled = !this.address_list_html.hasChildNodes();
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
   this.route_optimize_btn.disabled = disabled;
-  //myUtils.Element_setAttributeBoolean(this.route_optimize_btn, 'disabled', disabled);
 };
 
 //-----------------------------------------------------------------------------
@@ -222,10 +223,10 @@ MapWithMarkerListClass.prototype.address_list_changed = function (e) {
 
 MapWithMarkerListClass.prototype.MarkerAddFromAddress = function (address) {
   this.log('MarkerAddFromAddress. starting BackEnd.geocode...');
-  this.log('address ['+address+']');
   
   //защита от повторных кликов кнпоки Добавить
   if (this.address_last_added != address) {
+    this.log('address ['+address+']');
     this.back_end.XHR_Start(
       this.back_end.AddressGeocode, 
       {address: address}, 
@@ -233,6 +234,8 @@ MapWithMarkerListClass.prototype.MarkerAddFromAddress = function (address) {
     )
     
     this.address_last_added = address;
+  } else {
+    this.log('ignored. input data looks the same as previous one');
   }
 };
 
@@ -275,35 +278,52 @@ MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title
   //this.log('id=['+id+']');
   //this.log(addr);
   
-  this.AddressPublishToMap(addr, true);
+  this.AddressPublishToMap(addr, id, true);
   this.AddressPublishToPage(addr, id);
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //добавить адрес в представление на странице
 //marker - внутреннее представление маркера = элемент this.address_list
-/*
-Abandoned
-  //---ключевой объект на странице. шаблон для эл-та списка адресов
-  this.suggestion_template = document.getElementById('suggestion_template').innerHTML;
-              <script id="suggestion_template" type="text/html">{label}. {title}</li>
-              </script>
-  inner = this.suggestion_template;
-  //inner.replace('{id}', id);
-  inner.replace('{label}', address.label);
-  inner.replace('{title}', address.title);
-  li.innerHTML = inner;
-*/
 
 MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
   var li = document.createElement('li');
   li.id = id;
   li.classList.add('address');
   li.setAttribute('js_draggable', '');
-  li.innerHTML = address.label + '. ' + address.title + '<img src = "./assets/images/hamburger-gray.svg"/>';
+
+  var label = document.createElement('span');
+  label.innerHTML = address.label;
+  li.appendChild(label);
   
+  var txt = document.createTextNode('. ' + address.title);
+  li.appendChild(txt);
+
+  //li.innerHTML = address.label + '. ' + address.title + '<img src = "./assets/images/hamburger-gray.svg"/>';
+
+  var img = document.createElement('img');
+  img.src = "./assets/images/hamburger-gray.svg";
+  li.appendChild(img);
+
   this.address_list_html.appendChild(li);
   this.address_list_changed();
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//перенумеровать адреса в том порядке как они расположены в представлении на странице
+
+MapWithMarkerListClass.prototype.PageAllAddressesRenumber = function () {
+  this.log('PageAllAddressesRenumber');
+  var children = this.address_list_html.childNodes;
+  
+  for (var i = 0; i < children.length; i++) {
+    var v = i + 1;
+    var item = children[i];
+    this.address_list[item.id].label = v;//update internal list
+    //update the presentation on page
+    var label = item.childNodes[0];
+    label.innerHTML = v;
+  }
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
@@ -339,15 +359,18 @@ MouseEvent.movementY Read only
 
 MapWithMarkerListClass.prototype.draggable_onMouseDown = function (e) {
   this.log('draggable_onMouseDown');
-  if (e.button == myUtilsClass.mouse.button.main && this.crafted_DnD_isDraggable(e.target)) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();//not sure this is neceassary
-    this.crafted_DnD_onDragStart(e);
+  if (e.button == myUtilsClass.mouse.button.main) {
+    var dragged = this.crafted_DnD_DraggableTest(e.target);
+    if (dragged) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();//not sure this is neceassary
+      this.crafted_DnD_onDragStart(e, dragged);
+    }
   }
 };
 
-MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e) {
+MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e, dragged) {
   this.log('crafted_DnD_onDragStart');
   
   //lose focus, if any. focus IS interfer with DnD
@@ -355,7 +378,7 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e) {
   dnd.saved.focus = myUtils.Document_Blur();
   
   //get a ref to the Dragged
-  var dragged = dnd.dragged_node = e.target;
+  dnd.dragged_node = dragged;
   var parent = dnd.saved.parent = dragged.parentNode;
   dnd.saved.nextSibling = dragged.nextSibling;
   //save the current inline style props, if any
@@ -463,6 +486,8 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragMove = function (e) {
     //Abanodoned
     //var synth_event = new MouseEvent('mousemove', mouseEventInit);
     //below.dispatchEvent(synth_event);
+    
+    //прямой вызов без dispatch
     this.crafted_DnD_Droppable_onDragOver(mouseEventInit);
   }
   dragged.hidden = false;
@@ -504,6 +529,8 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
 
   //restore saved styles
   myUtils.Object_AppendFrom(dragged.style, dnd.saved.style);
+  
+  this.PageAllAddressesRenumber();
 
   dragged.classList.remove('dragged');
   dnd.dragged_node = null;
@@ -516,8 +543,15 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
 //utils 
 
 //this might be used by another technologies for example Touch
-MapWithMarkerListClass.prototype.crafted_DnD_isDraggable = function (target) {
-  return target.hasAttribute('js_draggable');
+MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
+  var draggable = null;
+  if (target.hasAttribute('js_draggable')) {
+    draggable = target;
+  }
+  if (target.parentNode.hasAttribute('js_draggable')) {
+    draggable = target.parentNode;
+  }
+  return draggable;
 };
 
 //this might be used by another technologies for example Touch
@@ -591,8 +625,9 @@ MapWithMarkerListClass.prototype.crafted_DnD_Droppable_onDragOver = function (e)
   var dragged = dnd.dragged_node;
   var placeholder = dnd.placeholder;
   var item_moved_over = e.target;
+  //this.log('crafted_DnD_Droppable_onDragOver ');
   
-  if (item_moved_over != placeholder) {
+  if (item_moved_over.parentNode == this.address_list_html && item_moved_over != placeholder) {
   
     //--- detect at which half of item_moved_over the mouse is
     //.offsetTop is Wrong choice 
@@ -654,11 +689,14 @@ MapWithMarkerListClass.prototype.draggable_onTouchStart = function (e) {
   //this.TouchEvent_dump(e);
   
   var touches = e.changedTouches;
-  if (touches.length && this.crafted_DnD_isDraggable(e.target)) {
-    e.preventDefault();
-    //this.log('about to call hadnler for mouse...');
-    this.DragAndDrop.touch.tracked_id = touches[0].identifier;
-    this.crafted_DnD_onDragStart(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id));
+  if (touches.length) {
+    var dragged = this.crafted_DnD_DraggableTest(e.target);
+    if (dragged) {
+      e.preventDefault();
+      //this.log('about to call hadnler for mouse...');
+      this.DragAndDrop.touch.tracked_id = touches[0].identifier;
+      this.crafted_DnD_onDragStart(this.TouchEvent_toMouseEvent(e, this.DragAndDrop.touch.tracked_id), dragged);
+    }
   }
   return false;
 };
@@ -803,17 +841,21 @@ MapWithMarkerListClass.prototype.MapExists = function () {
 добавить маркер на карту
 address - внутреннее представление маркера = элемент this.address_list
 */
-MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, map_pan) {
+
+MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, id, map_pan) {
   if (this.MapExists()) {
 
     //добавить на карту маркер для адреса
     var icons_pool = this.icons_pool['blue'];
     var m = L.marker([address.lat, address.lng], {icon: icons_pool[address.label]});//custom icon pool. Works
+
+    address.map_marker = m;
+    m.item_id = id;
+    m.on('click', this.map_marker_onClick.bind(this));
     
     m.bindTooltip(String(address.title), {}).openTooltip();//tooltip = address
     //m.bindPopup(address.title);
     m.addTo(this.map_obj);
-    address.map_marker = m;
 
     if (map_pan) {
       //прокрутить вид карты к расположению нового маркера
@@ -825,6 +867,30 @@ MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, map_pa
     }
   }
 };
+
+MapWithMarkerListClass.prototype.map_marker_onClick = function (e) {
+  this.log('---map_marker_onClick');
+  
+  //this.log(e);
+  
+  var m = e.sourceTarget;
+  if (m.item_id) {
+    //this.log('m.item_id['+m.item_id+']');
+    var item_html = document.getElementById(m.item_id);
+    item_html.style.backgroundColor = 'yellow';
+  }
+  
+  //=MouseEvent
+  //this.log('originalEvent.constructor.name['+e.originalEvent.constructor.name+']');
+  
+  //=i wtf???
+  //this.log('target.constructor.name['+e.target.constructor.name+']');
+  //=i wtf???
+  //this.log('sourceTarget.constructor.name['+e.sourceTarget.constructor.name+']');
+  //undefined usually
+  //this.log('propagatedFrom.constructor.name['+e.propagatedFrom.constructor.name+']');
+};
+
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //удалить маркер с карты для заданного эл-та внутреннего списка
@@ -867,11 +933,33 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     this.map_obj.setView(moscow, this.marker_add_zoom_default);
     //this.map_obj.setView(moscow, 13);
     
+    //no use for markers
+    //this.map_obj.on('click', this.map_onClick.bind(this));
+    
     this.log('-----finished ok');
   } else {
     document.getElementById(map_id).innerHTML("карта недоступна");
   }
 };
+
+/*клик на маркере не bubbles для карты*/
+MapWithMarkerListClass.prototype.map_onClick = function (e) {
+  this.log('---map_onClick');
+  
+  //this.log(e);
+  //=Object
+  //this.log('e.constructor.name['+e.constructor.name+']');
+  //=Object
+  this.log('latlng.constructor.name['+e.latlng.constructor.name+']');
+  //=MouseEvent
+  //this.log('originalEvent.constructor.name['+e.originalEvent.constructor.name+']');
+  
+  this.log('target.constructor.name['+e.target.constructor.name+']');
+  this.log('sourceTarget.constructor.name['+e.sourceTarget.constructor.name+']');
+  //undefined usually
+  //this.log('propagatedFrom.constructor.name['+e.propagatedFrom.constructor.name+']');
+};
+
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 MapWithMarkerListClass.prototype.IconsPoolCreate = function (color) {

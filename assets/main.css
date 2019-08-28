@@ -133,6 +133,10 @@ in a more abstract way
 }
 
 li.address {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  
   cursor: pointer;
 /*  background-color: var(--page-background-clr);/*useful then dragging without re-assign to thr new parent*/
   /*для отладки*/
@@ -141,7 +145,8 @@ li.address {
   vertical-align: middle;
 }
 li.address > img {
-  float: right;
+/*  float: right;*/
+  margin-left: auto;
   width: 1rem;
   height: 1rem;
 }
@@ -151,7 +156,6 @@ li.address > img {
   background-color: rgba(9, 30, 66, .04);
 /*  background-color: darkgray;*/
 }
-
 
 .dragged {
   cursor: grabbing;
