@@ -9,7 +9,6 @@ troubles
 TypeError: t.icon.createIcon is not a function
 solution: icon should be an instance created with 'new', not
 
-
 how the icon images should be located - in the same catalog
 page
 https://leafletjs.com/examples/custom-icons/example-one-icon.html
@@ -20,7 +19,8 @@ https://leafletjs.com/examples/custom-icons/leaf-shadow.png
 //copy-paste from example
 var myMapIconClass = L.Icon.extend({
 	options: {
-    imagePath: './assets/common/leaflet-my/images/',
+    imagePath: './assets/common/leaflet-my/icons/',
+    colorPath: 'blue',
     
 //		iconUrl:       'marker-icon.png',
 //		iconRetinaUrl: 'marker-icon-2x.png',
@@ -33,7 +33,16 @@ var myMapIconClass = L.Icon.extend({
 	},
 
 	_getIconUrl: function (name) {
-		return (this.options.imagePath) + L.Icon.prototype._getIconUrl.call(this, name);
+    var file_name;
+    switch (name) {
+      case 'icon':
+        file_name = (this.options.imagePath + this.options.colorPath + '/') + L.Icon.prototype._getIconUrl.call(this, name);
+        break;
+      case 'shadow':
+        file_name = (this.options.imagePath) + L.Icon.prototype._getIconUrl.call(this, name);
+        break;
+    }
+    return file_name;
 	}
 });
 

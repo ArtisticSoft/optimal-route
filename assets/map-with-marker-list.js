@@ -18,7 +18,9 @@ function MapWithMarkerListClass(options) {
   this.MapCreate(options.map.id);
   
   //иконки маркерами с нарисованным номером 0..99
-  this.IconsPoolCreate();
+  this.icons_pool = {};
+  this.IconsPoolCreate('blue');
+  this.IconsPoolCreate('yellow');
 
   //---ключевой объект на странице. список адресов
   this.address_list_html = document.getElementById(options.address_list_id);
@@ -65,8 +67,7 @@ function MapWithMarkerListClass(options) {
   this.address_list_html.addEventListener('click', this.draggable_onClick.bind(this));
   this.address_list_html.addEventListener('dblclick', this.draggable_onDblClick.bind(this));
   this.address_list_html.addEventListener('contextmenu', this.draggable_onContextMenu.bind(this));
- 
-
+  
   //---ключевой объект на странице. кнопка Оптимизировать маршрут
   this.route_optimize_btn = document.getElementById(options.route_optimize_btn_id);
   this.route_optimize_btn.addEventListener('click', this.route_optimize_btn_onClick.bind(this));
@@ -208,7 +209,8 @@ MapWithMarkerListClass.prototype.address_list_concatenate = function (property) 
 MapWithMarkerListClass.prototype.address_list_changed = function (e) {
   var disabled = !this.address_list_html.hasChildNodes();
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
-  myUtils.Element_setAttributeBoolean(this.route_optimize_btn, 'disabled', disabled);
+  this.route_optimize_btn.disabled = disabled;
+  //myUtils.Element_setAttributeBoolean(this.route_optimize_btn, 'disabled', disabled);
 };
 
 //-----------------------------------------------------------------------------
@@ -280,15 +282,27 @@ MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //добавить адрес в представление на странице
 //marker - внутреннее представление маркера = элемент this.address_list
+/*
+Abandoned
+  //---ключевой объект на странице. шаблон для эл-та списка адресов
+  this.suggestion_template = document.getElementById('suggestion_template').innerHTML;
+              <script id="suggestion_template" type="text/html">{label}. {title}</li>
+              </script>
+  inner = this.suggestion_template;
+  //inner.replace('{id}', id);
+  inner.replace('{label}', address.label);
+  inner.replace('{title}', address.title);
+  li.innerHTML = inner;
+*/
 
 MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
   var li = document.createElement('li');
   li.id = id;
+  li.classList.add('address');
   li.setAttribute('js_draggable', '');
-  li.innerHTML = address.label + '. ' + address.title;
-
-  this.address_list_html.appendChild(li);
+  li.innerHTML = address.label + '. ' + address.title + '<img src = "./assets/images/hamburger-gray.svg"/>';
   
+  this.address_list_html.appendChild(li);
   this.address_list_changed();
 };
 
@@ -793,7 +807,8 @@ MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, map_pa
   if (this.MapExists()) {
 
     //добавить на карту маркер для адреса
-    var m = L.marker([address.lat, address.lng], {icon: this.icons_pool[address.label]});//custom icon pool. Works
+    var icons_pool = this.icons_pool['blue'];
+    var m = L.marker([address.lat, address.lng], {icon: icons_pool[address.label]});//custom icon pool. Works
     
     m.bindTooltip(String(address.title), {}).openTooltip();//tooltip = address
     //m.bindPopup(address.title);
@@ -812,7 +827,7 @@ MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, map_pa
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//удалить маркер с карты для заданного адреса из внутреннего списка
+//удалить маркер с карты для заданного эл-та внутреннего списка
 
 MapWithMarkerListClass.prototype.AddressRemoveFromMap = function (address) {
   if (this.MapExists()) {
@@ -859,10 +874,11 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
 };
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-MapWithMarkerListClass.prototype.IconsPoolCreate = function () {
+MapWithMarkerListClass.prototype.IconsPoolCreate = function (color) {
   //this.log_enabled = true;
   
-  this.icons_pool = [];
+  var pool = this.icons_pool[color] = [];
+  
   var icon_cls = myMapIconClass;
   var suffix;
   
@@ -873,7 +889,8 @@ MapWithMarkerListClass.prototype.IconsPoolCreate = function () {
     //suffix = formatter.format(i);
     //this.log(suffix);
 
-    this.icons_pool.push(new myMapIconClass({
+    pool.push(new myMapIconClass({
+      colorPath: color,
       iconUrl: icon_cls.file_name_base + suffix + icon_cls.file_name_ext,
       iconRetinaUrl: icon_cls.file_name_base_retina + suffix + icon_cls.file_name_ext
     }));

@@ -1,16 +1,53 @@
 .my-btn {
-  padding: 0 var(--regular-padding);
   text-transform: uppercase;
+  
+  border-style: solid;
+  border-radius: 0.2rem;
+
+  padding: 0 var(--regular-padding);
+}
+.my-btn:focus, .my-btn.focus {
+  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);
 }
 
-.my-btn-link-alike {
-  display: inline-block;
-  text-transform: uppercase;
-  padding: 0 var(--regular-padding);
+.btn-regular {
+  color: var(--button-font-clr);
+  background-color: var(--button-background-clr);
+  border-color: var(--button-border-clr);
 }
-.my-btn-link-alike:hover {
-  cursor: pointer;
-  background-color: var(--regular-hover-bg-clr);
+.btn-regular:hover {
+  color: var(--button-hover-font-clr);
+  background-color: var(--button-hover-background-clr);
+  border-color: var(--button-hover-border-clr);
+}
+.btn-regular.disabled, .btn-regular:disabled {
+  color: var(--button-font-clr);
+  background-color: var(--button-background-clr);
+  border-color: var(--button-border-clr);
+}
+
+.btn-link-alike {
+  padding: 0 var(--regular-padding);
+/*  background: no-repeat url("./images/arrow-r-curved.png");*/
+}
+.btn-link-alike {
+  color: var(--link-font-clr);
+  background-color: var(--link-background-clr);
+  border-color: var(--link-border-clr);
+}
+.btn-link-alike:hover {
+  color: var(--link-hover-font-clr);
+  background-color: var(--link-hover-background-clr);
+  border-color: var(--link-hover-border-clr);
+}
+.btn-link-alike.disabled, .btn-link-alike:disabled {
+  color: var(--link-font-clr);
+  background-color: var(--link-background-clr);
+  border-color: var(--link-border-clr);
+}
+.btn-link-alike > img {
+/*  vertical-align: baseline;*/
+  vertical-align: middle;
 }
 
 .width-grow {
@@ -20,6 +57,12 @@
 /*margin\pagging will be set individually*/
 .separator-h {
 	border: 3px solid var(--theme-separator-clr);
-	border-radius: 3px;
+	border-radius: 2px;
 }
 
+a {
+  color: var(--link-font-clr);
+}
+a:hover {
+  color: var(--link-hover-font-clr);
+}

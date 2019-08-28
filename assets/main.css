@@ -128,12 +128,22 @@ in a more abstract way
 /*  background-color: lightgray;*/
 }
 
-.address-list li {
+.address-list .header {
+  text-transform: uppercase;
+}
+
+li.address {
   cursor: pointer;
 /*  background-color: var(--page-background-clr);/*useful then dragging without re-assign to thr new parent*/
   /*для отладки*/
 /*  border-color: violet;*/
   padding: 0.3rem 0;
+  vertical-align: middle;
+}
+li.address > img {
+  float: right;
+  width: 1rem;
+  height: 1rem;
 }
 
 .address-list .placeholder {
@@ -142,20 +152,12 @@ in a more abstract way
 /*  background-color: darkgray;*/
 }
 
-/*  background-color: violet;/*too rough solution*/
-
-.address-list .drag-target-over-before {
-/*  border-top-color: var(--address-list-drag-over-clr);*/
-}
-.address-list .drag-target-over-after {
-/*  border-bottom-color: var(--address-list-drag-over-clr);*/
-}
 
 .dragged {
   cursor: grabbing;
   z-index: 1000;
   background-color: var(--page-background-clr);
-  /*trello style*/
+  /*tre11o style*/
   border-radius: 3px;
   box-shadow: 0 12px 24px -6px rgba(9, 30, 66, .25), 0 0 0 1px rgba(9, 30, 66, .08);
   transform: rotate(4deg)

@@ -60,12 +60,11 @@ function RouteAppClass() {
   }
   this.address_add_btn = document.getElementById('address-add-btn');
   this.address_add_btn.addEventListener('click', this.address_add_btn_onClick.bind(this));
-  myUtils.Element_setAttributeBoolean(this.address_add_btn, 'disabled', true);//some browsers remember the Enabled state for buttons so make sure it is Disabled
+  //some browsers remember the Enabled state for buttons so make sure it is Disabled
+  this.address_add_btn.disabled = true;
   
   this.Search_onStateChange = function() {
-    myUtils.Element_setAttributeBoolean(
-      this.address_add_btn, 'disabled', this.SearchWithSuggestons.state != 'value_from_suggestion'
-    );
+    this.address_add_btn.disabled = this.SearchWithSuggestons.state != 'value_from_suggestion';
   };
   this.SearchWithSuggestons.onStateChange = this.Search_onStateChange.bind(this);
   

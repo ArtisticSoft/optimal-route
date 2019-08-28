@@ -3,7 +3,8 @@
 */
 
 :root {
-  --page-outside-background-clr: lightgray;
+  --page-outside-background-clr: rgb(96,96,96);
+/*  --page-outside-background-clr: lightgray;*/
   --page-background-clr: white;
   
   --global-padding: 0.5rem;
@@ -14,12 +15,39 @@
   --regular-border-radius: 0.2rem;
   --regular-border: 1px solid #ebecf7;
   
-  --theme-separator-clr: darkgray;
+  --theme-separator-clr: rgb(96,96,96);
   
-  --suggestions-background-clr: lightgreen;
+  --suggestions-background-clr: rgb(144,238,144);
   --suggestions-hover-clr: white;
 
-  --address-list-drag-over-clr: violet;
+/*  --address-list-drag-over-clr: violet;*/
   --address-list-placeholder-clr: lightgray;
+  
+/*
+Поделиться font-clr: rgba(96,96,96,1) 606060
+rgba(100,100,100,1) 646464
+
+button bg-clr: rgba(96,96,96,1) 606060
+
+icon-hamburger  rgba(122,122,122,1) 7A7A7A
+
+lightgreen rgb(144,238,144)
+*/
+  --button-font-clr: white;
+  --button-background-clr: rgb(96,96,96);
+  --button-border-clr: transparent;
+
+  --button-hover-font-clr: rgb(96,96,96);
+  --button-hover-background-clr: rgb(144,238,144);
+  --button-hover-border-clr: transparent;
+  
+  --link-font-clr: rgb(96,96,96);
+  --link-background-clr: rgb(255,255,255);
+  --link-border-clr: transparent;
+
+  --link-hover-font-clr: rgb(144,238,144);
+  --link-hover-background-clr: transparent;
+  --link-hover-border-clr: rgb(144,238,144);
+ 
 }
 

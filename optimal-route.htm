@@ -81,7 +81,7 @@
         <header class="col-xs-12">
           <p class="project-name">Optimal route</p>
           
-          <a id="nav-icon" class="nav-icon" href="#footer"><img src = "./assets/images/hamburger-blue.svg"/></a>
+          <a id="nav-icon" class="nav-icon" href="#footer"><img src = "./assets/images/hamburger-gray.svg"/></a>
         </header>
       </div>
       
@@ -104,7 +104,7 @@
                  Добавить&nbsp;адрес
               -->
               <input type="text" id="address-input" size="10" class="width-grow">
-              <button disabled id="address-add-btn" type="button" class="btn btn-primary my-btn">Добавить адрес</button>
+              <button disabled id="address-add-btn" type="button" class="my-btn btn-regular">Добавить адрес</button>
             </label>
             
             <div class="anchor-for-absolute-child">
@@ -118,7 +118,7 @@
             
           </div>
           <div class="address-list">
-            <p class="my-btn">Адреса</p>
+            <p class="header">Адреса</p>
             <div class="separator-h"></div>
             <ul id="address-list" "js_droppable"="">
               <!-- 
@@ -132,8 +132,11 @@
           <!-- для flex позиционирования кнопок -->
           <div class="address-list-buttons-wrapper">
             <!-- is it good to use &nbsp; ? -->
-            <button disabled id="route-optimize-btn" type="button" class="my-btn width-grow">Оптимизировать маршрут</button>
-            <button disabled id="share-link-btn" type="button" class="my-btn-link-alike">Поделиться</button>
+            <button disabled id="route-optimize-btn" type="button" class="my-btn btn-regular width-grow">Оптимизировать маршрут</button>
+            <button disabled id="share-link-btn" type="button" class="my-btn btn-link-alike">
+              <img src = "./assets/images/arrow-r-curved.png"/>
+              Поделиться
+            </button>
           </div>
           
         </div>
