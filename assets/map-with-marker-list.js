@@ -293,7 +293,7 @@ MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
   var spacer = document.createElement('span');
   spacer.classList.add('spacer-r');
   spacer.innerHTML = '&nbsp;';
-  li.appendChild(spacer );
+  li.appendChild(spacer);
   
   var img = document.createElement('img');
   img.src = "./assets/images/hamburger-gray.svg";
@@ -919,7 +919,9 @@ MapWithMarkerListClass.prototype.map_marker_onClick = function (e) {
   if (m.item_id) {
     //this.log('m.item_id['+m.item_id+']');
     var item_html = document.getElementById(m.item_id);
-    item_html.style.backgroundColor = 'yellow';
+    myUtils.Element_animation_restart(item_html, 'item-active-anim');
+    //item_html.classList.add('item-active-anim');
+    //item_html.style.backgroundColor = 'yellow';
   }
   
   //=MouseEvent

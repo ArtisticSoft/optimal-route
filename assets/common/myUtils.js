@@ -151,6 +151,37 @@ myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {
 
 //-----------------------------------------------------------------------------
 /*
+HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
+*/
+
+myUtilsClass.prototype.Element_animation_restart = function (element, class_name, delay) {
+  console.log('element['+element+']');
+  //console.log(element);
+  
+  delay = delay || 0;
+  if (element && class_name) {
+    //Removing a class that does not exist does NOT throw an error.
+    element.classList.remove(class_name);
+    window.setTimeout(this.classList_add.bind(this, element, class_name), delay);
+  }
+};
+
+myUtilsClass.prototype.classList_add = function (element, class_name, delay) {
+  element.classList.add(class_name);
+};
+
+/*
+Wierd! 
+element = [item-active-anim]
+for Raw fun
+function classList_add_raw(element, class_name) {
+  console.log('element['+element+']');
+  element.classList.add(class_name);
+}
+*/
+
+//-----------------------------------------------------------------------------
+/*
 Node. получить соседний эл-т по индексу
 */
 myUtilsClass.prototype.Node_getSiblingByIdx = function (node, idx) {

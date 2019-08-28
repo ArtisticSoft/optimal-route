@@ -170,6 +170,23 @@ li.address > img {
   transform: rotate(4deg)
 }
 
+@keyframes active-fadeout {
+  from {
+    background-color: var(--active-background-clr);
+  }
+  
+  to {
+    background-color: inherited;
+  }
+}
+
+.item-active-anim {
+  animation-name: active-fadeout;
+  animation-duration: 2s;
+/*  animation-iteration-count: 1;
+  animation-direction: alternate;*/
+}
+
 /*---------------------------------------------------------------------------*/
 /*кнопки Оптимизировать маршрут, Поделиться*/
 /*---------------------------------------------------------------------------*/
