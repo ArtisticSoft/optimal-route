@@ -55,7 +55,7 @@ function RouteAppClass() {
     if (this.SearchWithSuggestons.state == 'value_from_suggestion') {
       //console.log('SearchWithSuggestons.state  OK');
       //console.log('SearchWithSuggestons.getValue ['+this.SearchWithSuggestons.getValue()+']');
-      this.MapWithMarkerList.MarkerAddFromAddress(this.SearchWithSuggestons.getValue());
+      this.MapWithMarkerList.AddressAddFromString(this.SearchWithSuggestons.getValue());
     }
   }
   this.address_add_btn = document.getElementById('address-add-btn');
