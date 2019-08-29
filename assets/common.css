@@ -66,3 +66,10 @@ a {
 a:hover {
   color: var(--link-hover-font-clr);
 }
+
+.overlaid {
+  border: var(--regular-border);
+  background-color: var(--page-background-clr);/*по умолчанию фон наследуется от parent. если навигация всплывающая то фон по умолчанию прозрачный*/
+  padding: var(--regular-padding);
+  z-index: 10100;
+}

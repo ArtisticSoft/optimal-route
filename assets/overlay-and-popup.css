@@ -8,9 +8,6 @@
   right: 0;
   z-index: 10000;
   background-color: rgba(0, 0, 0, 0.5);
-  
-  /*don't show by default*/
-  display: none;
 }
 
 /*can have an arbitrary WH*/
@@ -20,29 +17,27 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 10100;
-/*  background-color: white;*/
-  
-  padding: var(--regular-padding);
-
-  /*don't show by default*/
-  display: none;
 }
-.popup > * {
-/*  padding: 0 var(--regular-padding);/*смотрится плохо*/
+.popup > header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+.popup > header > .close-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-left: auto;
 }
 
 .link-to-share {
   display: flex;
   flex-direction: row;
   align-items: center;
-/*  background-color: lightgray;*/
-}
-
-.link-to-share > button {
-  float: right;/*может пригодиться если поп-ап будет большой фиксированной ширины*/
-  margin-left: var(--regular-padding);
 }
 .link-to-share > p {
-  padding-left: var(--regular-padding);
+  margin-right: var(--regular-padding);
+  border: var(--regular-border);
+}
+.link-to-share > button {
+  margin-left: auto;
 }

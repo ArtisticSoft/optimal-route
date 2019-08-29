@@ -6,13 +6,13 @@ breakpoints должны совпадать с используемой верс
 /*
 крупноблочная раскладка страницы
 */
-header {
+.row > header {
   min-height: 5vh;
 }
 .map-section {
   min-height: 90vh;
 }
-footer {
+.row > footer {
   min-height: 5vh;
 }
 
@@ -99,8 +99,9 @@ the Main breakpoint on the page sits between xs & sm
 @media (min-width: 1200px) {
 /*bootstrap: col-xl-...*/
   label.address > input {
+    /*this MIGHT be misleading because makes an impression some Spaces are always where*/
     /*имеет смысл только для более широких экранов*/
   /*  margin-right: var(--regular-padding);*/
-      padding-left: var(--regular-padding);/*должно быть как у списка подсказок*/
+/*      padding-left: var(--regular-padding);/*должно быть как у списка подсказок*/
   }
 }

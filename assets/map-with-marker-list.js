@@ -71,8 +71,12 @@ function MapWithMarkerListClass(options) {
   //---ключевой объект на странице. кнопка Оптимизировать маршрут
   this.route_optimize_btn = document.getElementById(options.route_optimize_btn_id);
   this.route_optimize_btn.addEventListener('click', this.route_optimize_btn_onClick.bind(this));
+  //ссылка которой можно поделиться. сфомированная при последней оптимизации
+  this.link_to_share = false;
+  this.onLinkToShareChanged = null;//callback
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
   this.address_list_changed();
+  //this.LinkToShare_Set(false);//bad idea. this is an external callback and it is empty at this time
   
   /*
   ключевой массив 
@@ -108,6 +112,9 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
   //защита от повторных кликов кнпоки Оптимизировать
   if (this.addresses_last_optimized != addresses) {
     this.log('addresses ['+addresses+']');
+    
+    this.LinkToShare_Set(false);//link-to-share no longer valid
+
     this.back_end.XHR_Start(
       this.back_end.DistributionAddress, 
       {address: addresses}, 
@@ -136,7 +143,11 @@ MapWithMarkerListClass.prototype.BackendOptimizeRouteFulfilled = function (json)
   this.log('BackendOptimizeRouteFulfilled');
   this.log(json);
 
+  //пере-сортировать список адресов
   this.address_list_reorder_by_id_list(json.address);
+  
+  //сформировать ссылку которой можно поделиться
+  this.LinkToShare_Set(this.back_end.LinkToShareFromJson(json));
 };
 
 MapWithMarkerListClass.prototype.address_list_reorder_by_id_list = function (addr_id_lst) {
@@ -195,11 +206,23 @@ MapWithMarkerListClass.prototype.address_list_concatenate = function (property) 
   return concatenated;
 };
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 //список изменился - эл-т добавлен или удалён. обновить состояние кнопки Оптимизировать
 MapWithMarkerListClass.prototype.address_list_changed = function (e) {
   var disabled = !this.address_list_html.hasChildNodes();
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
   this.route_optimize_btn.disabled = disabled;
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//внешний интерфейс для обновления эл-тов управления например кнопки Поделиться ссылкой
+
+MapWithMarkerListClass.prototype.LinkToShare_Set = function (link) {
+  this.link_to_share = link;
+  if (this.onLinkToShareChanged) {
+    this.onLinkToShareChanged(link);
+  }
 };
 
 //-----------------------------------------------------------------------------
@@ -626,6 +649,20 @@ MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
   return draggable;
 };
 
+/*
+TODO: utils - make a fun parentNode_climb_hasAttribute
+MapWithMarkerListClass.prototype.crafted_DnD_DroppableTest = function (target) {
+  var droppable = null;
+  if (target.hasAttribute('js_droppable')) {
+    droppable = target;
+  }
+  if (target.parentNode.hasAttribute('js_droppable')) {
+    droppable = target.parentNode;
+  }
+  return droppable;
+};
+*/
+
 //this might be used by another technologies for example Touch
 MapWithMarkerListClass.prototype.crafted_DnD_isDragging = function (target) {
   return this.DragAndDrop.dragged_node !== null;
@@ -699,6 +736,7 @@ MapWithMarkerListClass.prototype.crafted_DnD_Droppable_onDragOver = function (e)
   var item_moved_over = e.target;
   //this.log('crafted_DnD_Droppable_onDragOver ');
   
+  //TODO: make a better test
   if (item_moved_over.parentNode == this.address_list_html && item_moved_over != placeholder) {
   
     //--- detect at which half of item_moved_over the mouse is

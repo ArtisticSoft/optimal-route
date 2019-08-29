@@ -78,10 +78,13 @@
     <!-- заголовок (header) -->
     
       <div class="row">
+        <div id="nav-anchor" class="nav-anchor"></div>
         <header class="col-xs-12">
           <p class="project-name">Optimal route</p>
           
-          <a id="nav-icon" class="nav-icon" href="#footer"><img src = "./assets/images/hamburger-gray.svg"/></a>
+          <a id="nav-show-btn" class="nav-icon clickable" href="#footer">
+            <img src = "./assets/images/hamburger-gray.svg"/>
+          </a>
         </header>
       </div>
       
@@ -132,8 +135,8 @@
           <!-- для flex позиционирования кнопок -->
           <div class="address-list-buttons-wrapper">
             <!-- is it good to use &nbsp; ? -->
-            <button disabled id="route-optimize-btn" type="button" class="my-btn btn-regular width-grow">Оптимизировать маршрут</button>
-            <button id="share-link-btn" type="button" class="my-btn btn-link-alike">
+            <button disabled id="route-optimize-btn" class="my-btn btn-regular width-grow">Оптимизировать маршрут</button>
+            <button disabled id="share-link-btn" class="my-btn btn-link-alike">
               <img src = "./assets/images/arrow-r-curved.png"/>
               Поделиться
             </button>
@@ -156,6 +159,9 @@
 
           <nav id="nav-responsive" class="nav-responsive">
             <ul>
+                <li id="nav-hide-btn" class="close-icon clickable" hidden>
+                  <img src = "./assets/images/close-gray.svg"/>
+                </li>
                 <li><a href="">О&nbsp;проекте</a></li>
                 <li><a href="">Контакты</a></li>
                 <li><a href="">Помощь</a></li>
@@ -169,14 +175,22 @@
     <!-- ====================================================================== -->
     <!-- оверлей и поп-апы -->
     
-    <div id="overlay" class="overlay"></div>
+    <div id="overlay" class="overlay" hidden></div>
     
-    <div id="popup-link-share" class="popup">
-      <p>Отправить ссылку</p>
+    <div id="popup-link-share" class="popup overlaid" hidden>
+      <header>
+        <strong>Отправить ссылку</strong>
+        <img id="popup-link-share-close-icon" class="close-icon clickable" src = "./assets/images/close-gray.svg"/>
+      </header>
+      <!-- 
       <p>ВКонтакте Facebook Одноклассники</p>
+      -->
       <div class="link-to-share">
-        <p id="link-to-share">https://placeholder</p>
-        <button id="link-copy-btn" type="button" class="my-btn">Копировать</button>
+        <!-- 
+        https://placeholder
+        -->
+        <p id="link-to-share"></p>
+        <button id="link-copy-btn" class="btn-regular">Выделить</button>
       </div>
     </div>
 
@@ -189,6 +203,7 @@
   <script src="./assets/common/base-classes.js"></script>
   <script src="./assets/common/XHRClass.js"></script>
   
+  <script src="./assets/nav-ondemand.js"></script>
   <script src="./assets/back-end.js"></script>
   <script src="./assets/search-with-suggestons.js"></script>
   <script src="./assets/map-with-marker-list.js"></script>

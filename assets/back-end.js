@@ -247,10 +247,37 @@ BackEndClass.prototype.XHR_Finish = function (xhr_obj, is_success) {
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+BackEndClass.prototype.LinkToShareFromJson = function (json) {
+  this.log('LinkToShareFromJson');
+  var consts = this.C.link_to_share;
+  
+  var url = new URL(this.C.protocol + consts.url);
+  url.searchParams.append(consts.query_param, json[consts.json_field]);
+  this.log('url.href ['+url.href+']');
+  
+  return url.href;
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 BackEndClass.prototype._static_properties_init = function () {
   this.log('BackEndClass._static_properties_init');
   
   this.C.protocol = 'https';
+    
+  /*
+  -= ссылка чтобы поделиться =-
+  
+  3) md_list берем из метода «Поиск оптимального маршрута - distribution_address» 
+  4) домен - пока созать констату с таким заничением «http://testtest01.itlogist.ru/api/v1/all/route_md_list/?md_list=»
+
+  По итогу будет что-то типа этого
+  http://testtest01.itlogist.ru/api/v1/all/route_md_list/?md_list=msdof9w4jcos9ecso9e
+  */
+  var share = this.C.link_to_share = {};
+  share.json_field = 'md_list';
+  share.url = '://testtest01.itlogist.ru/api/v1/all/route_md_list/';
+  share.query_param = 'md_list';
 };
 
 //=============================================================================
