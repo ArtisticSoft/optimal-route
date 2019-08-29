@@ -13,14 +13,14 @@ function MapWithMarkerListClass(options) {
   this.back_end = options.back_end;
   
   //ключевой объект на странице. карта
-  this.marker_add_zoom_default = options.map.marker_add_zoom_default;
+  this.map_zoom_default = options.map.zoom_default;
   this.map_obj;
   this.MapCreate(options.map.id);
   
   //иконки маркерами с нарисованным номером 0..99
   this.icons_pool = {};
-  this.IconsPoolCreate('blue');
-  this.IconsPoolCreate('yellow');
+  this.IconsPoolCreate(this.C.Map.marker.icon.color.default);
+  this.IconsPoolCreate(this.C.Map.marker.icon.color.active);
 
   //---ключевой объект на странице. список адресов
   this.address_list_html = document.getElementById(options.address_list_id);
@@ -111,7 +111,7 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     this.back_end.XHR_Start(
       this.back_end.DistributionAddress, 
       {address: addresses}, 
-      this.OptimizeRouteFulfilled.bind(this)
+      this.BackendOptimizeRouteFulfilled.bind(this)
     )
     
     this.addresses_last_optimized = addresses;
@@ -132,15 +132,15 @@ json sample
   "result": 1
 }
 */
-MapWithMarkerListClass.prototype.OptimizeRouteFulfilled = function (json) {
-  this.log('OptimizeRouteFulfilled');
+MapWithMarkerListClass.prototype.BackendOptimizeRouteFulfilled = function (json) {
+  this.log('BackendOptimizeRouteFulfilled');
   this.log(json);
 
-  this.address_list_fill_from_id_lst(json.address);
+  this.address_list_reorder_by_id_list(json.address);
 };
 
-MapWithMarkerListClass.prototype.address_list_fill_from_id_lst = function (addr_id_lst) {
-  this.log('address_list_fill_from_id_lst');
+MapWithMarkerListClass.prototype.address_list_reorder_by_id_list = function (addr_id_lst) {
+  this.log('address_list_reorder_by_id_list');
   
   //внутреннее представление списка: назначить новые Label
   //+ создать массив id сортированый по возрастанию Label
@@ -203,14 +203,14 @@ MapWithMarkerListClass.prototype.address_list_changed = function (e) {
 };
 
 //-----------------------------------------------------------------------------
-//Address list
+//Address list - Model
 //-----------------------------------------------------------------------------
 /*
 добавить маркер по адресу. запуск метода BackEnd.geocode
 */
 
-MapWithMarkerListClass.prototype.MarkerAddFromAddress = function (address) {
-  this.log('MarkerAddFromAddress. starting BackEnd.geocode...');
+MapWithMarkerListClass.prototype.AddressAddFromString = function (address) {
+  this.log('AddressAddFromString. starting BackEnd.geocode...');
   
   //защита от повторных кликов кнпоки Добавить
   if (this.address_last_added != address) {
@@ -218,7 +218,7 @@ MapWithMarkerListClass.prototype.MarkerAddFromAddress = function (address) {
     this.back_end.XHR_Start(
       this.back_end.AddressGeocode, 
       {address: address}, 
-      this.MarkerAddFromGeocode.bind(this, address)
+      this.BackendGeocodeFulfilled.bind(this, address)
     )
     
     this.address_last_added = address;
@@ -232,10 +232,10 @@ MapWithMarkerListClass.prototype.MarkerAddFromAddress = function (address) {
 добавить маркер из структуры данных возвращённой из BackEnd
 */
 
-MapWithMarkerListClass.prototype.MarkerAddFromGeocode = function (address, json) {
-  this.log('MarkerAddFromGeocode');
+MapWithMarkerListClass.prototype.BackendGeocodeFulfilled = function (address, json) {
+  this.log('BackendGeocodeFulfilled');
   //this.log('address ['+address+'] json.address_md['+json.address_md+']');
-  this.MarkerAddFromLatLng(json.lat, json.lng, address, json.address_md);
+  this.AddressAddFromLatLng(json.lat, json.lng, address, json.address_md);
 }
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
@@ -244,11 +244,15 @@ label - метка идентифицирующая маркер в UI напр�
 title - адрес или часть адреса, будет отображаться в PopUp
 */
 
-MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title, id, label) {
-  //this.log('MarkerAddFromLatLng lat lng['+lat+']['+lng+'] title['+title+']');
+MapWithMarkerListClass.prototype.AddressAddFromLatLng = function (lat, lng, title, addr_id, label) {
+  //this.log('AddressAddFromLatLng lat lng['+lat+']['+lng+'] title['+title+']');
   
-  id = id || 'address-list-item-' + this.C.address_id_to_assign;
+  addr_id = addr_id || 'address-list-item-' + this.C.address_id_to_assign;
   label = label || this.address_label_idx_to_assign;
+  
+  if (this.address_list[addr_id]) {
+    throw 'address id ['+addr_id+'] already exists'
+  }
   
   var addr = {
     lat: lat,
@@ -258,7 +262,7 @@ MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title
     map_marker: null
   };
   
-  this.address_list[id] = addr;
+  this.address_list[addr_id] = addr;
   
   this.C.address_id_to_assign += 1;
   this.address_label_idx_to_assign += 1; 
@@ -266,57 +270,11 @@ MapWithMarkerListClass.prototype.MarkerAddFromLatLng = function (lat, lng, title
   //this.log('id=['+id+']');
   //this.log(addr);
   
-  this.AddressPublishToMap(addr, id, true);
-  this.AddressPublishToPage(addr, id);
+  this.MapAddressPublish(addr_id, true);
+  this.PageAddressPublish(addr_id);
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//добавить адрес в представление на странице
-//marker - внутреннее представление маркера = элемент this.address_list
-
-MapWithMarkerListClass.prototype.AddressPublishToPage = function (address, id) {
-  var li = document.createElement('li');
-  li.id = id;
-  li.classList.add('address');
-  li.setAttribute('js_draggable', '');
-
-  //<span>1. </span>
-  var label = document.createElement('span');
-  label.innerHTML = this.PageLabelFormat(address.label);
-  li.appendChild(label);
-  
-  var txt = document.createTextNode(address.title);
-  li.appendChild(txt);
-
-  //li.innerHTML = address.label + '. ' + address.title + '<img src = "./assets/images/hamburger-gray.svg"/>';
-
-  var spacer = document.createElement('span');
-  spacer.classList.add('spacer-r');
-  spacer.innerHTML = '&nbsp;';
-  li.appendChild(spacer);
-  
-  var img = document.createElement('img');
-  img.src = "./assets/images/hamburger-gray.svg";
-  li.appendChild(img);
-
-  this.address_list_html.appendChild(li);
-  this.address_list_changed();
-};
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-
-MapWithMarkerListClass.prototype.PageLabelFormat = function (label_val) {
-  return label_val + '&nbsp;.&nbsp;';
-};
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//удалить все адреса из представления на странице
-
-MapWithMarkerListClass.prototype.PageAllAddressesRemove = function () {
-  myUtils.Element_Clear(this.address_list_html);
-};
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //перенумеровать адреса в том порядке как они расположены в представлении на странице
 
 MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
@@ -326,7 +284,8 @@ MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
   for (var i = 0; i < children.length; i++) {
     var v = i + 1;
     var item = children[i];
-    this.address_list[item.id].label = v;//update internal list
+    //update internal list
+    this.address_list[item.id].label = v;
     //update the presentation on page
     var label = item.childNodes[0];
     label.innerHTML = this.PageLabelFormat(v);
@@ -336,9 +295,8 @@ MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
   this.AddressesAllPublishTo('map');
 };
 
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//отобразить внутренний список адресов 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//обновить весь внутренний список адресов в указанных представлениях
 
 MapWithMarkerListClass.prototype.AddressesAllPublishTo = function (destination, addr_id_lst) {
   this.log('AddressesAllPublishTo');
@@ -356,7 +314,7 @@ MapWithMarkerListClass.prototype.AddressesAllPublishTo = function (destination, 
     this.PageAllAddressesRemove();
   }
   if (destination_map[destination].map) {
-    this.MapAllMarkersRemove();
+    this.MapAllAddressesRemove();
   }
 
   //populate presentations
@@ -366,13 +324,72 @@ MapWithMarkerListClass.prototype.AddressesAllPublishTo = function (destination, 
     //массив начинается с индекса=0 а Label с 1 так что addr может оказаться пустым
     if (addr) {
       if (destination_map[destination].page) {
-        this.AddressPublishToPage(addr, id);
+        this.PageAddressPublish(id);
       }
       if (destination_map[destination].map) {
-        this.AddressPublishToMap(addr, id);
+        this.MapAddressPublish(id);
       }
     }
   }
+};
+
+//-----------------------------------------------------------------------------
+//Page - Presentation
+//-----------------------------------------------------------------------------
+//добавить адрес в представление на странице
+//marker - внутреннее представление маркера = элемент this.address_list
+
+MapWithMarkerListClass.prototype.PageAddressPublish = function (addr_id) {
+  var address = this.address_list[addr_id];
+  var li = document.createElement('li');
+  address.page_element = li;
+  li.id = addr_id;
+  li.classList.add('address');
+  li.setAttribute('js_draggable', '');
+
+  //<span>1. </span>
+  var label = document.createElement('span');
+  label.innerHTML = this.PageLabelFormat(address.label);
+  li.appendChild(label);
+  
+  var txt = document.createTextNode(address.title);
+  li.appendChild(txt);
+
+  var spacer = document.createElement('span');
+  spacer.classList.add('spacer-r');
+  spacer.innerHTML = '&nbsp;';
+  li.appendChild(spacer);
+  
+  var img = document.createElement('img');
+  img.src = "./assets/images/hamburger-gray.svg";
+  li.appendChild(img);
+
+  this.address_list_html.appendChild(li);
+  this.address_list_changed();
+};
+
+MapWithMarkerListClass.prototype.PageLabelFormat = function (label_val) {
+  return label_val + '&nbsp;.&nbsp;';
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+MapWithMarkerListClass.prototype.PageAddressAnimationStart = function (addr_id) {
+  var address = this.address_list[addr_id];
+  myUtils.Element_animation_restart(address.page_element, 'item-active-anim');
+  //item_html.classList.add('item-active-anim');
+};
+
+MapWithMarkerListClass.prototype.PageAddressAnimationStop = function (addr_id) {
+  var address = this.address_list[addr_id];
+  address.page_element.classList.remove('item-active-anim');
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//удалить все адреса из представления на странице
+
+MapWithMarkerListClass.prototype.PageAllAddressesRemove = function () {
+  myUtils.Element_Clear(this.address_list_html);
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -431,6 +448,15 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e, dragged)
   saved_style.width = dragged.style.width;
   saved_style.height = dragged.style.height;
   
+  //if dragged is an Address, indicate this on the map
+  if (dnd.dragged_node.classList.contains('address')) {
+    this.MapAddressMarkerSetState(dnd.dragged_node.id, 'active');
+    this.MapAddressPanTo(dnd.dragged_node.id);
+    //animation Will restart on each Node remove\append. stop the animaiton to prevent restarts
+    //animation might be in progress if the corresponding marker is clicked shortly before
+    this.PageAddressAnimationStop(dnd.dragged_node.id);
+  }
+  
   //read the curent Dragged style. this is useful to 
   //  copy styles to a placeholder
   //  to set fixed WH so WH will not be affected by a new parent
@@ -452,7 +478,6 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e, dragged)
   
   //replace Dragged with Placeholder and attach Dragged to the whole Document
   var new_parent = document.body;
-  //var new_parent = document.getElementById('dnd-parent');
   parent.replaceChild(placeholder, dragged);
   new_parent.appendChild(dragged);
 
@@ -559,6 +584,11 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
   var dnd = this.DragAndDrop;
 
   //e.preventDefault();//this must be done outside because this can't be done for synthetic evt
+  
+  //if dragged is an Address, indicate this on the map
+  if (dnd.dragged_node.classList.contains('address')) {
+    this.MapAddressMarkerSetState(dnd.dragged_node.id, 'default');
+  }
     
   if (is_cancelled) {
     //move placeholder to the original position where Drag was started
@@ -869,7 +899,7 @@ MapWithMarkerListClass.prototype.TouchEvent_dump = function (e) {
 };
 
 //-----------------------------------------------------------------------------
-//Maps powered by LeafLet
+//Maps powered by LeafLet - Presentation
 //-----------------------------------------------------------------------------
 /*
 подключена ли библиотека карт?
@@ -884,15 +914,18 @@ MapWithMarkerListClass.prototype.MapExists = function () {
 address - внутреннее представление маркера = элемент this.address_list
 */
 
-MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, id, map_pan) {
+MapWithMarkerListClass.prototype.MapAddressPublish = function (addr_id, map_pan, icon_color) {
   if (this.MapExists()) {
+  
+    var address = this.address_list[addr_id];
+    icon_color = icon_color || this.C.Map.marker.icon.color.default;
 
     //добавить на карту маркер для адреса
-    var icons_pool = this.icons_pool['blue'];
+    var icons_pool = this.icons_pool[icon_color];
     var m = L.marker([address.lat, address.lng], {icon: icons_pool[address.label]});//custom icon pool. Works
 
     address.map_marker = m;
-    m.item_id = id;
+    m.item_id = addr_id;
     m.on('click', this.map_marker_onClick.bind(this));
     
     m.bindTooltip(String(address.title), {}).openTooltip();//tooltip = address
@@ -905,7 +938,7 @@ MapWithMarkerListClass.prototype.AddressPublishToMap = function (address, id, ma
 
       //this.map_obj.setView(lat_lng, 20);//very zoomed. streets are clearly visible
       //this.map_obj.setView(lat_lng, 5);//medium zoom. nearby cities are visible
-      this.map_obj.setView(lat_lng, this.marker_add_zoom_default);
+      this.map_obj.setView(lat_lng, this.map_zoom_default);
     }
   }
 };
@@ -918,10 +951,7 @@ MapWithMarkerListClass.prototype.map_marker_onClick = function (e) {
   var m = e.sourceTarget;
   if (m.item_id) {
     //this.log('m.item_id['+m.item_id+']');
-    var item_html = document.getElementById(m.item_id);
-    myUtils.Element_animation_restart(item_html, 'item-active-anim');
-    //item_html.classList.add('item-active-anim');
-    //item_html.style.backgroundColor = 'yellow';
+    this.PageAddressAnimationStart (m.item_id);
   }
   
   //=MouseEvent
@@ -937,10 +967,63 @@ MapWithMarkerListClass.prototype.map_marker_onClick = function (e) {
 
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//удалить маркер с карты для заданного эл-та внутреннего списка
+//адрес -> маркер. установить состояние 'default' 'active' и т.д.
 
-MapWithMarkerListClass.prototype.AddressRemoveFromMap = function (address) {
+MapWithMarkerListClass.prototype.MapAddressMarkerSetState = function (addr_id, state) {
+  this.MapAddressIconColorReplace(addr_id, this.C.Map.marker.icon.color[state]);
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//адрес -> маркер. заменить цвет иконки
+
+MapWithMarkerListClass.prototype.MapAddressIconColorReplace = function (addr_id, icon_color) {
   if (this.MapExists()) {
+    var address = this.address_list[addr_id];
+    address.map_marker.setIcon(this.icons_pool[icon_color][address.label]);
+  }
+
+  //too rough
+  //this.MapAddressRemove(addr_id);
+  //this.MapAddressPublish(addr_id, false, icon_color);
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+MapWithMarkerListClass.prototype.MapAddressPanTo = function (addr_id) {
+  if (this.MapExists()) {
+    var address = this.address_list[addr_id];
+    var lat_lng = new L.LatLng(address.lat, address.lng);
+    
+    //var bounds = this.map_obj.getBounds();
+    //bounds.getNorthWest();
+    
+    //Marker.getLatLng()
+
+    //not works :(
+    //if (this.map_obj.getBounds().contains(lat_lng)) {
+
+    //not works :(
+    //if (this.MapBoundsContains(this.map_obj.getBounds(), lat_lng)) {
+      this.map_obj.setView(lat_lng, this.map_zoom_default);
+    //}
+  }
+};
+
+MapWithMarkerListClass.prototype.MapBoundsContains = function (bounds, point) {
+  var ne = bounds.getNorthEast();
+  var sw = bounds.getSouthWest();
+  this.log('');
+  var lng = ne.lng < point.lng && point.lng < sw.lng;
+  var lat = ne.lat < point.lat && point.lat < sw.lat;
+  return lng && lat;
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//адрес -> маркер. удалить с карты 
+
+MapWithMarkerListClass.prototype.MapAddressRemove = function (addr_id) {
+  if (this.MapExists()) {
+    var address = this.address_list[addr_id];
     address.map_marker.remove();
   }
 };
@@ -948,10 +1031,10 @@ MapWithMarkerListClass.prototype.AddressRemoveFromMap = function (address) {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //удалить все маркеры с карты
 
-MapWithMarkerListClass.prototype.MapAllMarkersRemove = function () {
+MapWithMarkerListClass.prototype.MapAllAddressesRemove = function () {
   var ids = Object.keys(this.address_list);
   for (var i = 0; i < ids.length; i++) {
-    this.AddressRemoveFromMap(this.address_list[ids[i]]);
+    this.MapAddressRemove(ids[i]);
   }
 };
 
@@ -974,7 +1057,7 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     var moscow = new L.LatLng(55.755814,37.617635); 
     
     //без этой строки карта пустая
-    this.map_obj.setView(moscow, this.marker_add_zoom_default);
+    this.map_obj.setView(moscow, this.map_zoom_default);
     //this.map_obj.setView(moscow, 13);
     
     //no use for markers
@@ -1040,6 +1123,14 @@ MapWithMarkerListClass.prototype.IconsPoolCreate = function (color) {
 MapWithMarkerListClass.prototype._static_properties_init = function () {
   this.log('MapWithMarkerListClass._static_properties_init');
   
+  //constants related to Map
+  var map = this.C.Map = {};
+  var marker = map.marker = {};
+  var icon = marker.icon = {};
+  var color = icon.color = {};
+  color.default = 'blue';
+  color.active = 'yellow';
+  
   //constants related to suggestions HTML 
   var dnd = this.C.DragAndDrop = {};
   dnd.target_over_classes = ['drag-target-over-before', 'drag-target-over-after'];
@@ -1054,19 +1145,19 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
 MapWithMarkerListClass.prototype.test_AddSeveralMarkers = function () {
   this.PageAllAddressesRemove();
 
-  this.MarkerAddFromLatLng(51.5006728, -0.1244324, "Big Ben");
-  this.MarkerAddFromLatLng(51.503308, -0.119623, "London Eye");
-  this.MarkerAddFromLatLng(51.5077286, -0.1279688, "Nelson's Column");
-  //this.MarkerAddFromLatLng(51.5077286, -0.1279688, "Nelson's Column<br><a href=\"https://en.wikipedia.org/wiki/Nelson's_Column\">wp</a>");
+  this.AddressAddFromLatLng(51.5006728, -0.1244324, "Big Ben");
+  this.AddressAddFromLatLng(51.503308, -0.119623, "London Eye");
+  this.AddressAddFromLatLng(51.5077286, -0.1279688, "Nelson's Column");
+  //this.AddressAddFromLatLng(51.5077286, -0.1279688, "Nelson's Column<br><a href=\"https://en.wikipedia.org/wiki/Nelson's_Column\">wp</a>");
 };
 
 MapWithMarkerListClass.prototype.test_AddSeveralMarkersB = function () {
   this.PageAllAddressesRemove();
   
-  this.MarkerAddFromAddress('микрорайон Сходня, Химки, Московская область, Россия');
-  this.MarkerAddFromAddress('Долгопрудный, Московская область, Россия');
-  this.MarkerAddFromAddress('район Чертаново Северное, Южный административный округ, Москва, Россия');
-  this.MarkerAddFromAddress('Реутов, Московская область, Россия');
+  this.AddressAddFromString('микрорайон Сходня, Химки, Московская область, Россия');
+  this.AddressAddFromString('Долгопрудный, Московская область, Россия');
+  this.AddressAddFromString('район Чертаново Северное, Южный административный округ, Москва, Россия');
+  this.AddressAddFromString('Реутов, Московская область, Россия');
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

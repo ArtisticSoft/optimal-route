@@ -14,7 +14,7 @@ function RouteAppClass() {
 
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
-    map: {id: 'map', marker_add_zoom_default: 10},
+    map: {id: 'map', zoom_default: 10},
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.log_enabled = true;

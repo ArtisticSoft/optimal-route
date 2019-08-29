@@ -155,19 +155,30 @@ HTML Element. рестарт анимации. удалить CSS класс и 
 */
 
 myUtilsClass.prototype.Element_animation_restart = function (element, class_name, delay) {
-  console.log('element['+element+']');
+  //console.log('Element_animation_restart element['+element+']');
   //console.log(element);
   
   delay = delay || 0;
   if (element && class_name) {
     //Removing a class that does not exist does NOT throw an error.
     element.classList.remove(class_name);
+    
     window.setTimeout(this.classList_add.bind(this, element, class_name), delay);
+
+    var animation_stop_callback = this.classList_remove.bind(this, element, class_name);
+    element.addEventListener('animationend', animation_stop_callback);
+    //this Not helps then element is dragged while animation still in progress
+    element.addEventListener('onanimationcancel', animation_stop_callback);
   }
 };
 
-myUtilsClass.prototype.classList_add = function (element, class_name, delay) {
+myUtilsClass.prototype.classList_add = function (element, class_name) {
   element.classList.add(class_name);
+};
+
+myUtilsClass.prototype.classList_remove = function (element, class_name) {
+  //console.log('classList_remove  element['+element+'] class_name['+class_name+']');
+  element.classList.remove(class_name);
 };
 
 /*
