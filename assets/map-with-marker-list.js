@@ -399,7 +399,7 @@ MapWithMarkerListClass.prototype.PageLabelFormat = function (label_val) {
 
 MapWithMarkerListClass.prototype.PageAddressAnimationStart = function (addr_id) {
   var address = this.address_list[addr_id];
-  myUtils.Element_animation_restart(address.page_element, 'item-active-anim');
+  myUtils.Element_animation_start(address.page_element, 'item-active-anim');
   //item_html.classList.add('item-active-anim');
 };
 

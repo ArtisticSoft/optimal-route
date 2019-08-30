@@ -73,3 +73,8 @@ a:hover {
   padding: var(--regular-padding);
   z-index: 10100;
 }
+
+.close-icon {
+  width: 1rem;
+  height: 1rem;
+}

@@ -16,17 +16,6 @@ breakpoints должны совпадать с используемой верс
   min-height: 5vh;
 }
 
-.nav-responsive > ul {
-  display: flex;
-/*  flex-direction: row;/*временное решение - всегда в одну строку*/
-  flex-direction: column;/*расположить в одну колонку*/
-  align-items: center;
-/*  background-color: LightBlue;*/
-}
-.nav-responsive > ul > li > a {
-  padding: 0 var(--regular-padding);
-}
-
 /*
 >>>>> 
 the Main breakpoint on the page sits between xs & sm
@@ -54,11 +43,14 @@ the Main breakpoint on the page sits between xs & sm
   }
 
   .nav-responsive > ul {
-    flex-direction: row;/*расположить в один ряд*/
+    flex-direction: row;/*расположить в одну строку*/
   }
   /*сепараторы между элементами - имеют смысл только для расположения в одну строку*/
   .nav-responsive > ul > li + li:before {
-      content: "|";
+    content: "|";
+  }
+  .nav-responsive > ul > li > a {
+    padding: 0 var(--regular-padding);/*VH*/
   }
 
   /*

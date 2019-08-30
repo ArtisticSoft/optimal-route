@@ -154,8 +154,8 @@ myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {
 HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
 */
 
-myUtilsClass.prototype.Element_animation_restart = function (element, class_name, delay) {
-  //console.log('Element_animation_restart element['+element+']');
+myUtilsClass.prototype.Element_animation_start = function (element, class_name, delay) {
+  //console.log('Element_animation_start element['+element+']');
   //console.log(element);
   
   delay = delay || 0;
@@ -165,18 +165,22 @@ myUtilsClass.prototype.Element_animation_restart = function (element, class_name
     
     window.setTimeout(this.classList_add.bind(this, element, class_name), delay);
 
-    var animation_stop_callback = this.classList_remove.bind(this, element, class_name);
-    element.addEventListener('animationend', animation_stop_callback);
-    //this Not helps then element is dragged while animation still in progress
-    element.addEventListener('onanimationcancel', animation_stop_callback);
+    if (true) {
+      var animation_stop_callback = this.classList_remove.bind(this, element, class_name);
+      element.addEventListener('animationend', animation_stop_callback);
+      //this Not helps then element is dragged while animation still in progress
+      element.addEventListener('onanimationcancel', animation_stop_callback);
+    }
   }
 };
 
 myUtilsClass.prototype.classList_add = function (element, class_name) {
+  console.log('classList_add');
   element.classList.add(class_name);
 };
 
 myUtilsClass.prototype.classList_remove = function (element, class_name) {
+  console.log('classList_remove');
   //console.log('classList_remove  element['+element+'] class_name['+class_name+']');
   element.classList.remove(class_name);
 };

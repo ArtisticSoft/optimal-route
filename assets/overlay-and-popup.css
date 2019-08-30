@@ -28,8 +28,7 @@
   align-items: center;
 }
 .popup .close-icon {
-  width: 1rem;
-  height: 1rem;
+/*  align-self: flex-end;/*poor*/
   margin-left: auto;
 }
 

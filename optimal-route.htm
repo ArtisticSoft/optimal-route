@@ -36,6 +36,8 @@
     <link rel="stylesheet" href="./assets/main.css" type="text/css">
     <link rel="stylesheet" href="./assets/footer.css" type="text/css">
     
+    <link rel="stylesheet" href="./assets/navigation.css" type="text/css">
+    
     <!-- этот файл должен быть последним среди стилей сайта-->
     <link rel="stylesheet" href="./assets/responsive.css" type="text/css">
     
@@ -78,7 +80,11 @@
     <!-- заголовок (header) -->
     
       <div class="row">
-        <div id="nav-anchor" class="nav-anchor"></div>
+      
+        <div id="nav-anchor" class="nav-anchor">
+          <div id="nav-wrapper-offscreen" class="nav-wrapper-offscreen"></div>
+        </div>
+        
         <header class="col-xs-12">
           <p class="project-name">Optimal route</p>
           
@@ -157,16 +163,24 @@
       <div class="row">
         <footer id="footer" class="col-xs-12">
 
-          <nav id="nav-responsive" class="nav-responsive">
-            <ul>
-                <li id="nav-hide-btn" class="close-icon clickable" hidden>
-                  <img src = "./assets/images/close-gray.svg"/>
-                </li>
-                <li><a href="">О&nbsp;проекте</a></li>
-                <li><a href="">Контакты</a></li>
-                <li><a href="">Помощь</a></li>
-            </ul>
-          </nav>
+          <!-- 
+          nav-wrapper содержит стили для flex item,
+          это позволяет легко 
+          + перенести навигацию в fly-out убрав её из nav-wrapper
+          + перенести навигацию в header убрав сам nav-wrapper
+          -->
+          <div id="nav-wrapper" class="nav-wrapper">
+            <nav id="nav-responsive" class="nav-responsive">
+              <ul>
+                  <li id="nav-hide-btn" class="close-icon clickable" hidden>
+                    <img src = "./assets/images/close-gray.svg"/>
+                  </li>
+                  <li><a href="">О&nbsp;проекте</a></li>
+                  <li><a href="">Контакты</a></li>
+                  <li><a href="">Помощь</a></li>
+              </ul>
+            </nav>
+          </div>
           
         </footer>
       </div>

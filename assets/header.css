@@ -12,39 +12,4 @@ header {
   padding-left: var(--regular-padding);
 }
 
-/*---------------------------------------------------------------------------*/
-/*навигация*/
-/*---------------------------------------------------------------------------*/
-
-.nav-icon {
-  flex-basis: 1.5rem;
-  margin-left: auto;
-}
-.nav-icon img {
-  width: 1.5rem;
-  height: 1.5rem;
-  margin-right: 1rem;/*adjusted visually*/
-}
-
-.nav-anchor {
-  /*предотвратить горизонтальную прокрутку*/
-  overflow: hidden;/*единственное значение предотвращающее прокрутку*/
-  
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 0;
-}
-
-.nav-responsive {
-  margin-left: auto;
-}
-/*когда навигация появляется поверх страницы по клику*/
-.nav-responsive.overlaid {
-  padding-top: 0;
-}
-.nav-responsive .close-icon {
-  align-self: flex-end;
-}
 /*===========================================================================*/

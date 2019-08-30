@@ -1,0 +1,101 @@
+/*===========================================================================*/
+/*навигация*/
+/*---------------------------------------------------------------------------*/
+/*навигация по умолчанию*/
+
+.nav-responsive > ul {
+  display: flex;
+  flex-direction: column;/*расположить в одну колонку*/
+  align-items: center;
+}
+.nav-responsive > ul > li > a {
+/*  padding: 0 var(--regular-padding);/*VH useful for one-row*/
+  padding: 0 0 var(--regular-padding-inner);/*T H B*/
+}
+
+/*flex-item обёртка для Навигации когда она в footer\header*/
+.nav-wrapper {
+  margin-left: auto;
+}
+
+/*кнопка Показать навигацию*/
+.nav-icon {
+  flex-basis: 1.5rem;
+  margin-left: auto;
+}
+.nav-icon img {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 1rem;/*adjusted visually*/
+}
+
+/*---------------------------------------------------------------------------*/
+/*навигация динамическая*/
+
+/*обёртка для Навигации когда она динамическая*/
+.nav-anchor {
+  /*
+  предотвратить горизонтальную прокрутку
+  hidden - единственное значение предотвращающее прокрутку 
+  Но навигацию при этом не видно в браузере хотя видно её размер в отладчике
+  */
+/*  overflow: hidden;*/
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+}
+.nav-wrapper-offscreen {
+  position: absolute;
+  top: 0;
+}
+
+/*когда навигация динамическая = поверх страницы*/
+.nav-responsive.overlaid {
+/*  padding-top: 0;*/
+/*  padding: var(--regular-padding-inner);*/
+}
+
+/*кнопка Скрыть навигацию*/
+.nav-responsive .close-icon {
+/*  align-self: flex-end;*/
+  margin-left: auto;
+  
+  /*way better than img vertical-align: middle*/
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+/*убрать сепаратор после [х]. имеетсмысл только для расположения в строку*/
+.nav-responsive > ul > li.close-icon + li:before {
+  content: "";
+}
+
+
+@keyframes nav-fly-test {
+  from {    background-color: yellow;  }
+  to {    background-color: green;  }
+}
+
+@keyframes nav-fly {
+  from {    right: 0%;  }
+  to {    right: 100%;  }
+}
+
+.nav-fly-in {
+  animation-name: nav-fly;
+  animation-duration: 0.3s;
+/*  animation-duration: 2s;*/
+  animation-timing-function: ease-in;
+}
+.nav-fly-out {
+  animation-name: nav-fly;
+  animation-duration: 0.3s;
+/*  animation-duration: 2s;*/
+  animation-direction: reverse;
+  animation-timing-function: ease-out;
+}
+
+/*===========================================================================*/
