@@ -17,17 +17,22 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  padding-bottom: var(--regular-padding-inner);
+}
+.popup > * {
+  padding-bottom: var(--regular-padding-inner);
 }
 .popup > header {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.popup > header > .close-icon {
+.popup .close-icon {
   width: 1rem;
   height: 1rem;
   margin-left: auto;
 }
+
 
 .link-to-share {
   display: flex;

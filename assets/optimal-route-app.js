@@ -24,6 +24,9 @@ function RouteAppClass() {
     //lose focus. this is the first step to make close by ESC
     this.saved_focus = myUtils.Document_Blur();
     
+    //select link text
+    window.getSelection().selectAllChildren(this.link_to_share);
+    
     this.overlay.hidden = false;
     this.popup_link_share.hidden = false;
   };
