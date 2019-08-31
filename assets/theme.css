@@ -55,6 +55,8 @@ lightgreen rgb(144,238,144)
   
   --regular-border-radius: 0.2rem;
   
+
+
   --button-font-clr: white;
   --button-background-clr: rgb(96,96,96);
   --button-border-clr: transparent;
@@ -64,13 +66,23 @@ lightgreen rgb(144,238,144)
   --button-hover-border-clr: transparent;
   
   --link-font-clr: rgb(96,96,96);
-  --link-background-clr: rgb(255,255,255);
+  --link-background-clr: transparent;
   --link-border-clr: transparent;
 
   --link-hover-font-clr: rgb(144,238,144);
   --link-hover-background-clr: transparent;
   --link-hover-border-clr: rgb(144,238,144);
  
+  --btn-special-font-clr: rgb(36,97,205);
+  --btn-special-background-clr: transparent;
+  --btn-special-border-clr: transparent;
+
+  --btn-special-hover-font-clr: rgb(36,97,205);
+  --btn-special-hover-background-clr: transparent;
+  --btn-special-hover-border-clr: rgb(36,97,205);
+
+
+
   --active-background-clr: yellow;
 
   --share-link-url-background-clr: rgb(250,250,250);

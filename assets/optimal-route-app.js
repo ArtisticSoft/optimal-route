@@ -129,6 +129,7 @@ function RouteAppClass() {
   this.link_copy_btn_onClick = function (e) {
     console.log('link_copy_btn_onClick');
     window.getSelection().selectAllChildren(this.link_to_share);
+		document.execCommand('copy');
   };
   this.link_copy_btn = document.getElementById('link-copy-btn');
   this.link_copy_btn.addEventListener('click', this.link_copy_btn_onClick.bind(this));

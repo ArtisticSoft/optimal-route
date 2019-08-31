@@ -1,3 +1,7 @@
+/*===========================================================================*/
+/* Кнопки */
+/*---------------------------------------------------------------------------*/
+
 .my-btn {
   text-transform: uppercase;
   
@@ -10,6 +14,7 @@
 .my-btn:focus, .my-btn.focus {
 /*  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5);/*голубой контур вокруг последней-кликнутой кнопки. выглядит не очень*/
 }
+
 
 .btn-regular {
   color: var(--button-font-clr);
@@ -26,6 +31,7 @@
   background-color: var(--button-background-clr);
   border-color: var(--button-border-clr);
 }
+
 
 .btn-link-alike {
   padding: 0 var(--regular-padding);
@@ -50,6 +56,26 @@
 /*  vertical-align: baseline;*/
   vertical-align: middle;
 }
+
+.btn-special {
+  color: var(--btn-special-font-clr);
+  background-color: var(--btn-special-background-clr);
+  border-color: var(--btn-special-border-clr);
+}
+.btn-special:hover {
+  color: var(--btn-special-hover-font-clr);
+  background-color: var(--btn-special-hover-background-clr);
+  border-color: var(--btn-special-hover-border-clr);
+}
+.btn-special.disabled, .btn-special:disabled {
+  color: var(--btn-special-font-clr);
+  background-color: var(--btn-special-background-clr);
+  border-color: var(--btn-special-border-clr);
+}
+
+/*---------------------------------------------------------------------------*/
+/* Общие стили  */
+/*---------------------------------------------------------------------------*/
 
 .width-grow {
   flex: auto;
@@ -79,3 +105,4 @@ a:hover {
   width: 1rem;
   height: 1rem;
 }
+/*===========================================================================*/
