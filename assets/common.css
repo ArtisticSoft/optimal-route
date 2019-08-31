@@ -2,7 +2,8 @@
   text-transform: uppercase;
   
   border-style: solid;
-  border-radius: 0.2rem;
+/*  border-radius: 0.2rem;*/
+  border-radius: var(--regular-border-radius);
 
   padding: 0 var(--regular-padding);
 }

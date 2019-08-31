@@ -33,7 +33,7 @@ function RouteAppClass() {
     this.popup_link_share.hidden = false;
   };
   this.link_to_share_btn = document.getElementById('share-link-btn');
-  this.link_to_share_btn.disabled = true;//! important
+  //this.link_to_share_btn.disabled = true;//! important
   this.link_to_share_btn.addEventListener('click', this.link_to_share_btn_onClick.bind(this));
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 

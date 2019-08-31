@@ -50,9 +50,16 @@ SocialNetworksClass.prototype._static_properties_init = function () {
   var link_to_share = '';
   
   this.C.SocialNetworks = {
+    //--from VK docs
+    //http://vk.com/share.php?url={page URL}
+    //<a href="http://vk.com/share.php?url=http://mysite.com" target="_blank">Share in VK</a>
+    //transformed to 
+    //https://oauth.vk.com/authorize?client_id=-1&redirect_uri=https%3A%2F%2Fvk.com%2Fshare.php%3Furl%3Dhttp%3A%2F%2Fmysite.com&display=widget
+    //
+    //--from youtube
     //https://oauth.vk.com/authorize?client_id=-1&redirect_uri=https://vk.com/share.php?url=https://www.youtube.com/watch?v=QLNQamphldQ&feature=share&display=widget
     vkontakte: {title: 'ВКонтакте', icon: 'vkontakte.svg', 
-      share_link_template: 'https://oauth.vk.com/authorize?client_id=-1&redirect_uri=https://vk.com/share.php?url=${link_to_share}'
+      share_link_template: 'http://vk.com/share.php?url=${link_to_share}'
     },
 
     //https://www.facebook.com/login.php?skip_api_login=1&api_key=87741124305&signed_next=1&next=https://www.facebook.com/v2.10/dialog/share?redirect_uri=https://www.youtube.com/facebook_redirect&display=popup&href=https://www.youtube.com/watch?v=QLNQamphldQ&feature=share&client_id=87741124305&ret=login&cancel_url=https://www.youtube.com/facebook_redirect?error_code=4201&error_message=User+canceled+the+Dialog+flow#_=_&display=popup&locale=sv_SE
@@ -60,6 +67,27 @@ SocialNetworksClass.prototype._static_properties_init = function () {
       share_link_template: 'https://www.facebook.com/login.php?skip_api_login=1&api_key=87741124305&signed_next=1&next=https://www.facebook.com/v2.10/dialog/share?redirect_uri=https://www.youtube.com/facebook_redirect&display=popup&href=${link_to_share}'
     },
 
+    //https://connect.ok.ru/offer?url=http://mysite.com
+    //transformed to 
+    //https://connect.ok.ru/dk?st.cmd=OAuth2Login&st.layout=w&st.redirect=/dk?cmd=WidgetSharePreview&st.cmd=WidgetSharePreview&st.shareUrl=http://mysite.com&st._wt=1&st.client_id=-1
+    //
+    //--from OK docs
+    //You can use “share” without setting a button, for this you need to open a link in following form:
+    //    https://connect.ok.ru/offer
+    //       ?url=URL_TO_SHARE
+    //       &title=TITLE
+    //       &imageUrl=IMAGE_URL
+    //
+    //    Only the url parameter is required, the other parameters are optional.
+    //
+    //        The ability to know the number of “shares” to your page without setting a button:
+    //
+    //    https://connect.ok.ru/dk
+    //       ?st.cmd=extLike
+    //       &tp=json
+    //       &ref=URL_TO_SHARE
+    //
+    //--from youtube
     //https://connect.ok.ru/offer?url=https://www.youtube.com/watch?v=QLNQamphldQ&feature=share&title=LUSTGAS PÅ VOLVO 940 (NOS)
     odnoklasniki: {title: 'Одноклассники', icon: 'odnoklasniki.svg', 
       share_link_template: 'https://connect.ok.ru/offer?url=${link_to_share}'
