@@ -33,6 +33,26 @@
 }
 
 
+
+.social-networks {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.social-network {
+  width: 60px;
+  margin-right: 7px;
+}
+.social-network .icon {
+  margin-bottom: 7px;
+}
+.social-network p {
+  overflow: hidden;
+}
+
+
+
 .link-to-share {
   display: flex;
   flex-direction: row;

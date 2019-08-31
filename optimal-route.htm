@@ -9,7 +9,7 @@
     <title>Optimal route</title>
     <!-- <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico"> -->
   
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- Bootstrap CSS full-fledged -->
     <!-- 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="./assets/common/bootstrap-partial/bootstrap-grid.min.css" type="text/css">
     -->
     
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- стили сайта -->
     <link rel="stylesheet" href="./assets/common/bootstrap-override.css" type="text/css">
     <link rel="stylesheet" href="./assets/common/global-common.css" type="text/css">
@@ -41,7 +41,7 @@
     <!-- этот файл должен быть последним среди стилей сайта-->
     <link rel="stylesheet" href="./assets/responsive.css" type="text/css">
     
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- LeafLet map lib - with an integrity 
       FireFox bug: JS loading will fail 
       error: None of the “sha512” hashes in the integrity attribute match the content of the subresource.
@@ -76,7 +76,7 @@
     -->
     <div id="page-wrapper" class="container-fluid page-wrapper">
 
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- заголовок (header) -->
     
       <div class="row">
@@ -94,7 +94,7 @@
         </header>
       </div>
       
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- контент -->
     
       <main class="row content-row">
@@ -142,7 +142,7 @@
           <div class="address-list-buttons-wrapper">
             <!-- is it good to use &nbsp; ? -->
             <button disabled id="route-optimize-btn" class="my-btn btn-regular width-grow">Оптимизировать маршрут</button>
-            <button disabled id="share-link-btn" class="my-btn btn-link-alike">
+            <button id="share-link-btn" class="my-btn btn-link-alike">
               <img src = "./assets/images/arrow-r-curved.png"/>
               Поделиться
             </button>
@@ -157,7 +157,7 @@
         <div class="clearfix hidden-xs"></div>
       </main>
       
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- подвал (footer) -->
     
       <div class="row">
@@ -186,7 +186,7 @@
       </div>
     </div>
     
-    <!-- ====================================================================== -->
+    <!-- +--------------------------------------------------------------------+ -->
     <!-- оверлей и поп-апы -->
     
     <div id="overlay" class="overlay" hidden></div>
@@ -196,28 +196,44 @@
         <strong>Отправить ссылку</strong>
         <img id="popup-link-share-close-icon" class="close-icon clickable" src = "./assets/images/close-gray.svg"/>
       </header>
-      <!-- 
-      <p>ВКонтакте Facebook Одноклассники</p>
-      -->
-      <div class="link-to-share">
-        <!-- 
-        https://placeholder
-        -->
-        <p id="link-to-share"></p>
-        <button id="link-copy-btn" class="btn-regular">Выделить</button>
+
+      <div id="social-networks" class="social-networks">
+        <a name="vkontakte" class="social-network" href="" target="_blank" rel="noreferrer noopener">
+          <img class="icon" src = "./assets/images/vkontakte.svg"/>
+          <p>ВКонтакте</p>
+        </a>
+        <a name="facebook" class="social-network" href="" target="_blank" rel="noreferrer noopener">
+          <img class="icon" src = "./assets/images/facebook.svg"/>
+          <p>Facebook</p>
+        </a>
+        <a name="odnoklasniki" class="social-network" href="" target="_blank" rel="noreferrer noopener">
+          <img class="icon" src = "./assets/images/odnoklasniki.svg"/>
+          <p>Одноклассники</p>
+        </a>
       </div>
+
+      <div class="link-to-share">
+      
+        <!-- https://placeholder  -->
+        <p id="link-to-share">https://placeholder</p>
+        
+        <button id="link-copy-btn" class="my-btn btn-regular">Копировать</button>
+      </div>
+        <!-- 
       <p>нажмите Ctrl-C чтобы скопировать ссылку</p>
+        -->
     </div>
 
   </body>
 
-<!-- ====================================================================== -->
+<!-- +--------------------------------------------------------------------+ -->
 <!-- скрипты локальные -->
 
   <script src="./assets/common/myUtils.js"></script>
   <script src="./assets/common/base-classes.js"></script>
   <script src="./assets/common/XHRClass.js"></script>
   
+  <script src="./assets/social-networks.js"></script>
   <script src="./assets/nav-ondemand.js"></script>
   <script src="./assets/back-end.js"></script>
   <script src="./assets/search-with-suggestons.js"></script>
@@ -226,5 +242,4 @@
   <script src="./assets/optimal-route-app.js"></script>
   
 </html>
-    <!-- 
-    -->
+<!-- ====================================================================== -->

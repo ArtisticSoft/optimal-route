@@ -10,20 +10,15 @@ function NavigationOnDemandClass(options) {
   this.C = NavigationOnDemandClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
   
-  this.debug_all = false;
-  //this.debug_all = true;
-  
   //ключевой объект на странице. кнопка Показать навигацию
   this.nav_show_btn = document.getElementById('nav-show-btn');
   
-  if (!this.debug_all) {
   this.nav_show_btn.removeAttribute('href');
   this.nav_show_btn.addEventListener('click', this.nav_show_btn_onClick.bind(this));
   //ключевой объект на странице. кнопка Скорыть навигацию - обычно расположена в самой навигации
   this.nav_hide_btn = document.getElementById('nav-hide-btn');
   this.nav_hide_btn.removeAttribute('href');
   this.nav_hide_btn.addEventListener('click', this.nav_hide_btn_onClick.bind(this));
-  }
 
   //ключевой объект на странице. сама Навигация
   this.navigation_elt = document.getElementById('nav-responsive');
@@ -59,8 +54,6 @@ NavigationOnDemandClass.prototype.NavPlaceResponsive = function () {
     //flex-item обёртка для Навигации. переместить в header
     this.nav_show_btn.parentNode.replaceChild(this.navigation_wrapper, this.nav_show_btn);
   } else {
-    if (!this.debug_all) {
-
     this.log('screen W: small');
     //----------узкий экран 
     //  навигация. 
@@ -96,8 +89,6 @@ NavigationOnDemandClass.prototype.NavPlaceResponsive = function () {
     this.navigation_elt.style.position = 'absolute';
     
     this.nav_wrapper_offscreen.appendChild(this.navigation_elt);
-    
-    }
   }
 };
 

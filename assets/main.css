@@ -2,19 +2,8 @@
 
 .content-row {
   position: relative;
-  
-  /*имеет смысл только на больших экранах. Лучшая альтернатива body  min-height: 100%;*/
-/*  min-height:100vh !important;*/
 }
 
-/*
-.content-wrapper {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width:100%;
-}
-*/
 /*---------------------------------------------------------------------------*/
 /*ввод адреса с подсказками, кнопка добавления адреса*/
 /*---------------------------------------------------------------------------*/
@@ -61,7 +50,6 @@ label.address > button {
   top: 0;
   left: 0;
   width: 100%;
-  /*max-width: 630px;/*не слишком необходимо*/
   z-index: 10;
   
 /*скрыть список - по умолчанию*/
@@ -89,8 +77,6 @@ label.address > button {
   /*по умолчанию фон прозрачный. эта строчка нужна чтобы сделать фон сплошным*/
 /*  background-color: lightgreen;*/
   background-color: var(--suggestions-background-clr);
-
-/*  background-color: inherit;/*not works :( background-color inherited from body and it is transparent by default*/
 }
 
 /*
@@ -111,13 +97,11 @@ in a more abstract way
 
 .address-suggestions .suggestion:hover {
   cursor: pointer;
-  background-color: white;
   background-color: var(--suggestions-hover-clr);
 }
 
 /*keyboard hover*/
 .address-suggestions .suggestion[data-is-hovered] {
-  background-color: white;
   background-color: var(--suggestions-hover-clr);
 }
 
@@ -131,10 +115,7 @@ in a more abstract way
 }
 
 .address-list {
-  /*для отладки*/
-/*  background-color: lightgray;*/
 }
-
 .address-list .header {
   text-transform: uppercase;
 }
@@ -142,12 +123,10 @@ in a more abstract way
 li.address {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;/*требование заказчика*/
   
   cursor: pointer;
-/*  background-color: var(--page-background-clr);/*useful then dragging without re-assign to thr new parent*/
-  /*для отладки*/
-/*  border-color: violet;*/
+
   padding: 0.3rem 0;
   vertical-align: middle;
 }
@@ -162,9 +141,8 @@ li.address > img {
 }
 
 .address-list .placeholder {
-  /*trello style*/
+  /*tre11o style*/
   background-color: rgba(9, 30, 66, .04);
-/*  background-color: darkgray;*/
 }
 
 .dragged {
@@ -190,8 +168,6 @@ li.address > img {
 .item-active-anim {
   animation-name: active-fadeout;
   animation-duration: 2s;
-/*  animation-iteration-count: 1;
-  animation-direction: alternate;*/
 }
 
 /*---------------------------------------------------------------------------*/
@@ -204,13 +180,9 @@ li.address > img {
   /*на совсем небольших экранах поле ввода и кнопку можно расположить в одну линию 
   т.к область которую они занимают становится шириной с экран*/
   flex-direction: row;
-/*  flex-direction: column;*/
 
   align-items: stretch;
 /*  flex-wrap: wrap;/*похоже на responsive НО иногда накладывается на следующую область справа*/
-
-  /*для отладки*/
-/*  background-color: lightgray;*/
 }
 
 /*---------------------------------------------------------------------------*/

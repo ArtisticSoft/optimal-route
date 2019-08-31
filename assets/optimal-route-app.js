@@ -24,6 +24,8 @@ function RouteAppClass() {
     //lose focus. this is the first step to make close by ESC
     this.saved_focus = myUtils.Document_Blur();
     
+    this.SocialNetworks.LinkToShare_BuildAll(this.link_to_share.innerHTML);
+    
     //select link text
     window.getSelection().selectAllChildren(this.link_to_share);
     
@@ -76,8 +78,17 @@ function RouteAppClass() {
   });
   this.NavigationOnDemand.log_enabled = true;
   this.NavigationOnDemand.NavPlaceResponsive();
+  
+//социальные сети
+  this.SocialNetworks = new SocialNetworksClass({
+    list_id: 'social-networks', 
+    item_tag: 'a',
+    attribute_name: 'name'
+  });
+  this.SocialNetworks.log_enabled = true;
+  //this.SocialNetworks.LinkToShare_BuildAll('!!!test!!!');
 
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //кнопка Добавить адрес
 //передаёт данные между объектами SearchWithSuggestons => MapWithMarkerList
 
