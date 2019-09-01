@@ -62,9 +62,25 @@ SocialNetworksClass.prototype._static_properties_init = function () {
       share_link_template: 'http://vk.com/share.php?url=${link_to_share}'
     },
 
+    //https://www.facebook.com/sharer/sharer.php?u=https://www.your-domain.com/your-page.html
+    //transformed to 
+    //https://www.facebook.com/login.php?skip_api_login=1&api_key=966242223397117&signed_next=1&next=https%3A%2F%2Fwww.facebook.com%2Fsharer%2Fsharer.php%3Fu%3Dhttps%253A%252F%252Ftesttest01.itlogist.ru%252Fapi%252Fv1%252Fall%252Froute_md_list%252F%253Fmd_list%253D88515fa178ef3ed3c8df5ec3d7a61536&cancel_url=https%3A%2F%2Fwww.facebook.com%2Fdialog%2Fclose_window%2F%3Fapp_id%3D966242223397117%26connect%3D0%23_%3D_&display=popup&locale=en_US
+    //
+    //https://www.facebook.com/sharer/sharer.php?
+    //kid_directed_site=0
+    //&
+    //sdk=joey
+    //&
+    //u=https://www.your-domain.com/your-page.html
+    //&
+    //display=popup
+    //&
+    //ref=plugin
+    //&
+    //src=share_button
     //https://www.facebook.com/login.php?skip_api_login=1&api_key=87741124305&signed_next=1&next=https://www.facebook.com/v2.10/dialog/share?redirect_uri=https://www.youtube.com/facebook_redirect&display=popup&href=https://www.youtube.com/watch?v=QLNQamphldQ&feature=share&client_id=87741124305&ret=login&cancel_url=https://www.youtube.com/facebook_redirect?error_code=4201&error_message=User+canceled+the+Dialog+flow#_=_&display=popup&locale=sv_SE
     facebook: {title: 'Facebook', icon: 'facebook.svg', 
-      share_link_template: 'https://www.facebook.com/login.php?skip_api_login=1&api_key=87741124305&signed_next=1&next=https://www.facebook.com/v2.10/dialog/share?redirect_uri=https://www.youtube.com/facebook_redirect&display=popup&href=${link_to_share}'
+      share_link_template: 'https://www.facebook.com/sharer/sharer.php?u=${link_to_share}'
     },
 
     //https://connect.ok.ru/offer?url=http://mysite.com
