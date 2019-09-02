@@ -196,7 +196,9 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
   for (var i = 0; i < keys.length; i++) {
     k = keys[i];
     v = query[k] ? query[k] : method.params[k];
-    url.searchParams.append(k, v);
+    if (v !== null) {
+      url.searchParams.append(k, v);
+    }
   }
   this.log('url.href ['+url.href+']');
   

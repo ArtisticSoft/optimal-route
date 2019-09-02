@@ -75,7 +75,7 @@ function MapWithMarkerListClass(options) {
   this.link_to_share = false;
   this.onLinkToShareChanged = null;//callback
   //список изменился - эл-т добавлен или удалён
-  this.address_list_changed();
+  //this.address_list_changed();//poor idea. this involves backEnd- start DistributionHand
   //this.LinkToShare_Set(false);//bad idea. this is an external callback and it is empty at this time
   
   /*
