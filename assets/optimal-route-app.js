@@ -64,8 +64,6 @@ function RouteAppClass() {
       this.link_to_share_btn.disabled = true;
       //this.link_to_share.innerHTML = window.location.href;//fallback - Abandoned!
     }
-    //вернуть фокус в поле ввода адреса
-    this.SearchWithSuggestons.input_html.focus();
   };
   //задать значение по умолчанию для ссылки которой можно поделиться
   this.link_to_share_onChange(false);
