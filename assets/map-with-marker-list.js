@@ -74,7 +74,7 @@ function MapWithMarkerListClass(options) {
   //ссылка которой можно поделиться. сфомированная при последней оптимизации
   this.link_to_share = false;
   this.onLinkToShareChanged = null;//callback
-  //some browsers remember the Enabled state for buttons so make sure it is Disabled
+  //список изменился - эл-т добавлен или удалён
   this.address_list_changed();
   //this.LinkToShare_Set(false);//bad idea. this is an external callback and it is empty at this time
   
@@ -89,6 +89,13 @@ function MapWithMarkerListClass(options) {
   //может изменяться произвольно после оптимизации маршрута
   //этот механизм работает только для адресов добавленных вручную без использования BackEnd.distribution_address
   this.address_label_idx_to_assign = 1;
+  //самый свежий хэш списка адресов. используется для формирования ссылки которой можно поделиться
+  //обновляется после 
+  //  Оптимизации маршрута
+  //  Перемещения адреса вручную
+  //  Добавления адреса вручную
+  this.md_list_last = '';
+
 }
 
 MapWithMarkerListClass.prototype = new GenericBaseClass();//inherit from
@@ -101,13 +108,81 @@ MapWithMarkerListClass.prototype.SuperClass = GenericBaseClass.prototype;
 MapWithMarkerListClass.address_id_to_assign = 1000;
 
 //-----------------------------------------------------------------------------
+//Добавить Адрес вручную
+//-----------------------------------------------------------------------------
+
+MapWithMarkerListClass.prototype.AddressAddFromString = function (address) {
+  this.log('AddressAddFromString');
+  
+  //защита от повторных кликов кнпоки Добавить
+  if (this.address_last_added != address) {
+    this.log('address ['+address+']');
+    this.back_end.XHR_Start(
+      this.back_end.AddressGeocode, 
+      {address: address}, 
+      this.BackendGeocodeFulfilled.bind(this, address)
+    )
+    
+    this.address_last_added = address;
+  } else {
+    this.log('ignored. input data looks the same as the previous one');
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+/*
+добавить адрес из структуры данных возвращённой из BackEnd
+*/
+
+MapWithMarkerListClass.prototype.BackendGeocodeFulfilled = function (address, json) {
+  this.log('BackendGeocodeFulfilled');
+  //this.log('address ['+address+'] json.address_md['+json.address_md+']');
+  this.log('json');
+  this.log(json);
+  this.AddressAddFromLatLng(json.lat, json.lng, address, json.address_md);
+  
+  this.address_list_changed();
+}
+
+//-----------------------------------------------------------------------------
+//Адрес в списке Перемещён вручную
+//-----------------------------------------------------------------------------
+
+MapWithMarkerListClass.prototype.Addresses_ItemMoved = function () {
+  this.log('Addresses_ItemMoved');
+  
+  //перенумеровать адреса в том порядке как они расположены в представлении на странице
+  this.AddressesAllRenumber();
+  
+  this.address_list_changed();
+};
+
+MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
+  this.log('AddressesAllRenumber');
+  var children = this.address_list_html.childNodes;
+  
+  for (var i = 0; i < children.length; i++) {
+    var v = i + 1;
+    var item = children[i];
+    //update internal list
+    this.address_list[item.id].label = v;
+    //update the presentation on page
+    var label = item.childNodes[0];
+    label.innerHTML = this.PageLabelFormat(v);
+  }
+  
+  //update map markers
+  this.AddressesAllPublishTo('map');
+};
+
+//-----------------------------------------------------------------------------
 //Оптимизировать маршрут
 //-----------------------------------------------------------------------------
 
 MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
-  this.log('route_optimize_btn_onClick. starting BackEnd.DistributionAddress...');
+  this.log('route_optimize_btn_onClick');
   
-  var addresses = this.address_list_concatenate('id');
+  var addresses = this.address_list_join_id('id');
   
   //защита от повторных кликов кнпоки Оптимизировать
   if (this.addresses_last_optimized != addresses) {
@@ -142,12 +217,12 @@ json sample
 MapWithMarkerListClass.prototype.BackendOptimizeRouteFulfilled = function (json) {
   this.log('BackendOptimizeRouteFulfilled');
   this.log(json);
-
+  
   //пере-сортировать список адресов
   this.address_list_reorder_by_id_list(json.address);
   
   //сформировать ссылку которой можно поделиться
-  this.LinkToShare_Set(this.back_end.LinkToShareFromJson(json));
+  this.LinkToShare_BuildFromJson(json);
 };
 
 MapWithMarkerListClass.prototype.address_list_reorder_by_id_list = function (addr_id_lst) {
@@ -181,43 +256,18 @@ MapWithMarkerListClass.prototype.address_list_reorder_by_id_list = function (add
 
 };
 
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//объединить заданное поле для всех адресов из списка в строку
-//поле может = 'id'
+//-----------------------------------------------------------------------------
+//Ссылка-которой-можно-поделиться
+//-----------------------------------------------------------------------------
 
-MapWithMarkerListClass.prototype.address_list_concatenate = function (property) {
-  var concatenated = '';
-  var ids = Object.keys(this.address_list);
-  var id;
-  var v;
-  
-  for (var i = 0; i < ids.length; i++) {
-    id = ids[i];
-    if (concatenated.length) {
-      concatenated += ',';
-    }
-    if (property == 'id') {
-      v = id;
-    } else {
-      v = this.address_list[id][property];
-    }
-    concatenated += v;
-  }
-  return concatenated;
+MapWithMarkerListClass.prototype.LinkToShare_BuildFromJson = function (json) {
+  var md_list = json.md_list;
+
+  this.md_list_last = md_list;
+  this.LinkToShare_Set(this.back_end.LinkToShareFromJson(json));
 };
 
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-//список изменился - эл-т добавлен или удалён. обновить состояние кнопки Оптимизировать
-MapWithMarkerListClass.prototype.address_list_changed = function (e) {
-  var disabled = !this.address_list_html.hasChildNodes();
-  //some browsers remember the Enabled state for buttons so make sure it is Disabled
-  this.route_optimize_btn.disabled = disabled;
-};
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //внешний интерфейс для обновления эл-тов управления например кнопки Поделиться ссылкой
-
 MapWithMarkerListClass.prototype.LinkToShare_Set = function (link) {
   this.link_to_share = link;
   if (this.onLinkToShareChanged) {
@@ -228,43 +278,11 @@ MapWithMarkerListClass.prototype.LinkToShare_Set = function (link) {
 //-----------------------------------------------------------------------------
 //Address list - Model
 //-----------------------------------------------------------------------------
-/*
-добавить маркер по адресу. запуск метода BackEnd.geocode
-*/
-
-MapWithMarkerListClass.prototype.AddressAddFromString = function (address) {
-  this.log('AddressAddFromString. starting BackEnd.geocode...');
-  
-  //защита от повторных кликов кнпоки Добавить
-  if (this.address_last_added != address) {
-    this.log('address ['+address+']');
-    this.back_end.XHR_Start(
-      this.back_end.AddressGeocode, 
-      {address: address}, 
-      this.BackendGeocodeFulfilled.bind(this, address)
-    )
-    
-    this.address_last_added = address;
-  } else {
-    this.log('ignored. input data looks the same as previous one');
-  }
-};
-
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 /*
-добавить маркер из структуры данных возвращённой из BackEnd
-*/
-
-MapWithMarkerListClass.prototype.BackendGeocodeFulfilled = function (address, json) {
-  this.log('BackendGeocodeFulfilled');
-  //this.log('address ['+address+'] json.address_md['+json.address_md+']');
-  this.AddressAddFromLatLng(json.lat, json.lng, address, json.address_md);
-}
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-/*
+Добавить Адрес по координатам (+ Строка + Метка)
 label - метка идентифицирующая маркер в UI например 1 2 3 или A B C
-title - адрес или часть адреса, будет отображаться в PopUp
+title - адрес или часть адреса, будет отображаться в ToolTip или PopUp
 */
 
 MapWithMarkerListClass.prototype.AddressAddFromLatLng = function (lat, lng, title, addr_id, label) {
@@ -295,27 +313,6 @@ MapWithMarkerListClass.prototype.AddressAddFromLatLng = function (lat, lng, titl
   
   this.MapAddressPublish(addr_id, true);
   this.PageAddressPublish(addr_id);
-};
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//перенумеровать адреса в том порядке как они расположены в представлении на странице
-
-MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
-  this.log('AddressesAllRenumber');
-  var children = this.address_list_html.childNodes;
-  
-  for (var i = 0; i < children.length; i++) {
-    var v = i + 1;
-    var item = children[i];
-    //update internal list
-    this.address_list[item.id].label = v;
-    //update the presentation on page
-    var label = item.childNodes[0];
-    label.innerHTML = this.PageLabelFormat(v);
-  }
-  
-  //update map markers
-  this.AddressesAllPublishTo('map');
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -356,6 +353,110 @@ MapWithMarkerListClass.prototype.AddressesAllPublishTo = function (destination, 
   }
 };
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//список изменился - эл-т добавлен \ перемещён \ удалён
+
+MapWithMarkerListClass.prototype.address_list_changed = function (e) {
+  //обновить состояние кнопки Оптимизировать
+  var disabled = !this.address_list_html.hasChildNodes();
+  //some browsers remember the Enabled state for buttons so make sure it is Disabled
+  this.route_optimize_btn.disabled = disabled;
+  
+  //обновить хэш списка адресов
+  //вызвать метод Back-end Изменение порядка маршрута
+  this.DistributionHandStart();
+
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//обновить хэш списка адресов = md_list 
+
+MapWithMarkerListClass.prototype.DistributionHandStart = function () {
+  this.log('DistributionHandStart');
+  
+  var query = {};
+  query.address = this.address_list_join_id('id');
+  if (this.md_list_last && this.md_list_last.length) {
+    query.md_list = this.md_list_last;
+  }
+  
+  this.back_end.XHR_Start(
+    this.back_end.DistributionHand, 
+    query, 
+    this.DistributionHandFulfilled.bind(this)
+  )
+};
+
+/*
+json sample
+  {
+    "result":1,
+    "address":{
+    "1":"87365a03d2013fd966f90011021fd297",
+    "2":"d4abbd70fa959bcbdf39b1185728ec3f",
+    "3":"33ca68b2f84e30afcf6768ed9090e6b6"
+  },
+  "md_list":"e7b145c8d01f4ee3f1c65357b60c727d"
+*/
+MapWithMarkerListClass.prototype.DistributionHandFulfilled = function (json) {
+  this.log('DistributionHandFulfilled');
+  this.log(json);
+  
+  //сформировать ссылку которой можно поделиться
+  this.LinkToShare_BuildFromJson(json);
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//объединить ID всех адресов из списка в строку
+//в том порядке как адреса расположены на странице
+
+MapWithMarkerListClass.prototype.address_list_join_id = function (property) {
+  var joined = '';
+  var children = this.address_list_html.childNodes;
+  var v;
+  
+  for (var i = 0; i < children.length; i++) {
+    var id = children[i].id;
+    if (joined.length) {
+      joined += ',';
+    }
+    if (property == 'id') {
+      v = id;
+    } else {
+      v = this.address_list[id][property];
+    }
+    joined += v;
+  }
+  
+  return joined;
+};
+
+
+//Abandoned. order is not as in page
+//объединить заданное поле для всех адресов из списка в строку
+//поле может = 'id'
+/*
+MapWithMarkerListClass.prototype.address_list_concatenate = function (property) {
+  var concatenated = '';
+  var ids = Object.keys(this.address_list);
+  var id;
+  var v;
+  
+  for (var i = 0; i < ids.length; i++) {
+    id = ids[i];
+    if (concatenated.length) {
+      concatenated += ',';
+    }
+    if (property == 'id') {
+      v = id;
+    } else {
+      v = this.address_list[id][property];
+    }
+    concatenated += v;
+  }
+  return concatenated;
+};
+*/
 //-----------------------------------------------------------------------------
 //Page - Presentation
 //-----------------------------------------------------------------------------
@@ -388,7 +489,6 @@ MapWithMarkerListClass.prototype.PageAddressPublish = function (addr_id) {
   li.appendChild(img);
 
   this.address_list_html.appendChild(li);
-  this.address_list_changed();
 };
 
 MapWithMarkerListClass.prototype.PageLabelFormat = function (label_val) {
@@ -625,7 +725,7 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
   //restore saved styles
   myUtils.Object_AppendFrom(dragged.style, dnd.saved.style);
   
-  this.AddressesAllRenumber();
+  this.Addresses_ItemMoved();
 
   dragged.classList.remove('dragged');
   dnd.dragged_node = null;
@@ -1093,10 +1193,10 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
 
     var london = new L.LatLng(51.5056,-0.1213); 
     var moscow = new L.LatLng(55.755814,37.617635); 
+    var peterburg = new L.LatLng(59.939095,30.315868); 
     
     //без этой строки карта пустая
-    this.map_obj.setView(moscow, this.map_zoom_default);
-    //this.map_obj.setView(moscow, 13);
+    this.map_obj.setView(peterburg, this.map_zoom_default);
     
     //no use for markers
     //this.map_obj.on('click', this.map_onClick.bind(this));
@@ -1198,5 +1298,14 @@ MapWithMarkerListClass.prototype.test_AddSeveralMarkersB = function () {
   this.AddressAddFromString('Реутов, Московская область, Россия');
 };
 
+MapWithMarkerListClass.prototype.test_AddSeveralMarkersC = function () {
+  this.PageAllAddressesRemove();
+  
+  this.AddressAddFromString('Петергоф, Санкт-Петербург, Россия');
+  this.AddressAddFromString('Сестрорецк, Санкт-Петербург, Россия');
+  this.AddressAddFromString('посёлок городского типа Токсово, Всеволожский район, Ленинградская область, Россия');
+  this.AddressAddFromString('Отрадное, Кировский район, Ленинградская область, Россия');
+  this.AddressAddFromString('посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия');
+};
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //=============================================================================

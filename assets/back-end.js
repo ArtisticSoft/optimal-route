@@ -92,7 +92,23 @@ the same for
   }
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+Изменение порядка маршрута - distribution_hand
 
+  URL http://testtest01.itlogist.ru/api/v1/all/distribution_hand/ 
+  Пример
+  POST - запрос
+  Вход: address содержит список md_address через запятую по порядку, и переменная md_list (если есть)
+  Выход:
+  Позитивный:
+  {
+    "result":1,
+    "address":{
+    "1":"87365a03d2013fd966f90011021fd297",
+    "2":"d4abbd70fa959bcbdf39b1185728ec3f",
+    "3":"33ca68b2f84e30afcf6768ed9090e6b6"
+  },
+  "md_list":"e7b145c8d01f4ee3f1c65357b60c727d"
+  
 */
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -129,11 +145,22 @@ function BackEndClass() {
     params: {address: null}
   };
   
+  //Изменение порядка маршрута
+  //POST - запрос 
+  this.DistributionHand = {
+    name: 'distribution_hand',
+    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_hand/',
+    method: 'POST',
+    //address содержит список md_address через запятую по порядку, и переменная md_list (если есть)
+    params: {address: null, md_list: null}
+  };
+  
   //пул запросов. дерево. для каждого метода своя ветка с массивом запросов
   this.xhr_pool = {
     addr_suggestions: {list:[], wait_for_idx: null},
     addr_geocode: {list:[]},
-    distribution_address: {list:[]}
+    distribution_address: {list:[]},
+    distribution_hand: {list:[]}
   };
 }
 
@@ -144,8 +171,9 @@ BackEndClass.prototype.SuperClass = GenericBaseClass.prototype;
 
 BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
   this.log('XHR_Start. method.name ['+method.name+']');
-  //this.log('query');
-  //this.log(query);
+  
+  this.log('query');
+  this.log(query);
   
   var pool = this.xhr_pool[method.name];
   
@@ -249,13 +277,19 @@ BackEndClass.prototype.XHR_Finish = function (xhr_obj, is_success) {
 
 BackEndClass.prototype.LinkToShareFromJson = function (json) {
   this.log('LinkToShareFromJson');
+
   var consts = this.C.link_to_share;
+  var page_id = json[consts.json_field];
+  var link;
+
+  if (page_id && page_id.length) {
+    var url = new URL(this.C.protocol + consts.url);
+    url.searchParams.append(consts.query_param, page_id);
+    this.log('url.href ['+url.href+']');
+    link = url.href;
+  }
   
-  var url = new URL(this.C.protocol + consts.url);
-  url.searchParams.append(consts.query_param, json[consts.json_field]);
-  this.log('url.href ['+url.href+']');
-  
-  return url.href;
+  return link;
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

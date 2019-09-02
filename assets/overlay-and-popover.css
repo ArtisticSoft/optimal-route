@@ -11,8 +11,8 @@
 }
 
 /*can have an arbitrary WH*/
-.popup {
-  /*core Popup functionality*/
+.popover {
+  /*core popover functionality*/
   position: fixed;
   top: 50%;
   left: 50%;
@@ -20,15 +20,15 @@
   padding-bottom: 0;/*for full-height inner spacing*/
 /*  padding-bottom: var(--regular-padding-inner);/*only for half-height inner spacing*/
 }
-.popup > * {
+.popover > * {
   margin-bottom: var(--regular-padding);
 }
-.popup > header {
+.popover > header {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.popup .close-icon {
+.popover .close-icon {
 /*  align-self: flex-end;/*poor*/
   margin-left: auto;
 }
@@ -72,7 +72,7 @@
   /*не разбивать на строки и скрыть строку если выступает за пределы*/
   white-space: nowrap;
   overflow: hidden;
-  max-width: 10rem;
+  max-width: 8rem;/*to fit into smartphone screen W*/
 }
 .link-to-share > button {
   margin-left: auto;
