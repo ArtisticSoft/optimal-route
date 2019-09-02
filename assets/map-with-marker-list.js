@@ -70,14 +70,10 @@ function MapWithMarkerListClass(options) {
   
   //---ключевой объект на странице. кнопка Оптимизировать маршрут
   this.route_optimize_btn = document.getElementById(options.route_optimize_btn_id);
+  this.route_optimize_btn.disabled = true;
   this.route_optimize_btn.addEventListener('click', this.route_optimize_btn_onClick.bind(this));
-  //ссылка которой можно поделиться. сфомированная при последней оптимизации
-  this.link_to_share = false;
   this.onLinkToShareChanged = null;//callback
-  //список изменился - эл-т добавлен или удалён
-  //this.address_list_changed();//poor idea. this involves backEnd- start DistributionHand
-  //this.LinkToShare_Set(false);//bad idea. this is an external callback and it is empty at this time
-  
+
   /*
   ключевой массив 
   внутреннее представление адресов из списка
@@ -267,7 +263,6 @@ MapWithMarkerListClass.prototype.LinkToShare_BuildFromJson = function (json) {
 
 //внешний интерфейс для обновления эл-тов управления например кнопки Поделиться ссылкой
 MapWithMarkerListClass.prototype.LinkToShare_Set = function (link) {
-  this.link_to_share = link;
   if (this.onLinkToShareChanged) {
     this.onLinkToShareChanged(link);
   }
@@ -738,8 +733,11 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
   dragged.classList.remove('dragged');
   dnd.dragged_node = null;
   
-  //restore focus
-  dnd.saved.focus.focus();
+  //требование заказчика
+  //отключить (как минимум для смартфонов)
+  //на десктопе (FireFox) фокус сам восстанавливается
+  //восстановить фокус
+  //dnd.saved.focus.focus();
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -

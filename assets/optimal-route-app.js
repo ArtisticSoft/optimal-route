@@ -111,6 +111,10 @@ function RouteAppClass() {
       //вернуть фокус в поле ввода адреса
       this.SearchWithSuggestons.input_html.focus();
       
+      //требование заказчика
+      //очистить поле ввода
+      this.SearchWithSuggestons.input_html.value = '';
+      
       //ссылка которой можно поделиться становится не-валидной
       this.link_to_share_onChange(false);
     }
