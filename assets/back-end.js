@@ -108,7 +108,7 @@ the same for
     "3":"33ca68b2f84e30afcf6768ed9090e6b6"
   },
   "md_list":"e7b145c8d01f4ee3f1c65357b60c727d"
-  
+
 */
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -280,9 +280,11 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
 
   var consts = this.C.link_to_share;
   var page_id = json[consts.json_field];
+  this.log('page_id['+page_id +']');
   var link;
 
-  if (page_id && page_id.length) {
+  //sample page_id = "e7b145c8d01f4ee3f1c65357b60c727d"
+  if (page_id && page_id.length > 10) {
     var url = new URL(this.C.protocol + consts.url);
     url.searchParams.append(consts.query_param, page_id);
     this.log('url.href ['+url.href+']');
