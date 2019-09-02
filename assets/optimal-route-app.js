@@ -11,6 +11,8 @@ function RouteAppClass() {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //глобальные переменные
 
+  this.document_params = (new URL(document.location)).searchParams;
+
   this.overlay = document.getElementById('overlay');
   this.popover_link_share = document.getElementById('popover-link-share');
   this.link_to_share = document.getElementById('link-to-share');
@@ -62,7 +64,9 @@ function RouteAppClass() {
       this.link_to_share_btn.disabled = false;
     } else {
       this.link_to_share_btn.disabled = true;
-      //this.link_to_share.innerHTML = window.location.href;//fallback - Abandoned!
+      //требование заказчика
+      //не использовать
+      //this.link_to_share.innerHTML = window.location.href;//fallback
     }
   };
   //задать значение по умолчанию для ссылки которой можно поделиться
@@ -75,9 +79,14 @@ function RouteAppClass() {
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
   this.MapWithMarkerList.log_enabled = true;
-  this.MapWithMarkerList.test_AddSeveralMarkersC();//Peterburg
-  //this.MapWithMarkerList.test_AddSeveralMarkersB();//Moscow
-  //this.MapWithMarkerList.test_AddSeveralMarkers();//London
+
+  //test cases
+  if (this.document_params.has('testtest_add_files')) {
+    this.MapWithMarkerList.test_AddSeveralMarkersC();//Peterburg
+    //this.MapWithMarkerList.test_AddSeveralMarkersB();//Moscow
+    //this.MapWithMarkerList.test_AddSeveralMarkers();//London
+  }
+  
 
   //---навигация адаптивная
   this.NavigationOnDemand = new NavigationOnDemandClass({

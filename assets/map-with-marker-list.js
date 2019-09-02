@@ -1314,5 +1314,46 @@ MapWithMarkerListClass.prototype.test_AddSeveralMarkersC = function () {
   this.AddressAddFromString('Отрадное, Кировский район, Ленинградская область, Россия');
   this.AddressAddFromString('посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия');
 };
+
+/*
+Стрельна
+<li id="7bb5fe9d0337643260cff7ba0098d2bf" class="address" js_draggable="">
+<span>7&nbsp;.&nbsp;</span>посёлок Стрельна, Петродворцовый район, Санкт-Петербург, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+
+Всеволожский
+<li id="b43bd9e0ba6cb664d4370b71f4c174ee" class="address" js_draggable="">
+<span>8&nbsp;.&nbsp;</span>коттеджный посёлок Всеволожский, Щегловское сельское поселение, Всеволожский район, Ленинградская область, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+
+
+<li id="940050d87b35f5d5b4c9dfccc23ee42a" class="address" js_draggable="">
+<span>1&nbsp;.&nbsp;</span>Сестрорецк, Санкт-Петербург, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+<li id="c94436551cab9d529e0d2b37c65f7ca5" class="address" js_draggable="">
+<span>2&nbsp;.&nbsp;</span>посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+<li id="73b597d460eac6b77e8581373b9bbf8a" class="address" js_draggable="">
+<span>3&nbsp;.&nbsp;</span>Отрадное, Кировский район, Ленинградская область, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+<li id="7779ef26500d8464266252036f107b3b" class="address" js_draggable="">
+<span>4&nbsp;.&nbsp;</span>Петергоф, Санкт-Петербург, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+<li id="c7e30dfce50e3549d96de1c864ddae19" class="address" js_draggable="" style="">
+<span>5&nbsp;.&nbsp;</span>посёлок Парголово, Санкт-Петербург, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+<li id="3d8b31c09d3c899cce1098a53d434552" class="address" js_draggable="">
+<span>6&nbsp;.&nbsp;</span>посёлок городского типа Токсово, Всеволожский район, Ленинградская область, Россия<span class="spacer-r">&nbsp;</span>
+<img src="./assets/images/hamburger-gray.svg">
+</li>
+
+*/
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //=============================================================================
