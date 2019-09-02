@@ -94,7 +94,7 @@ function MapWithMarkerListClass(options) {
   //  Оптимизации маршрута
   //  Перемещения адреса вручную
   //  Добавления адреса вручную
-  this.md_list_last = '';
+  this.address_list_uid_last = '';
 
 }
 
@@ -136,7 +136,7 @@ MapWithMarkerListClass.prototype.AddressAddFromString = function (address) {
 
 MapWithMarkerListClass.prototype.BackendGeocodeFulfilled = function (address, json) {
   this.log('BackendGeocodeFulfilled');
-  //this.log('address ['+address+'] json.address_md['+json.address_md+']');
+
   this.log('json');
   this.log(json);
   this.AddressAddFromLatLng(json.lat, json.lng, address, json.address_md);
@@ -261,9 +261,7 @@ MapWithMarkerListClass.prototype.address_list_reorder_by_id_list = function (add
 //-----------------------------------------------------------------------------
 
 MapWithMarkerListClass.prototype.LinkToShare_BuildFromJson = function (json) {
-  var md_list = json.md_list;
-
-  this.md_list_last = md_list;
+  this.address_list_uid_last = json.md_list;
   this.LinkToShare_Set(this.back_end.LinkToShareFromJson(json));
 };
 
@@ -362,22 +360,32 @@ MapWithMarkerListClass.prototype.address_list_changed = function (e) {
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
   this.route_optimize_btn.disabled = disabled;
   
-  //обновить хэш списка адресов
-  //вызвать метод Back-end Изменение порядка маршрута
-  this.DistributionHandStart();
+  //информировать приложение что ссылка недействительна
+  this.LinkToShare_Set(null);
+  //обновить Unique ID списка адресов. процесс включает в себя promise resolve
+  //по завершении будет сформирована новая ссылка
+  this.AddressList_UniqueID_Refresh_Require();
 
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//обновить хэш списка адресов = md_list 
+//обновить Unique ID списка адресов = md_list 
+
+MapWithMarkerListClass.prototype.AddressList_UniqueID_Refresh_Require = function () {
+  window.clearTimeout(this.unique_id_timeout);//Passing an invalid ID to clearTimeout() silently does nothing; no exception is thrown.
+  this.unique_id_timeout = window.setTimeout(
+    this.DistributionHandStart.bind(this),
+    this.C.unique_id_timeout_delay
+  );
+};
 
 MapWithMarkerListClass.prototype.DistributionHandStart = function () {
   this.log('DistributionHandStart');
   
   var query = {};
   query.address = this.address_list_join_id('id');
-  if (this.md_list_last && this.md_list_last.length) {
-    query.md_list = this.md_list_last;
+  if (this.address_list_uid_last && this.address_list_uid_last.length) {
+    query.md_list = this.address_list_uid_last;
   }
   
   this.back_end.XHR_Start(
@@ -398,7 +406,7 @@ json sample
   },
   "md_list":"e7b145c8d01f4ee3f1c65357b60c727d"
 */
-MapWithMarkerListClass.prototype.DistributionHandFulfilled = function (json) {
+MapWithMarkerListClass.prototype.DistributionHandFulfilled = function (json) {//json должен быть последним
   this.log('DistributionHandFulfilled');
   this.log(json);
   
@@ -1273,6 +1281,7 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
   var dnd = this.C.DragAndDrop = {};
   dnd.target_over_classes = ['drag-target-over-before', 'drag-target-over-after'];
   
+  this.C.unique_id_timeout_delay = 200;
 };
 
 //-----------------------------------------------------------------------------

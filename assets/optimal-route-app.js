@@ -54,19 +54,15 @@ function RouteAppClass() {
   
   //---список адресов
   
+  //callback для списка адресов
   //ссылка которой можно поделиться изменилась
   this.link_to_share_onChange = function (link) {
     if (link && link.length) {
       this.link_to_share.innerHTML = link;
       this.link_to_share_btn.disabled = false;
     } else {
-      //изначально ссылка которой можно поделиться формировалась 
-      //на основе Оптимизированного списка адресов. у такого списка есть ID
-      //если список не был оптимизирован
-      //то ссылка которой можно поделиться = текущий URL страницы
-      this.link_to_share.innerHTML = window.location.href;
-      
-      //this.link_to_share_btn.disabled = true;//too rough
+      this.link_to_share_btn.disabled = true;
+      //this.link_to_share.innerHTML = window.location.href;//fallback - Abandoned!
     }
     //вернуть фокус в поле ввода адреса
     this.SearchWithSuggestons.input_html.focus();

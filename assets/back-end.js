@@ -9,11 +9,24 @@ minor mis-inforamation: md_address is actually address_md
 //else XHR requests will be blocked by the Browser (FireFox at least)
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+UPD sept02
+Попробуй заменить 
+
+http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/
+testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/
+
+На такую строку 
+
+http://testtest01.itlogist.ru/api/v1/all/
+testtest01.itlogist.ru/api/v1/all/
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 Подбор адреса - отображаем в списке адресов - address2
 Note: может возвращать пустой список = [] - массив а не объект {...} как в случае не-пустого списка
 
     URL http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/
-    Пример http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/?address=%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%B0%D1%8F%2012
+    Пример 
+    http://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/?address=%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%B0%D1%8F%2012
     GET запрос
     Вход: переменная address
     Выход:
@@ -120,9 +133,9 @@ function BackEndClass() {
   //Подбор адреса
   this.AddressSuggestions = {
     name: 'addr_suggestions',
-    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/search_address/',
+    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/search_address/',
     method: 'GET',
-    params: {address: null},
+    params: {address: undefined},
     accept_only_latest: true,
     json_main_key: 'address_list'
   };
@@ -130,9 +143,9 @@ function BackEndClass() {
   //Геокодинг адреса
   this.AddressGeocode = {
     name: 'addr_geocode',
-    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/90164b0a8effb826cff235a3761b91eb/geocode/',
+    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/geocode/',
     method: 'GET',
-    params: {address: null, save: null}
+    params: {address: undefined, save: ''}
   };
   
   //Поиск оптимального маршрута
@@ -142,7 +155,7 @@ function BackEndClass() {
     url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_address/',
     method: 'POST',
     //переменная address содержит список md_address через запятую 
-    params: {address: null}
+    params: {address: undefined}
   };
   
   //Изменение порядка маршрута
@@ -152,7 +165,7 @@ function BackEndClass() {
     url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_hand/',
     method: 'POST',
     //address содержит список md_address через запятую по порядку, и переменная md_list (если есть)
-    params: {address: null, md_list: null}
+    params: {address: undefined, md_list: undefined}
   };
   
   //пул запросов. дерево. для каждого метода своя ветка с массивом запросов
@@ -196,7 +209,7 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
   for (var i = 0; i < keys.length; i++) {
     k = keys[i];
     v = query[k] ? query[k] : method.params[k];
-    if (v !== null) {
+    if (v !== undefined) {
       url.searchParams.append(k, v);
     }
   }
