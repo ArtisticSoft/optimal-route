@@ -472,7 +472,7 @@ MapWithMarkerListClass.prototype.PageAddressPublish = function (addr_id) {
   address.page_element = li;
   li.id = addr_id;
   li.classList.add('address');
-  li.setAttribute('js_draggable', '');
+  li.setAttribute('js-draggable', '');
 
   //<span>1. </span>
   var label = document.createElement('span');
@@ -489,6 +489,7 @@ MapWithMarkerListClass.prototype.PageAddressPublish = function (addr_id) {
   
   var img = document.createElement('img');
   img.src = "./assets/images/hamburger-gray.svg";
+  img.alt = "=";
   li.appendChild(img);
 
   this.address_list_html.appendChild(li);
@@ -746,10 +747,10 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
 //this might be used by another technologies for example Touch
 MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
   var draggable = null;
-  if (target.hasAttribute('js_draggable')) {
+  if (target.hasAttribute('js-draggable')) {
     draggable = target;
   }
-  if (target.parentNode.hasAttribute('js_draggable')) {
+  if (target.parentNode.hasAttribute('js-draggable')) {
     draggable = target.parentNode;
   }
   return draggable;
@@ -759,10 +760,10 @@ MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
 TODO: utils - make a fun parentNode_climb_hasAttribute
 MapWithMarkerListClass.prototype.crafted_DnD_DroppableTest = function (target) {
   var droppable = null;
-  if (target.hasAttribute('js_droppable')) {
+  if (target.hasAttribute('js-droppable')) {
     droppable = target;
   }
-  if (target.parentNode.hasAttribute('js_droppable')) {
+  if (target.parentNode.hasAttribute('js-droppable')) {
     droppable = target.parentNode;
   }
   return droppable;
