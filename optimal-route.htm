@@ -113,7 +113,7 @@
           <!-- необходимо для позиционирования address-suggestions-dropdown -->
           <div class="address-wrapper">
           
-            <label class="address">
+            <div class="address">
               <!-- желательно size="..." больше чем ширина button 
                  size="25" хорошо подходит для десктопа
                  Но для смартфона > 720 требование располагать всё в одну строку
@@ -123,7 +123,7 @@
               -->
               <input type="text" id="address-input" size="10" class="width-grow">
               <button disabled id="address-add-btn" type="button" class="my-btn btn-regular">Добавить адрес</button>
-            </label>
+            </div>
             
             <div class="anchor-for-absolute-child">
               <div id="address-suggestions" class="address-suggestions">
@@ -235,7 +235,7 @@
 
 
   <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
-  <!-- скрипты локальные -->
+  <!-- скрипты локальные. валидатор: рекомендуется включать их внутри <body>  -->
 
     <script src="./assets/common/myUtils.js"></script>
     <script src="./assets/common/base-classes.js"></script>

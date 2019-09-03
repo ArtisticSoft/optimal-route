@@ -76,8 +76,18 @@ SearchWithSuggestonsClass.prototype.SuperClass = GenericBaseClass.prototype;
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //---interface for integration with external components
 
-SearchWithSuggestonsClass.prototype.getValue = function (state) {
+SearchWithSuggestonsClass.prototype.getValue = function () {
   return this.input_html.value;
+};
+
+SearchWithSuggestonsClass.prototype.setValue = function (str) {
+  this.input_html.value = str;
+  this._setState('by_script');
+};
+
+//вернуть фокус в поле ввода адреса
+SearchWithSuggestonsClass.prototype.focus = function () {
+  this.input_html.focus();
 };
 
 SearchWithSuggestonsClass.prototype._setState = function (state) {

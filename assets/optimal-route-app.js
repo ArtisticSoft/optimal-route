@@ -122,11 +122,11 @@ function RouteAppClass() {
       this.MapWithMarkerList.AddressAddFromString(this.SearchWithSuggestons.getValue());
       
       //вернуть фокус в поле ввода адреса
-      this.SearchWithSuggestons.input_html.focus();
+      this.SearchWithSuggestons.focus();
       
       //требование заказчика
       //очистить поле ввода
-      this.SearchWithSuggestons.input_html.value = '';
+      this.SearchWithSuggestons.setValue('');
       
       //ссылка которой можно поделиться становится не-валидной
       this.link_to_share_onChange(false);

@@ -7,7 +7,7 @@
 /*---------------------------------------------------------------------------*/
 /*ввод адреса с подсказками, кнопка добавления адреса*/
 /*---------------------------------------------------------------------------*/
-label.address {
+.address {
   display: flex;
 
   /*на совсем небольших экранах поле ввода и кнопку можно расположить в одну линию 
@@ -23,17 +23,17 @@ label.address {
   /*для отладки*/
 /*  background-color: lightgray;*/
 }
-label.address > input {
+.address > input {
   border: var(--input-border);
 /*  border-style: solid;*/
   border-radius: 0;
   
   background-color: var(--page-background-clr);
 }
-label.address > input.value-from-suggestion {
+.address > input.value-from-suggestion {
   background-color: var(--input-fromlist-background-clr);
 }
-label.address > button {
+.address > button {
   flex: initial;
 }
 
