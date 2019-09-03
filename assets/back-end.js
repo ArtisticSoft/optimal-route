@@ -135,6 +135,10 @@ function BackEndClass() {
     name: 'addr_suggestions',
     url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/search_address/',
     method: 'GET',
+    //список параметров метода. имена параметров берутся отсюда, значения из переданного {...}
+    //здесь можно задать значение по умолчанию - для обязательных параметров
+    //если Имя не найдено в {...} то значение будет взято отсюда, если оно !== undefined
+    //если значение === undefined то параметр необязательный, он будет пропущен если отсутствует в {...}
     params: {address: undefined},
     accept_only_latest: true,
     json_main_key: 'address_list'

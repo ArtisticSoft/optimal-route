@@ -9,7 +9,7 @@
     <title>Optimal route</title>
     <!-- <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico"> -->
   
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- for Social networks web-crawlers. Open Graph tags to customize link previews -->
     
     <meta property="og:url"           content="https://www.your-domain.com/your-page.html" />
@@ -18,7 +18,7 @@
     <meta property="og:description"   content="Your description" />
     <meta property="og:image"         content="https://www.your-domain.com/path/image.jpg" />
     
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- Bootstrap CSS full-fledged -->
     <!-- 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="./assets/common/bootstrap-partial/bootstrap-grid.min.css" type="text/css">
     -->
     
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- стили сайта -->
     <link rel="stylesheet" href="./assets/common/bootstrap-override.css" type="text/css">
     <link rel="stylesheet" href="./assets/common/global-common.css" type="text/css">
@@ -50,7 +50,7 @@
     <!-- этот файл должен быть последним среди стилей сайта-->
     <link rel="stylesheet" href="./assets/responsive.css" type="text/css">
     
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- LeafLet map lib - with an integrity 
       FireFox bug: JS loading will fail 
       error: None of the “sha512” hashes in the integrity attribute match the content of the subresource.
@@ -85,7 +85,7 @@
     -->
     <div id="page-wrapper" class="container-fluid page-wrapper">
 
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- заголовок (header) -->
     
       <div class="row">
@@ -98,12 +98,12 @@
           <p class="project-name">Optimal route</p>
           
           <a id="nav-show-btn" class="nav-icon clickable" href="#footer">
-            <img src = "./assets/images/hamburger-gray.svg"/>
+            <img src = "./assets/images/hamburger-gray.svg" alt="="/>
           </a>
         </header>
       </div>
       
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- контент -->
     
       <main class="row content-row">
@@ -152,7 +152,7 @@
             <!-- is it good to use &nbsp; ? -->
             <button disabled id="route-optimize-btn" class="my-btn btn-regular width-grow">Оптимизировать маршрут</button>
             <button id="share-link-btn" class="my-btn btn-link-alike">
-              <img src = "./assets/images/arrow-r-curved.png"/>
+              <img src = "./assets/images/arrow-r-curved.png" alt="->"/>
               Поделиться
             </button>
           </div>
@@ -166,7 +166,7 @@
         <div class="clearfix hidden-xs"></div>
       </main>
       
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- подвал (footer) -->
     
       <div class="row">
@@ -182,7 +182,7 @@
             <nav id="nav-responsive" class="nav-responsive">
               <ul>
                   <li id="nav-hide-btn" class="close-icon clickable" hidden>
-                    <img src = "./assets/images/close-gray.svg"/>
+                    <img src = "./assets/images/close-gray.svg" alt="x"/>
                   </li>
                   <li><a href="">О&nbsp;проекте</a></li>
                   <li><a href="">Контакты</a></li>
@@ -195,7 +195,7 @@
       </div>
     </div>
     
-    <!-- +--------------------------------------------------------------------+ -->
+    <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- оверлей и поп-апы -->
     
     <div id="overlay" class="overlay" hidden></div>
@@ -203,20 +203,20 @@
     <div id="popover-link-share" class="popover overlaid" hidden>
       <header>
         <strong>Отправить ссылку</strong>
-        <img id="popover-link-share-close-icon" class="close-icon clickable" src = "./assets/images/close-gray.svg"/>
+        <img id="popover-link-share-close-icon" class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
       </header>
 
       <div id="social-networks" class="social-networks">
         <a name="vkontakte" class="social-network" href="" target="_blank" rel="noreferrer noopener">
-          <img class="icon" src = "./assets/images/vkontakte.svg"/>
+          <img class="icon" src = "./assets/images/vkontakte.svg" alt="VK"/>
           <p>ВКонтакте</p>
         </a>
         <a name="facebook" class="social-network" href="" target="_blank" rel="noreferrer noopener">
-          <img class="icon" src = "./assets/images/facebook.svg"/>
+          <img class="icon" src = "./assets/images/facebook.svg" alt="FB"/>
           <p>Facebook</p>
         </a>
         <a name="odnoklasniki" class="social-network" href="" target="_blank" rel="noreferrer noopener">
-          <img class="icon" src = "./assets/images/odnoklasniki.svg"/>
+          <img class="icon" src = "./assets/images/odnoklasniki.svg" alt="OK"/>
           <p>Одноклассники</p>
         </a>
       </div>
@@ -235,7 +235,7 @@
 
   </body>
 
-<!-- +--------------------------------------------------------------------+ -->
+<!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
 <!-- скрипты локальные -->
 
   <script src="./assets/common/myUtils.js"></script>
@@ -251,4 +251,4 @@
   <script src="./assets/optimal-route-app.js"></script>
   
 </html>
-<!-- ====================================================================== -->
+<!--======================================================================-->
