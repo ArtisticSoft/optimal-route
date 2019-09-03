@@ -472,7 +472,8 @@ MapWithMarkerListClass.prototype.PageAddressPublish = function (addr_id) {
   address.page_element = li;
   li.id = addr_id;
   li.classList.add('address');
-  li.setAttribute('js-draggable', '');
+  li.dataset.dragAndDrop = 'js-draggable';
+  //li.setAttribute('js-draggable', '');//old style
 
   //<span>1. </span>
   var label = document.createElement('span');
@@ -747,17 +748,27 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
 //this might be used by another technologies for example Touch
 MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
   var draggable = null;
-  if (target.hasAttribute('js-draggable')) {
+  if (this.crafted_DnD_isElementDraggable(target)) {
     draggable = target;
   }
-  if (target.parentNode.hasAttribute('js-draggable')) {
+  if (this.crafted_DnD_isElementDraggable(target.parentNode)) {
     draggable = target.parentNode;
   }
   return draggable;
 };
 
+MapWithMarkerListClass.prototype.crafted_DnD_isElementDraggable = function (elem) {
+  return elem.dataset.dragAndDrop == 'js-draggable';
+  //return elem.hasAttribute('js-draggable');//old style
+};
+
 /*
-TODO: utils - make a fun parentNode_climb_hasAttribute
+TODO: 
+utils - make a fun parentNode_climb_hasAttribute
+
+modern way to read the attribute
+this.address_list_html.dataset.dragAndDrop - should return 'js-droppable'
+
 MapWithMarkerListClass.prototype.crafted_DnD_DroppableTest = function (target) {
   var droppable = null;
   if (target.hasAttribute('js-droppable')) {

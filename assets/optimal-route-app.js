@@ -81,6 +81,12 @@ function RouteAppClass() {
   this.MapWithMarkerList.log_enabled = true;
 
   //test cases
+  if (false) {
+    console.log('address_list_html.dataset[drag-and-drop]');
+    //=undefined
+    //console.log(this.MapWithMarkerList.address_list_html.dataset['drag-and-drop']);
+    console.log(this.MapWithMarkerList.address_list_html.dataset.dragAndDrop);
+  }
   if (this.document_params.has('testtest_add_files')) {
     this.MapWithMarkerList.test_AddSeveralMarkersC();//Peterburg
     //this.MapWithMarkerList.test_AddSeveralMarkersB();//Moscow
