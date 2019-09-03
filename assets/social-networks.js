@@ -31,12 +31,13 @@ SocialNetworksClass.prototype.LinkToShare_BuildAll = function (link_to_share) {
   
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
-      var soc_net_name = child.getAttribute(this.attribute_name);
-      this.log('soc_net_name['+soc_net_name+']');
-      var template = this.C.SocialNetworks[soc_net_name].share_link_template;
-      var share_url = template.replace('${link_to_share}', link_to_share);
+      var soc_net_name = child.dataset.id;
+      //this.log('soc_net_name['+soc_net_name+']');
+      var descriptor = this.C.SocialNetworks[soc_net_name];
+      var share_url = descriptor.share_link_template.replace('${link_to_share}', link_to_share);
       this.log('share_url['+share_url+']');
-      child.setAttribute('href', share_url);
+      child.href = share_url;
+      child.title = descriptor.title;
     }
   }
   
