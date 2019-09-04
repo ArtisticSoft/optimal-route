@@ -141,18 +141,40 @@ MapWithMarkerListClass.prototype.BackendGeocodeFulfilled = function (address, js
 }
 
 //-----------------------------------------------------------------------------
+//Адрес - удаление вручную
+//-----------------------------------------------------------------------------
+
+MapWithMarkerListClass.prototype.address_delete_onClick = function (e) {
+  this.log('address_delete_onClick');
+  
+  //получить э-лт представления
+  var addr_elem = e.target.parentNode;
+  var id = addr_elem.id;
+  //удалить из представления на карте. До удаления из модели
+  this.MapAddressRemove(id);
+  //удалить из представления в списке
+  addr_elem.parentNode.removeChild(addr_elem);
+  //удалить из модели
+  delete this.address_list[id];
+  
+  this.AddressesAllRenumber();
+  
+  this.address_list_changed();
+};
+
+//-----------------------------------------------------------------------------
 //Адрес в списке Перемещён вручную
 //-----------------------------------------------------------------------------
 
 MapWithMarkerListClass.prototype.Addresses_ItemMoved = function () {
   this.log('Addresses_ItemMoved');
   
-  //перенумеровать адреса в том порядке как они расположены в представлении на странице
   this.AddressesAllRenumber();
   
   this.address_list_changed();
 };
 
+//перенумеровать адреса в том порядке как они расположены в представлении на странице
 MapWithMarkerListClass.prototype.AddressesAllRenumber = function () {
   this.log('AddressesAllRenumber');
   var children = this.address_list_html.childNodes;
@@ -487,10 +509,15 @@ MapWithMarkerListClass.prototype.PageAddressPublish = function (addr_id) {
   spacer.classList.add('spacer-r');
   spacer.innerHTML = '&nbsp;';
   li.appendChild(spacer);
-  
+
   var img = document.createElement('img');
-  img.src = "./assets/images/hamburger-gray.svg";
-  img.alt = "=";
+  img.dataset.dragAndDrop = 'js-exclude';
+  img.src = "./assets/images/close-gray.svg";
+  img.alt = "x";
+  img.addEventListener('click', this.address_delete_onClick.bind(this));
+
+  //img.src = "./assets/images/hamburger-gray.svg";
+  //img.alt = "=";
   li.appendChild(img);
 
   this.address_list_html.appendChild(li);
@@ -748,11 +775,13 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
 //this might be used by another technologies for example Touch
 MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
   var draggable = null;
-  if (this.crafted_DnD_isElementDraggable(target)) {
-    draggable = target;
-  }
-  if (this.crafted_DnD_isElementDraggable(target.parentNode)) {
-    draggable = target.parentNode;
+  if (target.dataset.dragAndDrop != 'js-exclude') {
+    if (this.crafted_DnD_isElementDraggable(target)) {
+      draggable = target;
+    }
+    if (this.crafted_DnD_isElementDraggable(target.parentNode)) {
+      draggable = target.parentNode;
+    }
   }
   return draggable;
 };
