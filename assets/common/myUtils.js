@@ -40,9 +40,7 @@ myUtilsClass.touch = {
 };
 
 //-----------------------------------------------------------------------------
-/*
-Object. добавить св-ва из другого объекта. одноимённые св-ва будут перезаписаны
-*/
+//Object. добавить св-ва из другого объекта. одноимённые св-ва будут перезаписаны
 
 myUtilsClass.prototype.Object_AppendFrom = function (obj_to, obj_from) {
   var keys = Object.keys(obj_from);
@@ -54,9 +52,7 @@ myUtilsClass.prototype.Object_AppendFrom = function (obj_to, obj_from) {
   }
 };
 //-----------------------------------------------------------------------------
-/*
-Document. убрать фокус если он есть и вернуть элемент на котором был фокус
-*/
+//Document. убрать фокус если он есть и вернуть элемент на котором был фокус
 
 myUtilsClass.prototype.Document_Blur = function () {
   var active = document.activeElement;
@@ -67,9 +63,8 @@ myUtilsClass.prototype.Document_Blur = function () {
 };
 
 //-----------------------------------------------------------------------------
-/*
-HTML Element. очистить содержимое
-*/
+//HTML Element. очистить содержимое
+
 myUtilsClass.prototype.Element_Clear = function (element) {
 //easy alternative
   element.innerHTML = '';
@@ -81,12 +76,11 @@ myUtilsClass.prototype.Element_Clear = function (element) {
   */
 };
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-HTML Element. установить значение 
-boolean атрибута с именем attr. можно передавать массив имён
-атрибут добавляется или удаляется в зависимости от bool
-значение обычно = '' но его можно задать параметром val 
-*/
+//HTML Element. установить значение 
+//boolean атрибута с именем attr. можно передавать массив имён
+//атрибут добавляется или удаляется в зависимости от bool
+//значение обычно = '' но его можно задать параметром val 
+
 myUtilsClass.prototype.Element_setAttributeBoolean = function (element, attr, bool, val) {
   if (val === undefined) {
     val = '';
@@ -119,9 +113,7 @@ myUtilsClass.prototype.Element_setAttributeBoolean = function (element, attr, bo
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-HTML Element. добавить или удалить CSS класс
-*/
+//HTML Element. добавить или удалить CSS класс
 
 myUtilsClass.prototype.Element_classList_AddRemove = function (element, class_name, add) {
   if (add) {
@@ -132,9 +124,7 @@ myUtilsClass.prototype.Element_classList_AddRemove = function (element, class_na
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-HTML Element. получить смещение относительно документа
-*/
+//HTML Element. получить смещение относительно документа
 
 myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {
   var offset = {x: 0, y: 0};
@@ -150,9 +140,7 @@ myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {
 };
 
 //-----------------------------------------------------------------------------
-/*
-HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
-*/
+//HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
 
 myUtilsClass.prototype.Element_animation_start = function (element, class_name, delay) {
   //console.log('Element_animation_start element['+element+']');
@@ -196,48 +184,12 @@ function classList_add_raw(element, class_name) {
 */
 
 //-----------------------------------------------------------------------------
-/*
-Node. получить соседний эл-т по индексу
-*/
+//Node. получить соседний эл-т по индексу
+
 myUtilsClass.prototype.Node_getSiblingByIdx = function (node, idx) {
   return (idx == 0) ? target.previousSibling : target.nextSibling;
 };
 
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-Abandoned!
-insertBefore
-If referenceNode is null, the newNode is inserted at the end of the list of child nodes.
-
-Node. вставить эл-т перед указанным. отличается от insertBefore - если указан пустой 
-
-*/
-/*
-myUtilsClass.prototype.Node_insertBefore = function (parent, new_node, ref_node) {
-  var sibling = ref_node.nextSibling;
-  if (sibling) {
-    parent.insertBefore(new_node, sibling);
-  } else {
-    parent.appendChild(new_node);
-  }
-};
-*/
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-Abandoned!
-
-Node. вставить эл-т после указанного. дополняет insertBefore
-*/
-/*
-myUtilsClass.prototype.Node_insertBefore = function (parent, new_node, ref_node) {
-  var sibling = ref_node.nextSibling;
-  if (sibling) {
-    parent.insertBefore(new_node, sibling);
-  } else {
-    parent.appendChild(new_node);
-  }
-};
-*/
 //-----------------------------------------------------------------------------
 
 myUtilsClass.prototype.touch_isIdValid = function (id) {
@@ -246,9 +198,7 @@ myUtilsClass.prototype.touch_isIdValid = function (id) {
 };
 
 //-----------------------------------------------------------------------------
-/*
-координаты = любой объект со св-вами x и y
-*/
+//координаты = любой объект со св-вами x и y
 
 myUtilsClass.prototype.xy_copy = function (xy_a, xy_b) {
   xy_a.x = xy_b.x;

@@ -74,6 +74,11 @@ function RouteAppClass() {
 
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
+    
+    //--- zoom levels
+    //20 very zoomed. streets are clearly visible
+    //5 region-scale zoom. nearby cities are visible
+
     map: {id: 'map', zoom_default: 10},
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
@@ -97,7 +102,7 @@ function RouteAppClass() {
   //---навигация адаптивная
   this.NavigationOnDemand = new NavigationOnDemandClass({
   });
-  this.NavigationOnDemand.log_enabled = true;
+  //this.NavigationOnDemand.log_enabled = true;
   this.NavigationOnDemand.NavPlaceResponsive();
   
   //---социальные сети

@@ -298,14 +298,14 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
   this.log('LinkToShareFromJson');
 
   var consts = this.C.link_to_share;
-  var page_id = json[consts.json_field];
-  this.log('page_id['+page_id +']');
+  var page_uid = json[consts.json_field];
+  this.log('page_uid['+page_uid +']');
   var link;
 
-  //sample page_id = "e7b145c8d01f4ee3f1c65357b60c727d"
-  if (page_id && page_id.length > 10) {
+  //sample page_uid = "e7b145c8d01f4ee3f1c65357b60c727d"
+  if (page_uid && page_uid.length > 10) {
     var url = new URL(this.C.protocol + consts.url);
-    url.searchParams.append(consts.query_param, page_id);
+    url.searchParams.append(consts.query_param, page_uid);
     this.log('url.href ['+url.href+']');
     link = url.href;
   }
