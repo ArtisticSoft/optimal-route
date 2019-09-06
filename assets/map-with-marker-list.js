@@ -131,6 +131,8 @@ MapWithMarkerListClass.prototype.AddressAddFromString = function (addr_str) {
   this.log('AddressAddFromString');
   
   //защита от повторных кликов кнпоки Добавить
+  //сейчас эта защита не актуальна т.к. поле ввода очищается сразу после вызова данного метода
+  //но оставлена для красоты
   if (this.addr_str_to_add_shadow != addr_str && addr_str && addr_str.length) {
     this.log('addr_str ['+addr_str+']');
     this.back_end.XHR_Start(
@@ -141,7 +143,7 @@ MapWithMarkerListClass.prototype.AddressAddFromString = function (addr_str) {
     
     this.addr_str_to_add_shadow = addr_str;
   } else {
-    this.log('ignored. input data looks the same as the previous one');
+    this.log('ignored. input data is either empty or looks the same as the previous one');
   }
 };
 
@@ -1662,41 +1664,5 @@ MapWithMarkerListClass.prototype.test_AddSeveralMarkersC = function () {
   console.clear();
 };
 
-/*
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-Кудрово
-Кудрово, Заневское городское поселение, Всеволожский район, Ленинградская область, Россия
-
-Стрельна
-id="7bb5fe9d0337643260cff7ba0098d2bf"
-посёлок Стрельна, Петродворцовый район, Санкт-Петербург, Россия
-
-Всеволожский
-id="b43bd9e0ba6cb664d4370b71f4c174ee"
-коттеджный посёлок Всеволожский, Щегловское сельское поселение, Всеволожский район, Ленинградская область, Россия
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//test set by default
-
-id="940050d87b35f5d5b4c9dfccc23ee42a"
-Сестрорецк, Санкт-Петербург, Россия
-
-id="c94436551cab9d529e0d2b37c65f7ca5"
-посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия
-
-id="73b597d460eac6b77e8581373b9bbf8a"
-Отрадное, Кировский район, Ленинградская область, Россия
-
-id="7779ef26500d8464266252036f107b3b"
-Петергоф, Санкт-Петербург, Россия
-
-id="c7e30dfce50e3549d96de1c864ddae19"
-посёлок Парголово, Санкт-Петербург, Россия
-
-id="3d8b31c09d3c899cce1098a53d434552"
-посёлок городского типа Токсово, Всеволожский район, Ленинградская область, Россия
-
-
-*/
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //=============================================================================
