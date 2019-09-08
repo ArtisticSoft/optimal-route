@@ -130,6 +130,8 @@ function BackEndClass() {
   this.C = BackEndClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
   
+  this.onReject = null;//global handler
+
   //Подбор адреса
   this.AddressSuggestions = {
     name: 'addr_suggestions',
@@ -186,7 +188,7 @@ BackEndClass.prototype.SuperClass = GenericBaseClass.prototype;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
+BackEndClass.prototype.XHR_Start = function (method, query, on_resolve, on_reject) {
   this.log('XHR_Start. method.name ['+method.name+']');
   
   this.log('query');
@@ -194,7 +196,7 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
   
   var pool = this.xhr_pool[method.name];
   
-  var xhr_obj = new XHRClass();
+  var xhr_obj = new XHRClass({timeout: this.C.timeout_delay});
   var xhr_idx = pool.list.push(xhr_obj) - 1;
   xhr_obj.handle = {method: method, idx: xhr_idx};
   
@@ -203,8 +205,13 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
   }
   
   //xhr_obj.log_enabled = true;
-  xhr_obj.on_settle = this.XHR_Finish.bind(this, xhr_obj);
-  xhr_obj.on_finish = on_finish;
+  //XHRClass native callback
+  xhr_obj.on_settle = this.XHR_onSettle.bind(this, xhr_obj);
+  //bind a custom callbacks to be called from XHR_onSettle
+  xhr_obj.on_resolve = on_resolve;
+  if (on_reject) {
+    xhr_obj.on_reject = on_reject;
+  }
   
   var url = new URL(method.url);
   var keys = Object.keys(method.params);
@@ -227,16 +234,23 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_finish) {
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 
-BackEndClass.prototype.XHR_Finish = function (xhr_obj, is_success) {
-  this.log('XHR_Finish. is_success ['+is_success+']');
+BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
+  this.log('XHR_onSettle. is_fulfilled ['+is_fulfilled+']');
   
-  if (is_success) {
-    var json_obj;
+  //the flag to call XHR_onReject
+  //will =false then calling on_resolve
+  var rq_reject = true;
+  
+  //vars might be used then calling XHR_onReject
+  var json_obj;
+  
+  if (is_fulfilled) {
     var xhr = xhr_obj.xhr;
     
     var handle = xhr_obj.handle;
     var pool = this.xhr_pool[handle.method.name];
     
+    //-- get JSON 
     if (!pool.wait_for_idx || (pool.wait_for_idx == handle.idx)) {
       //usual responseType = json, response class = Object
       var resp_typ = xhr.responseType;
@@ -269,26 +283,63 @@ BackEndClass.prototype.XHR_Finish = function (xhr_obj, is_success) {
           this.log('unsupported responseType ['+xhr.responseType+']');
       }
       
-      //delete the XHR object from pool
+      //-- delete the XHR object from pool
       pool.list.splice(handle.idx, 1);
       
-      if (json_obj) {
-        if (json_obj && json_obj.result == 1) {
+      //-- process the JSON
+      if (json_obj && json_obj.result == 1) {
+      
+        this.log('XHR result = success. pool.list.length ['+pool.list.length+']');
+        //this.log(json_obj);
         
-          //this.log('XHR result = success');
-          this.log('XHR result = success. pool.list.length ['+pool.list.length+']');
-          //this.log(json_obj);
-          
-          if (handle.method.json_main_key) {
-            json_obj = json_obj[handle.method.json_main_key];
-          }
-          xhr_obj.on_finish(json_obj);
-        } else {
-          this.log('XHR result = error. XHR response dump...');
-          this.log(xhr.response);
+        if (handle.method.json_main_key) {
+          json_obj = json_obj[handle.method.json_main_key];
         }
+        xhr_obj.on_resolve(json_obj);
+        rq_reject = false;
       }
     }
+  }
+  
+  if (rq_reject) {
+    this.XHR_onReject(xhr_obj, is_fulfilled, json_obj);
+  }
+};
+
+BackEndClass.prototype.XHR_onReject = function (xhr_obj, is_fulfilled, json) {
+  this.log('XHR rejected. is_fulfilled['+is_fulfilled+']');
+  
+  this.XHR_debug_onRejectDump(xhr_obj, is_fulfilled, json);
+  
+  //custom callback for this request
+  if (xhr_obj.on_reject) {
+    xhr_obj.on_reject();
+  }
+
+  //global callback
+  if (this.onReject) {
+    this.onReject(xhr_obj, is_fulfilled, json);
+  }
+};
+
+BackEndClass.prototype.XHR_debug_onRejectDump = function (xhr_obj, is_fulfilled, json) {
+  console.log('XHR_debug_onRejectDump. is_fulfilled['+is_fulfilled+']');
+  
+  var xhr = xhr_obj.xhr;
+  var handle = xhr_obj.handle;
+  var pool = this.xhr_pool[handle.method.name];
+  
+  if (is_fulfilled) {
+    this.log('json');
+    this.log(json);
+
+    //this.log('response dump...');
+    //this.log(xhr.response);
+
+  } else {
+
+    this.log('method.name['+handle.method.name+']');
+    this.log('_load_end_conditon_name['+xhr._load_end_conditon_name+']');
   }
 };
 
@@ -319,6 +370,8 @@ BackEndClass.prototype._static_properties_init = function () {
   this.log('BackEndClass._static_properties_init');
   
   this.C.protocol = 'https';
+  
+  this.C.timeout_delay = 10000;
     
   /*
   -= ссылка чтобы поделиться =-

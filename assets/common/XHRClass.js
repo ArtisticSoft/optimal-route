@@ -1,21 +1,16 @@
 'use strict';
 //=============================================================================
 /*
-поле ввода с выпадающим списком предположений
-
----getAllResponseHeaders() = ... 
-cache-control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
-content-type: text/json;charset=UTF-8
-expires: Thu, 19 Nov 1981 08:52:00 GMT
-pragma: no-cache
-
+XHR request
 */
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-function XHRClass() {
+function XHRClass(options) {
   //this.C = this.constructor;
   this.C = XHRClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
+  
+  this.timeout = options ? options.timeout : this.C.timeout;
   
   //promise-like interface
   this._is_pending = false;
@@ -23,9 +18,8 @@ function XHRClass() {
   this.on_settle = undefined;
   
   if (XMLHttpRequest) {
-    this.xhr = new XMLHttpRequest;
+    this.xhr = new XMLHttpRequest();
 		
-		this._xhr = new XMLHttpRequest();
 //		this._add_listener('loadstart', this._loadstart_handler);
 //		this._add_listener('progress', this._progress_handler);
 //		this._add_listener('readystatechange', this._readystatechange_handler);
@@ -65,6 +59,10 @@ XHRClass.prototype.OpenAndSend = function (options) {
   if (this.xhr) {
     this.xhr.open(options.method, options.url, true);//last param means Async
 
+    //In Internet Explorer, the timeout property may be set only 
+    //after calling the open() method and before calling the send() method.
+    this.xhr.timeout = this.timeout;
+    
     if (options.responseType) {
       this.xhr.responseType = options.responseType;
     }
@@ -167,6 +165,7 @@ XHRClass.prototype._timeout_handler = function (e) {
 //assumed to be called from every Load-Ending condition handler
 XHRClass.prototype._load_end_handler = function (name, is_fulfilled, e) {
   this._pending_leave(is_fulfilled);
+  this._load_end_conditon_name = name;
   this.log('load ends. condition['+name+']');
 }
 	
@@ -205,6 +204,9 @@ XHRClass.prototype.static_properties_init = function () {
 */
 XHRClass.prototype._static_properties_init = function () {
   this.log('XHRClass._static_properties_init');
+  
+  this.C.timeout = 30000;// time in milliseconds
+  
   this.C.readyState_values = {
     //Client has been created. open() not called yet.
     UNSENT: 0,

@@ -38,14 +38,21 @@ function RouteAppClass() {
   //this.link_to_share_btn.disabled = true;//поделиться ссылкой можно всегда
   this.link_to_share_btn.addEventListener('click', this.link_to_share_btn_onClick.bind(this));
 
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
 
   //---BackEnd  - должен быть первым
   this.BackEnd = new BackEndClass();
-  this.BackEnd.log_enabled = true;
+  //this.BackEnd.log_enabled = true;
+  
+  this.backend_onReject = function (xhr_obj, is_fulfilled, json) {
+    //console.log('backend_onReject');
+  };
+  this.BackEnd.onReject = this.backend_onReject.bind(this);
 
-  //---поиск адресов - должен быть перед 'список адресов'
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//---поиск адресов - должен быть перед 'список адресов'
+
   this.SearchWithSuggestons = new SearchWithSuggestonsClass({
     back_end: this.BackEnd,
     input_id: 'address-input', suggestion_dropdown_id: 'address-suggestions', 
@@ -54,7 +61,8 @@ function RouteAppClass() {
   this.SearchWithSuggestons.log_enabled = true;
   //this.SearchWithSuggestons.test_inp_val();
   
-  //---список адресов
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//---список адресов
   
   //callback для списка адресов
   //ссылка которой можно поделиться изменилась
@@ -77,6 +85,7 @@ function RouteAppClass() {
     
     //--- zoom levels
     //20 very zoomed. streets are clearly visible
+    //10 city-scale zoom. large city and it's outskirts are visible
     //5 region-scale zoom. nearby cities are visible
 
     map: {id: 'map', zoom_default: 10},
@@ -98,8 +107,9 @@ function RouteAppClass() {
     //this.MapWithMarkerList.test_AddSeveralMarkers();//London
   }
   
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//---навигация адаптивная
 
-  //---навигация адаптивная
   this.NavigationOnDemand = new NavigationOnDemandClass({
   });
   //this.NavigationOnDemand.log_enabled = true;
@@ -124,7 +134,7 @@ function RouteAppClass() {
     if (this.SearchWithSuggestons.state == 'value_from_suggestion') {
       //console.log('SearchWithSuggestons.state  OK');
       //console.log('SearchWithSuggestons.getValue ['+this.SearchWithSuggestons.getValue()+']');
-      this.MapWithMarkerList.AddressAddFromString(this.SearchWithSuggestons.getValue());
+      this.MapWithMarkerList.Address_AppendFromString(this.SearchWithSuggestons.getValue());
       
       //вернуть фокус в поле ввода адреса
       this.SearchWithSuggestons.focus();
@@ -142,8 +152,13 @@ function RouteAppClass() {
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
   this.address_add_btn.disabled = true;
   
-  this.Search_onStateChange = function() {
-    this.address_add_btn.disabled = this.SearchWithSuggestons.state != 'value_from_suggestion';
+  this.Search_onStateChange = function(state) {
+    this.address_add_btn.disabled = (state != 'value_from_suggestion');
+    
+    if (state == 'value_from_suggestion') {
+      this.MapWithMarkerList.Address_Append_earlyPeek(this.SearchWithSuggestons.getValue());
+    }
+    
   };
   this.SearchWithSuggestons.onStateChange = this.Search_onStateChange.bind(this);
   

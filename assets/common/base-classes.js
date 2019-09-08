@@ -43,6 +43,26 @@ GenericBaseClass.prototype.warning = function (msg) {
   this.log('warning: ' + msg);
 };
 
+//html headings: h1 to h6
+GenericBaseClass.prototype.log_heading1 = function (msg) {
+  this.log('=============== ' + msg);
+};
+GenericBaseClass.prototype.log_heading2 = function (msg) {
+  this.log('-=-=-=-=-=- ' + msg);
+};
+GenericBaseClass.prototype.log_heading3 = function (msg) {
+  this.log('--------- ' + msg);
+};
+GenericBaseClass.prototype.log_heading4 = function (msg) {
+  this.log('----- ' + msg);
+};
+GenericBaseClass.prototype.log_heading5 = function (msg) {
+  this.log('--- ' + msg);
+};
+GenericBaseClass.prototype.log_heading6 = function (msg) {
+  this.log('-- ' + msg);
+};
+
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 GenericBaseClass.prototype.PostToQueue = function (to_execute) {

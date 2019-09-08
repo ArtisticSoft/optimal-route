@@ -165,7 +165,7 @@ value [велик]
 //если список suggestions раскрыт
 SearchWithSuggestonsClass.prototype.input_onKeydown = function (e) {
   var evt_consts = myUtilsClass.KeyboardEvent;
-  this.log('input_onKeydown key ['+e[evt_consts.key_prop]+']');
+  this.log_heading1('input_onKeydown key ['+e[evt_consts.key_prop]+']');
 
   if (this.suggestions_get_navigatable()) {
     this._input_onKeydown(e);
@@ -199,7 +199,7 @@ SearchWithSuggestonsClass.prototype._input_onKeydown = function (e) {
 
 //XHR request will start at certain conditions
 SearchWithSuggestonsClass.prototype.input_onInput = function (e) {
-  this.log('input_onInput');
+  this.log_heading1('input_onInput');
   //value after modification
   this.log('value ['+this.input_html.value+']');
   
@@ -226,7 +226,7 @@ SearchWithSuggestonsClass.prototype.input_onInput = function (e) {
 //KeyUp is the most useful because it is not a subject of the Auto-repeat
 SearchWithSuggestonsClass.prototype.input_onKeyup = function (e) {
   var evt_consts = myUtilsClass.KeyboardEvent;
-  this.log('input_onKeyup key ['+e[evt_consts.key_prop]+']');
+  this.log_heading1('input_onKeyup key ['+e[evt_consts.key_prop]+']');
   
   if (this.suggestions_get_navigatable()) {
     this._input_onKeyup(e);
@@ -300,12 +300,12 @@ SearchWithSuggestonsClass.prototype.KeyEventDump = function (e) {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
 SearchWithSuggestonsClass.prototype.input_onFocus = function (e) {
-  this.log('input_onFocus');
+  this.log_heading1('input_onFocus');
   //this.log('value ['+this.input_html.value+']');
 };
 
 SearchWithSuggestonsClass.prototype.input_onBlur = function (e) {
-  this.log('input_onBlur');
+  this.log_heading1('input_onBlur');
   //this.log('value ['+this.input_html.value+']');
   if (!this.suggestions_prevent_close) {
     this.suggestions_set_visible(false);
@@ -319,7 +319,7 @@ SearchWithSuggestonsClass.prototype.input_onBlur = function (e) {
 
 //XHR request fulfilled
 SearchWithSuggestonsClass.prototype.suggestions_populate = function (address_list) {
-  this.log('suggestions_populate');
+  this.log_heading2('suggestions_populate');
   
   var consts = this.C.SuggestionList;
   
@@ -408,24 +408,24 @@ dropdown_onClick
 
 //prevent default behavior of input_onBlur hanlder
 SearchWithSuggestonsClass.prototype.dropdown_onMouseDown = function (e) {
-  //this.log('dropdown_onMousedown');
+  //this.log_heading1('dropdown_onMousedown');
   this.suggestions_prevent_close = true;
 };
 
 //not used
 //SearchWithSuggestonsClass.prototype.dropdown_onMouseUp = function (e) {
-  //this.log('dropdown_onMouseup');
+  //this.log_heading1('dropdown_onMouseup');
 //};
 
 SearchWithSuggestonsClass.prototype.dropdown_onMouseEnter = function (e) {
-  this.log('dropdown_onMouseEnter');
+  this.log_heading1('dropdown_onMouseEnter');
   
   //hide the hover made with Arrow keys, if any
   this.suggestion_selected_with_keys_set_visible(false);
 };
 
 SearchWithSuggestonsClass.prototype.dropdown_onMouseLeave = function (e) {
-  this.log('dropdown_onMouseLeave');
+  this.log_heading1('dropdown_onMouseLeave');
   
   //show the hover made with Arrow keys, if any
   this.suggestion_selected_with_keys_set_visible(true);
@@ -433,11 +433,11 @@ SearchWithSuggestonsClass.prototype.dropdown_onMouseLeave = function (e) {
 
 //odd. fired right after MouseEnter and Several times
 //SearchWithSuggestonsClass.prototype.dropdown_onMouseOut = function (e) {
-//  this.log('dropdown_onMouseOut');
+//  this.log_heading1('dropdown_onMouseOut');
 //};
 
 SearchWithSuggestonsClass.prototype.dropdown_onClick = function (e) {
-  this.log('dropdown_onClick');
+  this.log_heading1('dropdown_onClick');
   var consts = this.C.SuggestionList;
   //HTMLLIElement
   //this.log('target class ['+e.target.constructor.name+']');
