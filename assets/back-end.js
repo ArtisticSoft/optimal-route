@@ -378,8 +378,9 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
 BackEndClass.prototype._static_properties_init = function () {
   this.log('BackEndClass._static_properties_init');
   
-  this.C.protocol = 'http';
-  //this.C.protocol = 'https';//will be in the future
+  //this Will conflict with raw links like href="https://unpkg.com/leaflet@1.5.1....
+  //this.C.protocol = 'http';
+  this.C.protocol = 'https';//will be in the future
   
   this.C.timeout_delay = 10000;
     
