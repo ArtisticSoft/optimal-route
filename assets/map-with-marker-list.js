@@ -275,7 +275,7 @@ MapWithMarkerListClass.prototype.Backend_Geocode_onReject = function (addr_id_tm
   }
 
   //Модель. удалить
-  if (this.address_list.includes(addr_id_tmp)) {
+  if (this.address_list[addr_id_tmp]) {
     delete this.address_list[addr_id_tmp];
   }
   
