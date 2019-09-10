@@ -90,6 +90,7 @@ the same for
   Пример 
   POST - запрос 
   Вход: переменная address содержит список md_address через запятую 
+      UPD sept09: и переменная md_list (если есть)
   Выход: 
   Позитивный:
   {
@@ -160,8 +161,8 @@ function BackEndClass() {
     name: 'distribution_address',
     url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_address/',
     method: 'POST',
-    //переменная address содержит список md_address через запятую 
-    params: {address: undefined}
+    //переменная address содержит список md_address через запятую , и переменная md_list (если есть)
+    params: {address: undefined, md_list: undefined}
   };
   
   //Изменение порядка маршрута
@@ -353,8 +354,12 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
   this.log('page_uid['+page_uid +']');
   var link;
 
-  //sample page_uid = "e7b145c8d01f4ee3f1c65357b60c727d"
-  if (page_uid && page_uid.length > 10) {
+  //sample page_uid 
+  //
+  //"md_list": "2t6iyc3"
+  //obsolete style = "e7b145c8d01f4ee3f1c65357b60c727d"
+  
+  if (page_uid && page_uid.length) {
     var url = new URL(this.C.protocol + consts.url);
     url.searchParams.append(consts.query_param, page_uid);
     this.log('url.href ['+url.href+']');

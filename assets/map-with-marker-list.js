@@ -28,6 +28,7 @@ function MapWithMarkerListClass(options) {
   //--- Список адресов. ключевой объект на странице
   this.address_list_html = document.getElementById(options.address_list_id);
   this.PageAddressList_Remove();
+  
   //homebrewed DnD 
   this.DragAndDrop = {
     dragged_node: null,
@@ -75,7 +76,9 @@ function MapWithMarkerListClass(options) {
   this.route_optimize_btn = document.getElementById(options.route_optimize_btn_id);
   this.route_optimize_btn.disabled = true;
   this.route_optimize_btn.addEventListener('click', this.route_optimize_btn_onClick.bind(this));
-  this.onLinkToShareChanged = null;//callback
+  
+  //вызывается не только после оптимизаци маршрута но и после других изменений списка адресов
+  this.onLinkToShareChanged = null;
 
   //--- ключевой ассоциативный массив 
   //внутренняя модель адресов из списка
@@ -116,7 +119,7 @@ MapWithMarkerListClass.prototype.SuperClass = GenericBaseClass.prototype;
 //авто-увеличивающийся ID для эл-тов списка адресов
 //начальное значение большое чтобы не спутать с порядковым номером эл-та в списке
 //этот механизм работает только для адресов добавленных без использования BackEnd.geocode
-//т.е. только для отладки
+
 MapWithMarkerListClass.address_id_to_assign = 1000;
 
 //-----------------------------------------------------------------------------
@@ -369,6 +372,38 @@ MapWithMarkerListClass.prototype.address_delete_onClick = function (e) {
 //Адрес в списке Перемещён вручную
 //-----------------------------------------------------------------------------
 
+/*
+TODO: integrate this
+
+  //if dragged is an Address, indicate this on the map
+  if (dnd.current.dragged.classList.contains('address')) {
+    var addr = this.PageAddress_getAddrObj(dnd.current.dragged);
+    this.MapAddress_setState(addr, 'active');
+    this.MapAddress_PanTo(addr);
+    //animation Will restart on each Node remove\append. stop the animaiton to prevent restarts
+    //animation might be in progress if the corresponding marker is clicked shortly before
+    this.PageAddress_AnimationStop(addr);
+  }
+  
+*/
+
+/*
+TODO: 
+
+  this.onDrop = null;
+
+
+TODO: integrate this
+
+  //if dragged is an Address, indicate this on the map
+  if (dnd.current.dragged.classList.contains('address')) {
+    var addr = this.PageAddress_getAddrObj(dnd.current.dragged);
+    this.MapAddress_setState(addr, 'default');
+  }
+    
+
+*/
+
 MapWithMarkerListClass.prototype.Addresses_ItemMoved = function (element) {
   this.log_heading2('Addresses_ItemMoved');
   
@@ -398,26 +433,37 @@ MapWithMarkerListClass.prototype.Addresses_ItemMoved = function (element) {
 MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
   this.log_heading2('route_optimize_btn_onClick');
   
-  var addresses = this.PageAddressList_getIdArray().join(',');
+  var address_list_joined = this.PageAddressList_getIdArray().join(',');
   
   //защита от повторных кликов кнпоки Оптимизировать
-  if (this.address_lst_to_optimize_shadow != addresses && addresses && addresses.length) {
-    this.log('addresses ['+addresses+']');
+  if (this.address_lst_to_optimize_shadow != address_list_joined && address_list_joined.length) {
+    this.log('address_list_joined ['+address_list_joined+']');
     
     //информировать приложение что ссылка недействительна
     this.LinkToShare_Set(null);
-
+    
     //запустить сортировку списка адресов. процесс включает в себя promise resolve
     //по завершении будет сформирована новая ссылка
+    var query = {address: address_list_joined};
+    this.Query_includeListUID(query);
+    
     this.back_end.XHR_Start(
       this.back_end.DistributionAddress, 
-      {address: addresses}, 
+      query, 
       this.Backend_OptimizeRoute_onFulfill.bind(this)
     )
     
-    this.address_lst_to_optimize_shadow = addresses;
+    this.address_lst_to_optimize_shadow = address_list_joined;
   } else {
     this.log('ignored. input data looks the same as previous one');
+  }
+};
+
+//некоторые методы back-end имеют необязательный параметр md_list 
+//включить этот параметр в запрос, если имеется валидное значение
+MapWithMarkerListClass.prototype.Query_includeListUID = function (query) {
+  if (this.address_list_uid && this.address_list_uid.length) {
+    query.md_list = this.address_list_uid;
   }
 };
 
@@ -451,6 +497,7 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   //добавить все линии маршрутов
   this.MapRouteAll_Publish();
   
+  //md_list из json будет сохранён
   this.AddressList_AfterChange(json);
 };
 
@@ -638,12 +685,9 @@ MapWithMarkerListClass.prototype.Backend_DistributionHand_Start = function () {
   
   var address_list_joined = this.PageAddressList_getIdArray().join(',');
   
-  if (address_list_joined) {
-    var query = {};
-    query.address = address_list_joined;
-    if (this.address_list_uid && this.address_list_uid.length) {
-      query.md_list = this.address_list_uid;
-    }
+  if (address_list_joined.length) {
+    var query = {address: address_list_joined};
+    this.Query_includeListUID(query);
     
     this.back_end.XHR_Start(
       this.back_end.DistributionHand, 
@@ -912,8 +956,7 @@ MapWithMarkerListClass.prototype.PageAddress_Publish = function (addr_id) {
   addr.page_element = li;
   this.PageAddress_setId(li, addr_id);
   li.classList.add('address');
-  li.dataset.dragAndDrop = 'js-draggable';
-  //li.setAttribute('js-draggable', '');//old style
+  li.dataset.craftedDragAndDrop = 'draggable';
 
   //<span>1. </span>
   var label = document.createElement('span');
@@ -929,7 +972,7 @@ MapWithMarkerListClass.prototype.PageAddress_Publish = function (addr_id) {
   li.appendChild(spacer);
 
   var img = document.createElement('img');
-  img.dataset.dragAndDrop = 'js-exclude';
+  img.dataset.craftedDragAndDrop = 'exclude';
   img.src = "./assets/images/close-gray.svg";
   img.alt = "x";
   img.addEventListener('click', this.address_delete_onClick.bind(this));
@@ -1145,7 +1188,7 @@ MouseEvent.movementY Read only
 MapWithMarkerListClass.prototype.draggable_onMouseDown = function (e) {
   this.log_heading1('draggable_onMouseDown');
   if (e.button == myUtilsClass.mouse.button.main) {
-    var dragged = this.crafted_DnD_DraggableTest(e.target);
+    var dragged = this.crafted_DnD_getDraggable(e.target);
     if (dragged) {
       e.preventDefault();
       e.stopPropagation();
@@ -1346,42 +1389,30 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
 //utils 
 
 //this might be used by another technologies for example Touch
-MapWithMarkerListClass.prototype.crafted_DnD_DraggableTest = function (target) {
+MapWithMarkerListClass.prototype.crafted_DnD_getDraggable = function (target) {
   var draggable = null;
-  if (target.dataset.dragAndDrop != 'js-exclude') {
-    if (this.crafted_DnD_isElementDraggable(target)) {
-      draggable = target;
+
+  var depth_max = 5;
+  var level = 0;
+  var elem = target;
+
+  //search will break if attr value = 'exclude' encountered at any level
+  do {
+    var attr_val = elem ? elem.dataset.craftedDragAndDrop : false;
+    var is_found = attr_val == 'draggable';
+    
+    if (!is_found) {
+      elem = elem.parentNode;
+      level++;
     }
-    if (this.crafted_DnD_isElementDraggable(target.parentNode)) {
-      draggable = target.parentNode;
-    }
+
+  } while (!(is_found || level >= depth_max || attr_val == 'exclude') && elem);
+    
+  if (is_found) {
+    draggable = elem;
   }
   return draggable;
 };
-
-MapWithMarkerListClass.prototype.crafted_DnD_isElementDraggable = function (elem) {
-  return elem.dataset.dragAndDrop == 'js-draggable';
-  //return elem.hasAttribute('js-draggable');//old style
-};
-
-/*
-TODO: 
-utils - make a fun parentNode_climb_hasAttribute
-
-modern way to read the attribute
-this.address_list_html.dataset.dragAndDrop - should return 'js-droppable'
-
-MapWithMarkerListClass.prototype.crafted_DnD_DroppableTest = function (target) {
-  var droppable = null;
-  if (target.hasAttribute('js-droppable')) {
-    droppable = target;
-  }
-  if (target.parentNode.hasAttribute('js-droppable')) {
-    droppable = target.parentNode;
-  }
-  return droppable;
-};
-*/
 
 //this might be used by another technologies for example Touch
 MapWithMarkerListClass.prototype.crafted_DnD_isDragging = function (target) {
@@ -1391,7 +1422,6 @@ MapWithMarkerListClass.prototype.crafted_DnD_isDragging = function (target) {
 MapWithMarkerListClass.prototype.Dragged_setPos = function (dragged, e) {
   var pos = myUtils.xy_add(this.MouseEvent_getPos(e), this.DragAndDrop.initial_offset);
   myUtils.Element_styleTopLeft_from_xy(dragged, pos);
-  //myUtils.Element_styleTopLeft_from_xy(dragged, this.MouseEvent_getPos(e));
 };
 MapWithMarkerListClass.prototype.MouseEvent_getPos = function (e) {
   return {x: e.pageX, y: e.pageY};//relative to document?
@@ -1520,7 +1550,7 @@ MapWithMarkerListClass.prototype.draggable_onTouchStart = function (e) {
   
   var touches = e.changedTouches;
   if (touches.length) {
-    var dragged = this.crafted_DnD_DraggableTest(e.target);
+    var dragged = this.crafted_DnD_getDraggable(e.target);
     if (dragged) {
       e.preventDefault();
       //this.log('about to call hadnler for mouse...');
@@ -1823,8 +1853,8 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     }).addTo(this.map_obj);
     this.map_obj.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
 
-    var moscow = new L.LatLng(55.755814,37.617635); 
     var peterburg = new L.LatLng(59.939095,30.315868); 
+    var moscow = new L.LatLng(55.755814,37.617635); 
     
     //без этой строки карта пустая
     this.map_obj.setView(peterburg, this.map_zoom_default);
@@ -2282,67 +2312,122 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
 //для отладки. добавить несколько маркеров
 //-----------------------------------------------------------------------------
 
+MapWithMarkerListClass.test_address_sets = {
+  'Peterburg': {
+    latlng: [59.939095,30.315868],
+    type: 'strings',
+    addr_set_a: [
+      'Петергоф, Санкт-Петербург, Россия',
+      'Сестрорецк, Санкт-Петербург, Россия',
+      'посёлок городского типа Токсово, Всеволожский район, Ленинградская область, Россия',
+      'Отрадное, Кировский район, Ленинградская область, Россия',
+      'посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия'
+    ]
+  }
+  ,
+  
+  'Moscow': {
+    latlng: [55.755814,37.617635],
+    type: 'strings',
+    addr_set_a: [
+      'микрорайон Сходня, Химки, Московская область, Россия',
+      'Долгопрудный, Московская область, Россия',
+      'район Чертаново Северное, Южный административный округ, Москва, Россия',
+      'Реутов, Московская область, Россия'
+    ]
+  }
+  ,
+  
+  'London': {
+    latlng: [51.5056,-0.1213],
+    zoom: 14,
+    type: 'objects',
+    addr_set_a: [
+      {lat: 51.5006728, lng: -0.1244324, title: "Big Ben"},
+      {lat: 51.503308, lng: -0.119623, title: "London Eye"},
+      {lat: 51.5077286, lng: -0.1279688, title: "Nelson's Column"},
+    	//{lat: 51.5077286, lng: -0.1279688, title: "Nelson's Column", popup: "<br><a href=\"https://en.wikipedia.org/wiki/Nelson's_Column\">wp</a>"},
+      {lat: 51.523011, lng: -0.124183, title: "Russel Square"},
+      {lat: 51.499048, lng: -0.1334, title: "St. James's Park tube station, Circle Line, London, United Kingdom"}
+    ]
+  }
+  ,
+  add_delay: 2000
+};
+
+MapWithMarkerListClass.prototype.test_AddSeveralMarkersD = function (loc_name) {
+  this.PageAddressList_Remove();
+  
+  this.test_address_add = {state: 'init'};
+  var location = this.test_address_add.location = this.C.test_address_sets[loc_name];
+  this.test_address_add.addr_set = location.addr_set_a;
+  
+  var latlng = new L.LatLng(location.latlng[0], location.latlng[1]); 
+  this.map_obj.setView(latlng, location.zoom || this.map_zoom_default);
+  
+  //console.clear();
+  this.log_heading1('start timer...');
+  this.test_address_add.timer = window.setInterval(
+    this.test_AddressFill_engine.bind(this), this.C.test_address_sets.add_delay
+  );
+};
+
+MapWithMarkerListClass.prototype.test_AddressFill_engine = function () {
+  var a = this.test_address_add;
+  this.log_heading1('timer tick. state['+a.state+']');
+  
+  switch (a.state) {
+    case 'init':
+      a.index = 0;
+      a.state = (a.location.type == 'strings') ? 'add_string' : 'add_object';
+      if (a.location.type == 'objects') {
+        a.addr_set_keys = Object.keys(a.addr_set);
+      }
+      break;
+      
+    case 'add_string':
+      this.Address_AppendFromString(a.addr_set[a.index]);
+      a.index++;
+      
+      if (a.index >= a.addr_set.length) {
+        a.state = 'finalize';
+      }
+      break;
+
+    case 'add_object':
+      var addr = a.addr_set[a.addr_set_keys[a.index]];
+      this.test_AddMarker(addr.lat, addr.lng, addr.title);
+      a.index++;
+      if (a.index >= a.addr_set_keys.length) {
+        a.state = 'finalize';
+      }
+      break;
+      
+    case 'finalize':
+      //console.clear();
+      a.state = 'wait_all_latlng';
+      break;
+      
+    case 'wait_all_latlng':
+      if (this.AddressList_AllHas_LatLng()) {
+      
+        //this make a sense only for no-pause Add Add Add...
+        //this.MapRouteAll_Remove();
+        //this.MapRouteAll_Publish();
+        
+        window.clearInterval(a.timer);
+      }
+      break;
+      
+  }
+};
+
 MapWithMarkerListClass.prototype.test_AddMarker = function (lat, lng, addr_str) {
   //hackish method
   this.Backend_Geocode_onFulfill( addr_str, {   lat: lat,   lng: lng   } );
 };
 
-MapWithMarkerListClass.prototype.test_AddMarkers_Finalize = function () {
-  //console.clear();
-  
-  this.test_AddRoutes();
-};
-
-MapWithMarkerListClass.prototype.test_AddRoutes = function () {
-  var ok = this.AddressList_AllHas_LatLng();
-  if (ok) {
-    this.MapRouteAll_Remove();
-    this.MapRouteAll_Publish();
-  } else {
-    window.setTimeout(this.test_AddRoutes.bind(this), 1000);
-  }
-};
-
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-MapWithMarkerListClass.prototype.test_AddSeveralMarkers = function () {
-  this.PageAddressList_Remove();
-
-  var london = new L.LatLng(51.5056,-0.1213);
-
-  this.test_AddMarker(51.5006728, -0.1244324, "Big Ben");
-  this.test_AddMarker(51.503308, -0.119623, "London Eye");
-  this.test_AddMarker(51.5077286, -0.1279688, "Nelson's Column");
-  //this.test_AddMarker(51.5077286, -0.1279688, "Nelson's Column<br><a href=\"https://en.wikipedia.org/wiki/Nelson's_Column\">wp</a>");
-  this.test_AddMarker(51.523011, -0.124183, "Russel Square");
-  this.test_AddMarker(51.499048, -0.1334, "St. James's Park tube station, Circle Line, London, United Kingdom");
-
-  this.map_obj.setView(london, 14);
-  this.test_AddMarkers_Finalize();
-};
-
-MapWithMarkerListClass.prototype.test_AddSeveralMarkersB = function () {
-  this.PageAddressList_Remove();
-  
-  this.Address_AppendFromString('микрорайон Сходня, Химки, Московская область, Россия');
-  this.Address_AppendFromString('Долгопрудный, Московская область, Россия');
-  this.Address_AppendFromString('район Чертаново Северное, Южный административный округ, Москва, Россия');
-  this.Address_AppendFromString('Реутов, Московская область, Россия');
-  
-  this.test_AddMarkers_Finalize();
-};
-
-MapWithMarkerListClass.prototype.test_AddSeveralMarkersC = function () {
-  this.PageAddressList_Remove();
-  
-  this.Address_AppendFromString('Петергоф, Санкт-Петербург, Россия');
-  this.Address_AppendFromString('Сестрорецк, Санкт-Петербург, Россия');
-  this.Address_AppendFromString('посёлок городского типа Токсово, Всеволожский район, Ленинградская область, Россия');
-  this.Address_AppendFromString('Отрадное, Кировский район, Ленинградская область, Россия');
-  this.Address_AppendFromString('посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия');
-
-  this.test_AddMarkers_Finalize();
-};
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //=============================================================================

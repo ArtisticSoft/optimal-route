@@ -35,8 +35,8 @@ function RouteAppClass() {
     this.popover_link_share.hidden = false;
   };
   this.link_to_share_btn = document.getElementById('share-link-btn');
-  //this.link_to_share_btn.disabled = true;//поделиться ссылкой можно всегда
   this.link_to_share_btn.addEventListener('click', this.link_to_share_btn_onClick.bind(this));
+  this.link_to_share_btn.disabled = true;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
@@ -67,6 +67,8 @@ function RouteAppClass() {
   //callback для списка адресов
   //ссылка которой можно поделиться изменилась
   this.link_to_share_onChange = function (link) {
+    //console.log('link_to_share_onChange. link['+link+']');
+    
     if (link && link.length) {
       this.link_to_share.innerHTML = link;
       this.link_to_share_btn.disabled = false;
@@ -102,9 +104,9 @@ function RouteAppClass() {
     console.log(this.MapWithMarkerList.address_list_html.dataset.dragAndDrop);
   }
   if (this.document_params.has('testtest_add_files')) {
-    this.MapWithMarkerList.test_AddSeveralMarkersC();//Peterburg
-    //this.MapWithMarkerList.test_AddSeveralMarkersB();//Moscow
-    //this.MapWithMarkerList.test_AddSeveralMarkers();//London
+    this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
+    //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
+    //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
   }
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 

@@ -139,6 +139,46 @@ myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {
   return offset;
 };
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//HTML Element. найти Parent содержаший заданный класс
+
+myUtilsClass.prototype.Element_findParent_hasClass = function (element, class_name, depth_max) {
+  var level = 0;
+  var prnt = element;
+  var is_found;
+  do {
+    prnt = prnt.parentNode;
+    
+    //the key line
+    is_found = prnt ? prnt.classList.contains(class_name) : false;
+    
+    level++;
+  } while (!(is_found || level >= depth_max) && prnt);
+  
+  return {parent: prnt, is_found: is_found};
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//HTML Element. найти Parent содержаший заданное значение атрибута data-*
+//имена эл-тов должны быть в JS формате, не в HTML формате. 
+//например HTML: data-list-size => JS: listSize
+
+myUtilsClass.prototype.Element_findParent_hasDataNameValue = function (element, attr_name, attr_value, depth_max) {
+  var level = 0;
+  var prnt = element;
+  var is_found;
+  do {
+    prnt = prnt.parentNode;
+
+    //the key line
+    is_found = prnt ? (prnt.dataset[attr_name] == attr_value) : false;
+
+    level++;
+  } while (!(is_found || level >= depth_max) && prnt);
+  
+  return {parent: prnt, is_found: is_found};
+};
+
 //-----------------------------------------------------------------------------
 //HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
 
