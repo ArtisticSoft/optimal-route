@@ -361,7 +361,11 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
   
   if (page_uid && page_uid.length) {
     var url = new URL(this.C.protocol + consts.url);
-    url.searchParams.append(consts.query_param, page_uid);
+    if (consts.query_param) {
+      url.searchParams.append(consts.query_param, page_uid);
+    } else {
+      url.pathname += page_uid;
+    }
     this.log('url.href ['+url.href+']');
     link = url.href;
   }
@@ -374,12 +378,18 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
 BackEndClass.prototype._static_properties_init = function () {
   this.log('BackEndClass._static_properties_init');
   
-  this.C.protocol = 'https';
+  this.C.protocol = 'http';
+  //this.C.protocol = 'https';//will be in the future
   
   this.C.timeout_delay = 10000;
     
   /*
   -= ссылка чтобы поделиться =-
+  UPD sept10:
+  надо поменять ссылку, которая формируется для копирования
+  На ссылку следующего формата: http://mini.aurama.ru/p/i68h41l
+  Адрес в строке после /p/ , это md_list
+  Как она получается? Берем базу http://mini.aurama.ru/p/ и добавляем к ней md_list = i68h41l
   
   3) md_list берем из метода «Поиск оптимального маршрута - distribution_address» 
   4) домен - пока созать констату с таким заничением «http://testtest01.itlogist.ru/api/v1/all/route_md_list/?md_list=»
@@ -389,8 +399,10 @@ BackEndClass.prototype._static_properties_init = function () {
   */
   var share = this.C.link_to_share = {};
   share.json_field = 'md_list';
-  share.url = '://testtest01.itlogist.ru/api/v1/all/route_md_list/';
-  share.query_param = 'md_list';
+  share.url = '://mini.aurama.ru/p/';
+  share.query_param = '';
+  //share.url = '://testtest01.itlogist.ru/api/v1/all/route_md_list/';
+  //share.query_param = 'md_list';
 };
 
 //=============================================================================
