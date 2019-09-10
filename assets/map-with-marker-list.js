@@ -270,7 +270,7 @@ MapWithMarkerListClass.prototype.Backend_Geocode_onReject = function (addr_id_tm
   this.PageAddress_FindByIdAndRemove(addr_id_tmp);
 
   //вспомогательный список. удалить ID
-  if (AddressList_getIdList_byWhere('actual').includes(addr_id_tmp)) {
+  if (this.AddressList_getIdList_byWhere('actual').includes(addr_id_tmp)) {
     this.AddressList_Remove(addr_id_tmp, 'actual');
   }
 
