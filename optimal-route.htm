@@ -135,7 +135,7 @@
           <div class="address-list">
             <p class="header">Адреса</p>
             <div class="separator-h"></div>
-            <ul id="address-list" data-drag-and-drop="js-droppable">
+            <ul id="address-list" data-crafted-drag-and-drop="droppable">
               <!-- 
               <li>1. садовая</li>
               <li>2. егорова</li>
@@ -200,7 +200,7 @@
     <div id="popover-link-share" class="popover overlaid" hidden>
       <header>
         <strong>Отправить ссылку</strong>
-        <img id="popover-link-share-close-icon" class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
+        <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
       </header>
 
       <div id="social-networks" class="social-networks">
@@ -230,6 +230,16 @@
         -->
     </div>
 
+  <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+
+    <div id="popover-error" class="popover overlaid" hidden>
+      <header>
+        <strong>Ошибка</strong>
+        <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
+      </header>
+
+      <p id="error-text"></p>
+    </div>
 
   <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
   <!-- скрипты локальные. валидатор: рекомендуется включать их внутри <body>  -->
@@ -237,7 +247,6 @@
     <!-- my additions to LeafLet map lib -->
     <script src="./assets/common/leaflet-my/leaflet-my.js"></script>
     
-
     <script src="./assets/common/myUtils.js"></script>
     <script src="./assets/common/base-classes.js"></script>
     <script src="./assets/common/XHRClass.js"></script>

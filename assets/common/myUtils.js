@@ -40,6 +40,31 @@ myUtilsClass.touch = {
 };
 
 //-----------------------------------------------------------------------------
+//auto-detect the protocol for the current document
+//this is primary for BackEnd requests
+//for the hosting environment
+//
+//the simplest form to get the current protocol:
+//document.location.protocol
+//
+//But this will not work in a local environment
+//document.location.protocol will return [file:]
+//which is not suitable for BackEnd calls
+
+myUtilsClass.http_protocol = {
+  default_val: 'https:',
+  allowed_list: ['http:', 'https:']
+};
+
+myUtilsClass.prototype.http_protocol_detect = function () {
+  var p = document.location.protocol;
+  if (!this.C.http_protocol.allowed_list.includes(p)) {
+    p = this.C.http_protocol.default_val;
+  }
+  return p;
+};
+
+//-----------------------------------------------------------------------------
 //Object. добавить св-ва из другого объекта. одноимённые св-ва будут перезаписаны
 
 myUtilsClass.prototype.Object_AppendFrom = function (obj_to, obj_from) {

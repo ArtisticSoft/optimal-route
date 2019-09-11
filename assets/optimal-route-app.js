@@ -11,11 +11,37 @@ function RouteAppClass() {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //глобальные переменные
 
-  this.document_params = (new URL(document.location)).searchParams;
-
   this.overlay = document.getElementById('overlay');
+
+  this.popover_error = document.getElementById('popover-error');
+
   this.popover_link_share = document.getElementById('popover-link-share');
   this.link_to_share = document.getElementById('link-to-share');
+  console.log('this.link_to_share.tagName['+this.link_to_share.tagName+']');
+  
+  this.popover_onClick = function (e) {
+    console.log('popover_onClick');
+    
+    //кнопка Закрыть в поп-овере
+    if (e.target.classList.contains('close-icon')) {
+      e.currentTarget.hidden = true;
+      this.overlay.hidden = true;
+      e.preventDefault();
+    }
+  };
+  this.popover_error.addEventListener('click', this.popover_onClick.bind(this));
+  this.popover_link_share.addEventListener('click', this.popover_onClick.bind(this));
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//кнопка Копировать в поп-овере
+
+  this.link_copy_btn_onClick = function (e) {
+    console.log('link_copy_btn_onClick');
+    window.getSelection().selectAllChildren(this.link_to_share);
+		document.execCommand('copy');
+  };
+  this.link_copy_btn = document.getElementById('link-copy-btn');
+  this.link_copy_btn.addEventListener('click', this.link_copy_btn_onClick.bind(this));
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //кнопка Поделиться. открывает поп-овер
@@ -43,7 +69,7 @@ function RouteAppClass() {
 
   //---BackEnd  - должен быть первым
   this.BackEnd = new BackEndClass();
-  //this.BackEnd.log_enabled = true;
+  this.BackEnd.log_enabled = true;
   
   this.backend_onReject = function (xhr_obj, is_fulfilled, json) {
     //console.log('backend_onReject');
@@ -53,6 +79,7 @@ function RouteAppClass() {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
 
+  //console.log('SearchWithSuggestons creating...');
   this.SearchWithSuggestons = new SearchWithSuggestonsClass({
     back_end: this.BackEnd,
     input_id: 'address-input', suggestion_dropdown_id: 'address-suggestions', 
@@ -60,6 +87,7 @@ function RouteAppClass() {
   });
   this.SearchWithSuggestons.log_enabled = true;
   //this.SearchWithSuggestons.test_inp_val();
+  //console.log('ok');
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---список адресов
@@ -82,6 +110,7 @@ function RouteAppClass() {
   //задать значение по умолчанию для ссылки которой можно поделиться
   this.link_to_share_onChange(false);
 
+  //console.log('MapWithMarkerList creating...');
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
     
@@ -95,15 +124,12 @@ function RouteAppClass() {
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
   this.MapWithMarkerList.log_enabled = true;
+  //console.log('ok');
 
-  //test cases
-  if (false) {
-    console.log('address_list_html.dataset[drag-and-drop]');
-    //=undefined
-    //console.log(this.MapWithMarkerList.address_list_html.dataset['drag-and-drop']);
-    console.log(this.MapWithMarkerList.address_list_html.dataset.dragAndDrop);
-  }
-  if (this.document_params.has('testtest_add_files')) {
+  //-- test cases
+  //=[?testtest_add_files=1]
+  //console.log('document.location.search ['+document.location.search+']');
+  if (document.location.search.includes('testtest_add_files=1')) {
     this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
@@ -163,29 +189,6 @@ function RouteAppClass() {
     
   };
   this.SearchWithSuggestons.onStateChange = this.Search_onStateChange.bind(this);
-  
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//кнопка Закрыть в поп-овере
-
-  this.popover_close_btn_onClick = function (e) {
-    console.log('popover_close_btn_onClick');
-    this.popover_link_share.hidden = true;
-    this.overlay.hidden = true;
-  };
-  this.popover_close_btn = document.getElementById('popover-link-share-close-icon');
-  this.popover_close_btn.addEventListener('click', this.popover_close_btn_onClick.bind(this));
-  
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//кнопка Копировать в поп-овере
-
-  this.link_copy_btn_onClick = function (e) {
-    console.log('link_copy_btn_onClick');
-    window.getSelection().selectAllChildren(this.link_to_share);
-		document.execCommand('copy');
-  };
-  this.link_copy_btn = document.getElementById('link-copy-btn');
-  this.link_copy_btn.addEventListener('click', this.link_copy_btn_onClick.bind(this));
-
 }
 //-----------------------------------------------------------------------------
 //когда загрузка документа завершена - выполнить onDocumentLoaded

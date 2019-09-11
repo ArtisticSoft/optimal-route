@@ -136,7 +136,7 @@ function BackEndClass() {
   //Подбор адреса
   this.AddressSuggestions = {
     name: 'addr_suggestions',
-    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/search_address/',
+    url: this.C.protocol + '//testtest01.itlogist.ru/api/v1/all/search_address/',
     method: 'GET',
     //список параметров метода. имена параметров берутся отсюда, значения из переданного {...}
     //здесь можно задать значение по умолчанию - для обязательных параметров
@@ -150,7 +150,7 @@ function BackEndClass() {
   //Геокодинг адреса
   this.AddressGeocode = {
     name: 'addr_geocode',
-    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/geocode/',
+    url: this.C.protocol + '//testtest01.itlogist.ru/api/v1/all/geocode/',
     method: 'GET',
     params: {address: undefined, save: ''}
   };
@@ -159,7 +159,7 @@ function BackEndClass() {
   //POST - запрос 
   this.DistributionAddress = {
     name: 'distribution_address',
-    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_address/',
+    url: this.C.protocol + '//testtest01.itlogist.ru/api/v1/all/distribution_address/',
     method: 'POST',
     //переменная address содержит список md_address через запятую , и переменная md_list (если есть)
     params: {address: undefined, md_list: undefined}
@@ -169,7 +169,7 @@ function BackEndClass() {
   //POST - запрос 
   this.DistributionHand = {
     name: 'distribution_hand',
-    url: this.C.protocol + '://testtest01.itlogist.ru/api/v1/all/distribution_hand/',
+    url: this.C.protocol + '//testtest01.itlogist.ru/api/v1/all/distribution_hand/',
     method: 'POST',
     //address содержит список md_address через запятую по порядку, и переменная md_list (если есть)
     params: {address: undefined, md_list: undefined}
@@ -190,7 +190,7 @@ BackEndClass.prototype.SuperClass = GenericBaseClass.prototype;
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 BackEndClass.prototype.XHR_Start = function (method, query, on_resolve, on_reject) {
-  this.log('XHR_Start. method.name ['+method.name+']');
+  this.log_heading3('XHR_Start. method.name ['+method.name+']');
   
   this.log('query');
   this.log(query);
@@ -236,7 +236,7 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_resolve, on_rejec
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 
 BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
-  this.log('XHR_onSettle. is_fulfilled ['+is_fulfilled+']');
+  this.log_heading3('XHR_onSettle. is_fulfilled ['+is_fulfilled+']');
   
   //the flag to call XHR_onReject
   //will =false then calling on_resolve
@@ -308,7 +308,7 @@ BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
 };
 
 BackEndClass.prototype.XHR_onReject = function (xhr_obj, is_fulfilled, json) {
-  this.log('XHR rejected. is_fulfilled['+is_fulfilled+']');
+  this.log_heading4('XHR rejected. is_fulfilled['+is_fulfilled+']');
   
   this.XHR_debug_onRejectDump(xhr_obj, is_fulfilled, json);
   
@@ -324,7 +324,7 @@ BackEndClass.prototype.XHR_onReject = function (xhr_obj, is_fulfilled, json) {
 };
 
 BackEndClass.prototype.XHR_debug_onRejectDump = function (xhr_obj, is_fulfilled, json) {
-  console.log('XHR_debug_onRejectDump. is_fulfilled['+is_fulfilled+']');
+  console.log_heading5('XHR_debug_onRejectDump. is_fulfilled['+is_fulfilled+']');
   
   var xhr = xhr_obj.xhr;
   var handle = xhr_obj.handle;
@@ -347,7 +347,7 @@ BackEndClass.prototype.XHR_debug_onRejectDump = function (xhr_obj, is_fulfilled,
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 BackEndClass.prototype.LinkToShareFromJson = function (json) {
-  this.log('LinkToShareFromJson');
+  this.log_heading6('LinkToShareFromJson');
 
   var consts = this.C.link_to_share;
   var page_uid = json[consts.json_field];
@@ -378,9 +378,12 @@ BackEndClass.prototype.LinkToShareFromJson = function (json) {
 BackEndClass.prototype._static_properties_init = function () {
   this.log('BackEndClass._static_properties_init');
   
-  //this Will conflict with raw links like href="https://unpkg.com/leaflet@1.5.1....
+  //autodetect
+  this.C.protocol = myUtils.http_protocol_detect();
+  //this Might conflict with raw links like href="https://unpkg.com/leaflet@1.5.1....
   //this.C.protocol = 'http';
-  this.C.protocol = 'https';//will be in the future
+  //currently not available on the actual hosting. will be in the future
+  //this.C.protocol = 'https';
   
   this.C.timeout_delay = 10000;
     
@@ -400,7 +403,7 @@ BackEndClass.prototype._static_properties_init = function () {
   */
   var share = this.C.link_to_share = {};
   share.json_field = 'md_list';
-  share.url = '://mini.aurama.ru/p/';
+  share.url = '//mini.aurama.ru/p/';
   share.query_param = '';
   //share.url = '://testtest01.itlogist.ru/api/v1/all/route_md_list/';
   //share.query_param = 'md_list';

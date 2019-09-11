@@ -6,9 +6,12 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 function MapWithMarkerListClass(options) {
+  //this.log_enabled = true;//debug the constructor
+  
   //this.C = this.constructor;
   this.C = MapWithMarkerListClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
+  
   
   this.back_end = options.back_end;
   
@@ -1847,7 +1850,13 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
 
     //NOTE: if site uses HTTPS then tileLayer must use HTTPS too, 
     //else XHR requests for tiles will be blocked by the Browser (FireFox at least)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    
+    //autodetect
+    var protocol = myUtils.http_protocol_detect();
+    this.log('protocol autodetected['+protocol+']');
+
+    //L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer(protocol + '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
       maxZoom: 18
     }).addTo(this.map_obj);
