@@ -164,8 +164,8 @@ XHRClass.prototype._timeout_handler = function (e) {
 //utility
 //assumed to be called from every Load-Ending condition handler
 XHRClass.prototype._load_end_handler = function (name, is_fulfilled, e) {
+  this._load_end_conditon_name = name;//might be used in _pending_leave
   this._pending_leave(is_fulfilled);
-  this._load_end_conditon_name = name;
   this.log('load ends. condition['+name+']');
 }
 	

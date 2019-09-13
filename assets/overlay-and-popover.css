@@ -1,3 +1,4 @@
+/*===========================================================================*/
 
 .overlay {
   /*core Overlay functionality*/
@@ -10,30 +11,52 @@
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-/*can have an arbitrary WH*/
-.popover {
-  /*core popover functionality*/
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+/*---------------------------------------------------------------------------*/
+/*
+an Alert layout
+can have an arbitrary WH
+*/
+
+.alert {
   padding-bottom: 0;/*for full-height inner spacing*/
 /*  padding-bottom: var(--regular-padding-inner);/*only for half-height inner spacing*/
 }
-.popover > * {
+.alert > * {
   margin-bottom: var(--regular-padding);
 }
-.popover > header {
+.alert > header {
   display: flex;
   flex-direction: row;
   align-items: center;
 }
-.popover .close-icon {
+.alert .close-icon {
 /*  align-self: flex-end;/*poor*/
   margin-left: auto;
 }
 
+/*---------------------------------------------------------------------------*/
+/*
+.popover {
 
+}
+*/
+/*---------------------------------------------------------------------------*/
+
+.notificaitons-wrapper {
+  z-index: 10100;
+}
+
+/*
+.error-message {
+
+}
+*/
+
+.error-text {
+  white-space: pre-line;
+}
+
+/*---------------------------------------------------------------------------*/
 
 .social-networks {
   display: flex;
@@ -77,3 +100,4 @@
 .link-to-share > button {
   margin-left: auto;
 }
+/*===========================================================================*/

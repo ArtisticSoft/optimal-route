@@ -101,6 +101,26 @@ myUtilsClass.prototype.Element_Clear = function (element) {
   */
 };
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+myUtilsClass.prototype.Element_childNodes_dumpToString = function (element) {
+  var txt = '--- Element_childNodes_dumpToString  tagName['+element.tagName+'] className['+element.className+']\n';
+  var children = element.childNodes;
+  var s;
+  
+  for (var i = 0; i < children.length; i++) {
+    txt += 'childNodes['+i+'].innerHTML';
+    s = children[i].innerHTML;
+    if (s && s.length) {
+      txt += '\n'+s+'\n';
+    } else {
+      txt += '=['+s+']\n';
+    }
+  }
+  
+  return txt;
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //HTML Element. установить значение 
 //boolean атрибута с именем attr. можно передавать массив имён
 //атрибут добавляется или удаляется в зависимости от bool

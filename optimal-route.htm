@@ -57,6 +57,10 @@
     -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+    <!-- my additions to LeafLet map lib. 
+      if LeafLet <script...> fails, the following line Will fail too 
+      to give a second chance, additions should be included in the fallback - see below -->
+    <script src="./assets/common/leaflet-my/leaflet-my.js"></script>
     
     <!-- LeafLet map lib - local fallback. this is for FireFox -->
     <script>
@@ -64,7 +68,11 @@
         if (!window.L) {
           var el = document.createElement('script');
           el.src = './assets/common/leaflet/leaflet.js';
-          el.async = true;
+          //el.async = true;
+          document.head.appendChild(el);
+          var el = document.createElement('script');
+          el.src = './assets/common/leaflet-my/leaflet-my.js';
+          //el.async = true;
           document.head.appendChild(el);
           console.log('using local fallback for leaflet.js');
         }
@@ -173,7 +181,7 @@
           nav-wrapper содержит стили для flex item,
           это позволяет легко 
           + перенести навигацию в fly-out убрав её из nav-wrapper
-          + перенести навигацию в header убрав сам nav-wrapper
+          + перенести навигацию в header вместе с nav-wrapper, скрыв иконку-гамбургер
           -->
           <div id="nav-wrapper" class="nav-wrapper">
             <nav id="nav-responsive" class="nav-responsive">
@@ -197,7 +205,7 @@
     
     <div id="overlay" class="overlay" hidden></div>
     
-    <div id="popover-link-share" class="popover overlaid" hidden>
+    <div id="popover-link-share" class="popover alert overlaid pos_fixed_center" hidden>
       <header>
         <strong>Отправить ссылку</strong>
         <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
@@ -232,21 +240,20 @@
 
   <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
-    <div id="popover-error" class="popover overlaid" hidden>
-      <header>
-        <strong>Ошибка</strong>
-        <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
-      </header>
+    <div id="notificaitons-wrapper" class="notificaitons-wrapper pos_fixed_bottom_right">
+      <div class="error-message alert overlaid" hidden>
+        <header>
+          <strong>Ошибка</strong>
+          <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
+        </header>
 
-      <p id="error-text"></p>
+        <p class="error-text"></p>
+      </div>
     </div>
-
+    
   <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
   <!-- скрипты локальные. валидатор: рекомендуется включать их внутри <body>  -->
 
-    <!-- my additions to LeafLet map lib -->
-    <script src="./assets/common/leaflet-my/leaflet-my.js"></script>
-    
     <script src="./assets/common/myUtils.js"></script>
     <script src="./assets/common/base-classes.js"></script>
     <script src="./assets/common/XHRClass.js"></script>

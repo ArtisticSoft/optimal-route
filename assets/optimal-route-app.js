@@ -13,24 +13,29 @@ function RouteAppClass() {
 
   this.overlay = document.getElementById('overlay');
 
-  this.popover_error = document.getElementById('popover-error');
+  this.notificaitons_wrapper = document.getElementById('notificaitons-wrapper');
+  //this can't be done with simple .childNodes[0]
+  this.notificaiton_template = this.notificaitons_wrapper.getElementsByClassName('error-message')[0];
 
   this.popover_link_share = document.getElementById('popover-link-share');
   this.link_to_share = document.getElementById('link-to-share');
-  console.log('this.link_to_share.tagName['+this.link_to_share.tagName+']');
   
-  this.popover_onClick = function (e) {
-    console.log('popover_onClick');
+  this.overlaid_onClick = function (e) {
+    console.log('overlaid_onClick');
     
     //кнопка Закрыть в поп-овере
+    var classes = e.currentTarget.classList;
     if (e.target.classList.contains('close-icon')) {
-      e.currentTarget.hidden = true;
-      this.overlay.hidden = true;
+      if (classes.contains('popover')) {
+        e.currentTarget.hidden = true;
+        this.overlay.hidden = true;
+      } else if (classes.contains('error-message')) {
+        e.currentTarget.parentNode.removeChild(e.currentTarget);
+      }
       e.preventDefault();
     }
   };
-  this.popover_error.addEventListener('click', this.popover_onClick.bind(this));
-  this.popover_link_share.addEventListener('click', this.popover_onClick.bind(this));
+  this.popover_link_share.addEventListener('click', this.overlaid_onClick.bind(this));
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //кнопка Копировать в поп-овере
@@ -71,11 +76,39 @@ function RouteAppClass() {
   this.BackEnd = new BackEndClass();
   this.BackEnd.log_enabled = true;
   
-  this.backend_onReject = function (xhr_obj, is_fulfilled, json) {
-    //console.log('backend_onReject');
+  this.backend_onReject = function (xhr_obj, txt) {
+    //-- new Notification = template.Clone
+    var notification = this.notificaiton_template.cloneNode(true);
+    //console.log('notification.constructor.name['+notification.constructor.name+']');
+    var error_text = notification.getElementsByClassName('error-text')[0];
+    error_text.innerHTML = txt;
+    notification.hidden = false;
+    //this.overlay.hidden = false;//this is for pop-ups only
+    //the first Notification will be appended below the Template
+    this.notificaitons_wrapper.appendChild(notification);
+    notification.addEventListener('click', this.overlaid_onClick.bind(this));
+    
+    //-- prevent overflow
+    var wrapper_style = window.getComputedStyle(this.notificaitons_wrapper);
+    //Note: getComputedStyle.height has String format '150px'
+    console.log('wrapper_style.height['+wrapper_style.height +'] window.innerHeight['+window.innerHeight+'] window.outerHeight['+window.outerHeight+']');
+    if (parseFloat(wrapper_style.height, 10) > window.innerHeight) {
+      //remove the Topmost child except the Template
+      var notifications = this.notificaitons_wrapper.getElementsByClassName('error-message');
+      this.notificaitons_wrapper.removeChild(notifications[1]);
+    }
   };
   this.BackEnd.onReject = this.backend_onReject.bind(this);
 
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//---навигация адаптивная
+//должна быть перед картой чтобы инициализация карты не задерживала адаптивное размщение навигации
+
+  this.NavigationOnDemand = new NavigationOnDemandClass({
+  });
+  this.NavigationOnDemand.log_enabled = true;
+  this.NavigationOnDemand.NavPlaceResponsive();
+  
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
 
@@ -136,13 +169,6 @@ function RouteAppClass() {
   }
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//---навигация адаптивная
-
-  this.NavigationOnDemand = new NavigationOnDemandClass({
-  });
-  //this.NavigationOnDemand.log_enabled = true;
-  this.NavigationOnDemand.NavPlaceResponsive();
-  
   //---социальные сети
   this.SocialNetworks = new SocialNetworksClass({
     list_id: 'social-networks', 

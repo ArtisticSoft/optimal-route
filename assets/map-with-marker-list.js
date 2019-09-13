@@ -29,6 +29,7 @@ function MapWithMarkerListClass(options) {
   this.polylines_pool = [];
 
   //--- Список адресов. ключевой объект на странице
+  //from console Application.MapWithMarkerList.address_list_html.childNodes.length
   this.address_list_html = document.getElementById(options.address_list_id);
   this.PageAddressList_Remove();
   
@@ -506,7 +507,7 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
 
 //обновить состояние кнопки Оптимизировать
 MapWithMarkerListClass.prototype.route_optimize_btn_state_update = function () {
-  this.route_optimize_btn.disabled = !this.address_list_html.hasChildNodes();
+  this.route_optimize_btn.disabled = this.address_list_html.childNodes.length < 2;
 };
 
 //-----------------------------------------------------------------------------
@@ -746,14 +747,14 @@ MapWithMarkerListClass.prototype.AddressList_findId_byTitle = function (title) {
   }
   return id;
 };
-  
+
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //у всех ли адресов есть координаты?
 //эта проверка имеет смысл если используется отложенное добавление адреса
 //используется например для рисования линий на карте
 
 MapWithMarkerListClass.prototype.AddressList_AllHas_LatLng = function () {
-  this.log('AddressList_AllHas_LatLng');
+  this.log_heading6('AddressList_AllHas_LatLng');
   
   var ok = true;
   var keys = Object.keys(this.address_list);
@@ -1909,28 +1910,30 @@ MapWithMarkerListClass.prototype.MapExists = function () {
 
 MapWithMarkerListClass.prototype.MapIconsPool_Create = function (color) {
   //this.log_enabled = true;
-  
-  var pool = this.map_icons_pool[color] = [];
-  
-  var icon_cls = myMapIconClass;
-  var suffix;
-  
-  //var formatter = new Intl.NumberFormat('en-US', {style: 'decimal', minimumIntegerDigits: 2});
 
-  //начать с 1. при этом иконка с номером "0" будет пропущена
-  //индекс массива 0 будет соответствовать иконке с номером 1
-  for (var i = this.C.address_list.label.idx_base; i <= 99; i++) {
-    suffix = i;
-    //suffix = formatter.format(i);
-    //this.log(suffix);
+  //LeafLet library sometimes NA. guard against it
+  if (myMapIconClass) {
+    var pool = this.map_icons_pool[color] = [];
+    
+    var icon_cls = myMapIconClass;
+    var suffix;
+    
+    //var formatter = new Intl.NumberFormat('en-US', {style: 'decimal', minimumIntegerDigits: 2});
 
-    pool.push(new myMapIconClass({
-      colorPath: color,
-      iconUrl: icon_cls.file_name_base + suffix + icon_cls.file_name_ext,
-      iconRetinaUrl: icon_cls.file_name_base_retina + suffix + icon_cls.file_name_ext
-    }));
+    //начать с 1. при этом иконка с номером "0" будет пропущена
+    //индекс массива 0 будет соответствовать иконке с номером 1
+    for (var i = this.C.address_list.label.idx_base; i <= 99; i++) {
+      suffix = i;
+      //suffix = formatter.format(i);
+      //this.log(suffix);
+
+      pool.push(new myMapIconClass({
+        colorPath: color,
+        iconUrl: icon_cls.file_name_base + suffix + icon_cls.file_name_ext,
+        iconRetinaUrl: icon_cls.file_name_base_retina + suffix + icon_cls.file_name_ext
+      }));
+    }
   }
-  
 };
 
 //var myTestIcon = new myMapIconClass();
@@ -2361,7 +2364,8 @@ MapWithMarkerListClass.test_address_sets = {
     ]
   }
   ,
-  add_delay: 2000
+  add_delay: 2000,
+  finalization_timeout: 3
 };
 
 MapWithMarkerListClass.prototype.test_AddSeveralMarkersD = function (loc_name) {
@@ -2415,16 +2419,22 @@ MapWithMarkerListClass.prototype.test_AddressFill_engine = function () {
     case 'finalize':
       //console.clear();
       a.state = 'wait_all_latlng';
+      a.finalization_tmr = 0;
       break;
       
     case 'wait_all_latlng':
-      if (this.AddressList_AllHas_LatLng()) {
+      a.finalization_tmr++;
+      var timeout = a.finalization_tmr >= this.C.test_address_sets.finalization_timeout;
+      if (this.AddressList_AllHas_LatLng() || timeout) {
       
         //this make a sense only for no-pause Add Add Add...
         //this.MapRouteAll_Remove();
         //this.MapRouteAll_Publish();
         
         window.clearInterval(a.timer);
+      }
+      if (timeout) {
+        this.log('test: finished by timeout');
       }
       break;
       

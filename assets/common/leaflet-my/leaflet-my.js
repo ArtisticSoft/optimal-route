@@ -16,6 +16,12 @@ image
 https://leafletjs.com/examples/custom-icons/leaf-shadow.png
 */
 
+//sometimes LeafLet library not attached properly. guard against it
+//[window.L] works, simple [L] is not
+if (!window.L) {
+  console.error('LeafLet library not available');
+} else {
+
 //copy-paste from example
 var myMapIconClass = L.Icon.extend({
 	options: {
@@ -51,6 +57,8 @@ myMapIconClass.file_name_ext = '.png';
 myMapIconClass.file_name_base = 'marker-icon-';
 myMapIconClass.file_name_base_retina = 'marker-icon-2x-';
 
+}
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 /*
 //copy-paste from example
 var myMapIconClass = L.Icon.extend({
@@ -83,7 +91,7 @@ var myMapIconClass = IconDefault.extend({
 //var redIcon = new myMapIconClass({iconUrl: 'leaf-red.png'});
 //var orangeIcon = new myMapIconClass({iconUrl: 'leaf-orange.png'});
 //-----------------------------------------------------------------------------
-/*using tooltip and permanent
+/*using tooltip and permanent - works but Poor solution
 
 howTo bind to a marker:
  * marker.bindTooltip("my tooltip text").openTooltip();
