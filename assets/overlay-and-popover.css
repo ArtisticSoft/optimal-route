@@ -79,7 +79,7 @@ can have an arbitrary WH
 
 .link-to-share {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;/*for very narrow screens only*/
   align-items: center;
 
   padding: var(--regular-padding);
@@ -89,15 +89,16 @@ can have an arbitrary WH
   background-color: var(--share-link-url-background-clr);
 }
 .link-to-share > p {
-  margin-right: var(--regular-padding);
-/*  border: var(--regular-border);*/
+  margin-bottom: var(--regular-padding);/*column stack only*/
+/*  margin-right: var(--regular-padding);/*one-row only*/
+/*  border: var(--regular-border);/*debug*/
 
   /*не разбивать на строки и скрыть строку если выступает за пределы*/
   white-space: nowrap;
   overflow: hidden;
-  max-width: 8rem;/*to fit into smartphone screen W*/
+  max-width: 15rem;/*to fit into smartphone screen W*/
 }
 .link-to-share > button {
-  margin-left: auto;
+/*  margin-left: auto;/*one-row only*/
 }
 /*===========================================================================*/

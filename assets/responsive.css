@@ -70,7 +70,7 @@ the Main breakpoint on the page sits between xs & sm
   }
   
   .link-to-share > p {
-    max-width: 15rem;/*to fit into screen W = sm */
+    max-width: 17rem;/*to fit into screen W = sm. must be > default val, defined in overlay-and-popover.css*/
   }
 }
 
@@ -81,6 +81,17 @@ the Main breakpoint on the page sits between xs & sm
     flex-direction: row;
   }
 
+  .link-to-share {
+    flex-direction: row;
+  }
+  .link-to-share > p {
+    margin-bottom: 0;/*column stack only*/
+    margin-right: var(--regular-padding);/*one-row only*/
+  }
+  .link-to-share > button {
+    margin-left: auto;/*one-row only*/
+  }
+  
 }
 
 @media (min-width: 992px) {

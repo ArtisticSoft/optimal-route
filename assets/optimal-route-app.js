@@ -51,6 +51,8 @@ function RouteAppClass() {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //кнопка Поделиться. открывает поп-овер
 
+  //this.link_to_share_debug = true;
+
   this.link_to_share_btn_onClick = function (e) {
     console.log('link_to_share_btn_onClick');
     
@@ -67,7 +69,7 @@ function RouteAppClass() {
   };
   this.link_to_share_btn = document.getElementById('share-link-btn');
   this.link_to_share_btn.addEventListener('click', this.link_to_share_btn_onClick.bind(this));
-  this.link_to_share_btn.disabled = true;
+  this.link_to_share_btn.disabled = !this.link_to_share_debug;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
@@ -128,7 +130,7 @@ function RouteAppClass() {
   //callback для списка адресов
   //ссылка которой можно поделиться изменилась
   this.link_to_share_onChange = function (link) {
-    //console.log('link_to_share_onChange. link['+link+']');
+    console.log('link_to_share_onChange. link['+link+']');
     
     if (link && link.length) {
       this.link_to_share.innerHTML = link;
@@ -136,7 +138,9 @@ function RouteAppClass() {
       //кнопкa Поделиться будет разрешена после формирования первой не-пустой ссылки
       this.link_to_share_btn.disabled = false;
     } else {
-      this.link_to_share.innerHTML = '';
+      if (!this.link_to_share_debug) {
+        this.link_to_share.innerHTML = '';
+      }
       this.link_copy_btn.disabled = true;
       //требование заказчика
       //не запрещать кнопку Поделиться
