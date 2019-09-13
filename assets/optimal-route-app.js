@@ -132,9 +132,16 @@ function RouteAppClass() {
     
     if (link && link.length) {
       this.link_to_share.innerHTML = link;
+      this.link_copy_btn.disabled = false;
+      //кнопкa Поделиться будет разрешена после формирования первой не-пустой ссылки
       this.link_to_share_btn.disabled = false;
     } else {
-      this.link_to_share_btn.disabled = true;
+      this.link_to_share.innerHTML = '';
+      this.link_copy_btn.disabled = true;
+      //требование заказчика
+      //не запрещать кнопку Поделиться
+      //this.link_to_share_btn.disabled = true;
+      
       //требование заказчика
       //не использовать
       //this.link_to_share.innerHTML = window.location.href;//fallback
