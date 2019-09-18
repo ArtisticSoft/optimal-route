@@ -57,6 +57,13 @@
     -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js" integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og==" crossorigin=""></script>
+    
+    <!-- leaflet-routing-machine = LeafLet plugin for Routes -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <!-- my additions to leaflet-routing-machine. -->
+    <link rel="stylesheet" href="./assets/common/leaflet-my/leaflet-routing-machine-my.css" />
+
     <!-- my additions to LeafLet map lib. 
       if LeafLet <script...> fails, the following line Will fail too 
       to give a second chance, additions should be included in the fallback - see below -->
@@ -189,9 +196,9 @@
                   <li id="nav-hide-btn" class="close-icon clickable" hidden>
                     <img src = "./assets/images/close-gray.svg" alt="x"/>
                   </li>
-                  <li><a href="">О&nbsp;проекте</a></li>
-                  <li><a href="">Контакты</a></li>
-                  <li><a href="">Помощь</a></li>
+                  <li><a id="nav-about" class="clickable">О&nbsp;проекте</a></li>
+                  <li><a id="nav-contacts" class="clickable">Контакты</a></li>
+                  <li><a id="nav-help" class="clickable">Помощь</a></li>
               </ul>
             </nav>
           </div>
@@ -239,6 +246,35 @@
         <!-- 
       <p>нажмите Ctrl-C чтобы скопировать ссылку</p>
         -->
+    </div>
+
+  <!--   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -->
+
+    <div id="popover-about" class="popover alert overlaid pos_fixed_center" hidden>
+      <header>
+        <strong>О проекте</strong>
+        <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
+      </header>
+
+      <div class="about-content">
+        здесь должен быть текст О проекте
+      </div>
+    </div>
+
+  <!--   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -->
+
+    <div id="popover-help" class="popover alert overlaid pos_fixed_center" hidden>
+      <header>
+        <strong>Помощь</strong>
+        <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
+      </header>
+
+      <div class="help-content">
+        <iframe width="560" height="315" 
+          src="https://www.youtube-nocookie.com/embed/zBCbbXlVOhs" frameborder="0" 
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+        </iframe>
+      </div>
     </div>
 
   <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->

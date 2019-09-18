@@ -74,6 +74,10 @@ function RouteAppClass() {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
 
+  //---OSRM BackEnd
+  //this.OSRMBackEnd = new OSRMBackEndClass();
+  //this.OSRMBackEnd.log_enabled = true;
+
   //---BackEnd  - должен быть первым
   this.BackEnd = new BackEndClass();
   this.BackEnd.log_enabled = true;
@@ -101,15 +105,39 @@ function RouteAppClass() {
     }
   };
   this.BackEnd.onReject = this.backend_onReject.bind(this);
+  //this.OSRMBackEnd.onReject = this.backend_onReject.bind(this);
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---навигация адаптивная
-//должна быть перед картой чтобы инициализация карты не задерживала адаптивное размщение навигации
+//должна быть перед картой чтобы инициализация карты не задерживала адаптивное размeщение навигации
 
   this.NavigationOnDemand = new NavigationOnDemandClass({
   });
   this.NavigationOnDemand.log_enabled = true;
   this.NavigationOnDemand.NavPlaceResponsive();
+  
+  this.navigation_items = {
+    'nav-about': 'popover-about',
+    'nav-contacts': '',
+    'nav-help': 'popover-help',
+  };
+  this.navigation_item_onClick = function (e) {
+    console.log('navigation_item_onClick');
+    var popover_id = this.navigation_items[e.target.id];
+    if (popover_id && popover_id.length) {
+      this.overlay.hidden = false;
+      document.getElementById(popover_id).hidden = false;
+    }
+  };
+  var keys = Object.keys(this.navigation_items);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    document.getElementById(k).addEventListener('click', this.navigation_item_onClick.bind(this));
+    var popover_id = this.navigation_items[k];
+    if (popover_id && popover_id.length) {
+      document.getElementById(popover_id).addEventListener('click', this.overlaid_onClick.bind(this));
+    }
+  }
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
@@ -174,9 +202,9 @@ function RouteAppClass() {
   //=[?testtest_add_files=1]
   //console.log('document.location.search ['+document.location.search+']');
   if (document.location.search.includes('testtest_add_files=1')) {
-    this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
+    //this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
-    //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
+    this.MapWithMarkerList.test_AddSeveralMarkersD('London');
   }
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 

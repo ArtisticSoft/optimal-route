@@ -118,7 +118,7 @@ XHRClass.prototype._load_handler = function (e) {
 				this.log('responseType ['+resp_typ +']');
 				switch (resp_typ){
 					case 'json':
-						//this.log('response body= ...\n' + VUtils.VariableToString(this.xhr.response));
+						//this.log('response body= ...\n' + VariableToString(this.xhr.response));
 						break;
 						
 					case '':

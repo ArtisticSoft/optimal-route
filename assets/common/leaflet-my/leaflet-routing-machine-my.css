@@ -1,0 +1,4 @@
+/*скрыть не только текстовый список пунктов но и контейнер*/
+.leaflet-control-container .leaflet-routing-container-hide {
+    display: none;
+}

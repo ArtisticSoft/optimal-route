@@ -76,6 +76,7 @@ the same for
 
     Негативный: {"result":0}
     Позитивный:
+minor mis-inforamation: md_address is actually address_md
     {
     "lat":"58.528716",
     "lng":"31.280524",
@@ -334,7 +335,7 @@ BackEndClass.prototype.XHR_debug_onRejectDump_toString = function (xhr_obj, is_f
   
   if (is_fulfilled) {
     txt += '--- json\n';
-    txt += json;
+    txt += json.toString();
     //this.log('response dump...');
     //this.log(xhr_obj.xhr.response);
   } else {
