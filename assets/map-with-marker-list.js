@@ -12,7 +12,6 @@ function MapWithMarkerListClass(options) {
   this.C = MapWithMarkerListClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
   
-  
   this.back_end = options.back_end;
   
   //--- Карта. ключевой объект на странице
@@ -370,8 +369,8 @@ MapWithMarkerListClass.prototype.address_delete_onClick = function (e) {
   var addr_id = this.PageAddress_IdFromEvent(e);
   var addr = this.address_list[addr_id];
   
-  //удалить из представления на карте. До удаления из модели
-  this.MapUpdate_AddressRemove(addr);
+  //представление на карте. удалить. До удаления из модели
+  this.MapUpdate_AddressRemoveBefore(addr_id);
   
   //удалить из представления на странице
   this.PageAddress_Remove(addr);
@@ -382,6 +381,9 @@ MapWithMarkerListClass.prototype.address_delete_onClick = function (e) {
   //перенумеровать список адресов
   this.AddressList_LabelsRefresh();
   
+  //представление на карте. обновить
+  this.MapUpdate_AddressRemoveAfter(addr_id);
+
   this.AddressList_AfterChange();//здесь будет обновлено состояние кнопки Оптимизировать
 };
 
@@ -1720,7 +1722,9 @@ MapWithMarkerListClass.prototype.TouchEvent_dump = function (e) {
 MapWithMarkerListClass.prototype.MapUpdate_AddressAppend = function (addr_id) {
   switch (this.map_options.renderer) {
     case 'routing-lib':
-      this.MapRoutingLib_AddressAppend(addr_id);
+      this.MapRoutingLib_AllPublish();
+      //Not work :(
+      //this.MapRoutingLib_AddressAppend(addr_id);
       break;
       
     case 'crafted':
@@ -1732,10 +1736,14 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressAppend = function (addr_id) {
   }
 };
 
-MapWithMarkerListClass.prototype.MapUpdate_AddressRemove = function (addr_id) {
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveBefore = function (addr_id) {
   switch (this.map_options.renderer) {
     case 'routing-lib':
-      this.MapRoutingLib_AddressRemove(addr_id);
+      this.MapRoutingLib_AllRemove();
+      //Not work :(
+      //this.MapRoutingLib_AddressRemove(addr_id);
       break;
       
     case 'crafted':
@@ -1746,10 +1754,25 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressRemove = function (addr_id) {
   }
 };
 
+MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveAfter = function (addr_id) {
+  switch (this.map_options.renderer) {
+    case 'routing-lib':
+      this.MapRoutingLib_AllPublish();
+      break;
+      
+    case 'crafted':
+      break;
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
 MapWithMarkerListClass.prototype.MapUpdate_AddressMoveBefore = function (addr_id) {
   switch (this.map_options.renderer) {
     case 'routing-lib':
-      this.MapRoutingLib_AddressMoveBefore(addr_id);
+      this.MapRoutingLib_AllRemove();
+      //Not work :(
+      //this.MapRoutingLib_AddressMoveBefore(addr_id);
       break;
       
     case 'crafted':
@@ -1762,7 +1785,9 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveBefore = function (addr_id
 MapWithMarkerListClass.prototype.MapUpdate_AddressMoveAfter = function (addr_id) {
   switch (this.map_options.renderer) {
     case 'routing-lib':
-      this.MapRoutingLib_AddressMoveAfter(addr_id);
+      this.MapRoutingLib_AllPublish();
+      //Not work :(
+      //this.MapRoutingLib_AddressMoveAfter(addr_id);
       break;
       
     case 'crafted':
@@ -1771,6 +1796,8 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveAfter = function (addr_id)
       break;
   }
 };
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
 MapWithMarkerListClass.prototype.MapUpdate_AllSortBefore = function () {
   switch (this.map_options.renderer) {
@@ -1797,22 +1824,6 @@ MapWithMarkerListClass.prototype.MapUpdate_AllSortAfter = function () {
       break;
   }
 };
-
-/*
-Abandoned
-MapWithMarkerListClass.prototype.MapUpdate_AllRemove = function () {
-  switch (this.map_options.renderer) {
-    case 'routing-lib':
-      this.MapRoutingLib_AllRemove();
-      break;
-      
-    case 'crafted':
-      //удалить все линии маршрутов
-      this.MapRoute_AllRemove();
-      break;
-  }
-};
-*/
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //добавить маркер на карту
@@ -2127,7 +2138,6 @@ MapWithMarkerListClass.prototype.MapRoute_AllRemove = function () {
 
 MapWithMarkerListClass.prototype.MapRoute_Publish = function (addr_id) {
   this.log_heading4('MapRoute_Publish');
-  return;
   
   //this.Map_debug_Route_AllDump('Before');
 
@@ -2173,7 +2183,6 @@ MapWithMarkerListClass.prototype.MapAddress_RouteRemove = function (addr_id) {
 //нарисовать линию маршрута по паре ID
 MapWithMarkerListClass.prototype.MapRoute_PublishFromTo = function (from_id, to_id) {
   this.log_heading5('MapRoute_PublishFromTo. from_id['+from_id+'] to_id['+to_id+']');
-  return;
   
   var from = this.address_list[from_id];
   var to = this.address_list[to_id];
@@ -2438,6 +2447,8 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AllPublish = function () {
   }
   
   this.MapRoutingLib_NeedObject(waypoints);
+  //i am not sure 
+  //this.LeafletRoutingMachine.route();
 };
 
 MapWithMarkerListClass.prototype.MapRoutingLib_NeedObject = function (waypoints) {
@@ -2454,8 +2465,27 @@ MapWithMarkerListClass.prototype.MapRoutingLib_NeedObject = function (waypoints)
     
     //hide the overlaid list of route intermediate points
     this.LeafletRoutingMachine.hide();
+
+    //=object with serviceUrl = https://router.project-osrm.org/route/v1
+    //this.log('LeafletRoutingMachine.getRouter()');
+    //this.log(this.LeafletRoutingMachine.getRouter());
+    
+    //=undefined
+    //this.log('LeafletRoutingMachine.getRouter().serviceUrl['+this.LeafletRoutingMachine.getRouter().serviceUrl+']');
   }
 };
+
+/*
+Abandoned
+//dirty hack: delete routing control. currently this is the only way to see the Routes
+MapWithMarkerListClass.prototype.MapRoutingLib_HackIt = function () {
+  this.log_heading3('MapRoutingLib_HackIt');
+  
+  if (this.LeafletRoutingMachine) {
+    this.LeafletRoutingMachine.remove();
+  }
+};
+*/
 
 MapWithMarkerListClass.prototype.MapRoutingLib_AllRemove = function () {
   this.log_heading3('MapRoutingLib_AllRemove');
@@ -2495,7 +2525,7 @@ MapWithMarkerListClass.prototype.MapRoutingLib_createMarker = function (i, waypo
   mrk.on('click', this.map_marker_onClick.bind(this));
   
   //маркер. название
-  //mrk.bindTooltip(String(addr.title), {}).openTooltip();//tooltip = address
+  mrk.bindTooltip(String(addr.title), {}).openTooltip();//tooltip = address
   //mrk.bindPopup(addr.title);
   
   if (this.map_options.marker.on_publish.pan) {
@@ -2507,19 +2537,36 @@ MapWithMarkerListClass.prototype.MapRoutingLib_createMarker = function (i, waypo
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+/*
+Not works with spliceWaypoints. the easy way is to use setWaypoints for the full addr list
 
 MapWithMarkerListClass.prototype.MapRoutingLib_AddressAppend = function (addr_id) {
   this.log_heading3('MapRoutingLib_AddressAppend');
+
   var addr = this.address_list[addr_id];
+  var latlng = L.latLng(addr.lat, addr.lng);
+  
+  //this.log('addr');
+  //this.log(addr);
+  //this.log('latlng');
+  //this.log(latlng);
+
   if (this.LeafletRoutingMachine) {
-    this.LeafletRoutingMachine.spliceWaypoints(-1, 0, L.latLng(addr.lat, addr.lng));
+    this.LeafletRoutingMachine.spliceWaypoints(-1, 0, latlng);
+    //i am not sure. this actually Not helps in case Waypoints contains at least one ghost point
+    //this.LeafletRoutingMachine.route();
   } else {
-    this.MapRoutingLib_NeedObject([L.latLng(addr.lat, addr.lng)]);
+    this.MapRoutingLib_NeedObject([latlng]);
   }
 };
+*/
+
+/*
+All
+Abandoned
 
 MapWithMarkerListClass.prototype.MapRoutingLib_AddressRemove = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressRemove');
+  this.log_heading3('MapRoutingLib_AddressRemove. addr_id['+addr_id+']');
   var i = this.MapRoutingLib_AddressGetIndex(addr_id);
   if (i >= 0) {
     this.LeafletRoutingMachine.spliceWaypoints(i, 1);
@@ -2529,18 +2576,20 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AddressRemove = function (addr_id
 };
 
 MapWithMarkerListClass.prototype.MapRoutingLib_AddressMoveBefore = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressMoveBefore');
+  this.log_heading3('MapRoutingLib_AddressMoveBefore. addr_id['+addr_id+']');
   this.MapRoutingLib_AddressRemove(addr_id);
 };
 
 MapWithMarkerListClass.prototype.MapRoutingLib_AddressMoveAfter = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressMoveAfter');
+  this.log_heading3('MapRoutingLib_AddressMoveAfter. addr_id['+addr_id+']');
   var addr = this.address_list[addr_id];
   var i = this.Address_getIndex(addr_id, 'actual');
   this.LeafletRoutingMachine.spliceWaypoints(i, 0, L.latLng(addr.lat, addr.lng));
 };
 
 MapWithMarkerListClass.prototype.MapRoutingLib_AddressGetIndex = function (addr_id) {
+  //this.log_heading4('MapRoutingLib_AddressGetIndex. addr_id['+addr_id+']');
+  
   var addr = this.address_list[addr_id];
   var idx = -1;
   var waypoints = this.LeafletRoutingMachine.getWaypoints();
@@ -2554,7 +2603,7 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AddressGetIndex = function (addr_
   }
   return idx;
 };
-
+*/
 //-----------------------------------------------------------------------------
 
 MapWithMarkerListClass.prototype._static_properties_init = function () {
@@ -2611,11 +2660,11 @@ MapWithMarkerListClass.test_address_sets = {
     latlng: [59.939095,30.315868],
     type: 'strings',
     addr_set_a: [
-      'Петергоф, Санкт-Петербург, Россия',
       'Сестрорецк, Санкт-Петербург, Россия',
       'посёлок городского типа Токсово, Всеволожский район, Ленинградская область, Россия',
       'Отрадное, Кировский район, Ленинградская область, Россия',
-      'посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия'
+      'посёлок Шушары, Пушкинский район, Санкт-Петербург, Россия',
+      'Петергоф, Санкт-Петербург, Россия'
     ]
   }
   ,

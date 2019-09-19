@@ -80,7 +80,7 @@ function RouteAppClass() {
 
   //---BackEnd  - должен быть первым
   this.BackEnd = new BackEndClass();
-  this.BackEnd.log_enabled = true;
+  //this.BackEnd.log_enabled = true;
   
   this.backend_onReject = function (xhr_obj, txt) {
     //-- new Notification = template.Clone
@@ -202,9 +202,9 @@ function RouteAppClass() {
   //=[?testtest_add_files=1]
   //console.log('document.location.search ['+document.location.search+']');
   if (document.location.search.includes('testtest_add_files=1')) {
-    //this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
+    this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
-    this.MapWithMarkerList.test_AddSeveralMarkersD('London');
+    //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
   }
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
