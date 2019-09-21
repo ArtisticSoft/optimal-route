@@ -6,6 +6,8 @@
 
 function myUtilsClass() {
   this.C = myUtilsClass;
+  
+  this.log_enabled = true;
 }
 
 //константы класса
@@ -62,6 +64,14 @@ myUtilsClass.prototype.http_protocol_detect = function () {
     p = this.C.http_protocol.default_val;
   }
   return p;
+};
+
+//-----------------------------------------------------------------------------
+
+myUtilsClass.prototype.log = function (msg) {
+  if (this.log_enabled) {
+    console.log(msg);
+  }
 };
 
 //-----------------------------------------------------------------------------
@@ -289,6 +299,24 @@ myUtilsClass.prototype.Node_getSiblingByIdx = function (node, idx) {
 myUtilsClass.prototype.touch_isIdValid = function (id) {
   var invalid_types = ['null', 'boolean', 'object'];
   return !(id === undefined || id === null || invalid_types.indexOf(typeof id) >= 0);
+};
+
+//-----------------------------------------------------------------------------
+//для отладки. распечатка размеров окна и документа
+//from console: 
+//myUtils.debug_window_sizes_dump();
+
+myUtilsClass.prototype.debug_window_sizes_dump = function (id) {
+  //space available for page inside a browser window
+  this.log('document.documentElement.clientWidth['+document.documentElement.clientWidth+'] clientHeight['+document.documentElement.clientHeight+']');
+
+  //Display size unmodified. for example 1920 x 1080
+  this.log('window.screen.width['+window.screen.width+'] height['+window.screen.height+']');
+
+  //Display size available for applications, including browser. 
+  //for Windows, some part of Height occupied by the Taskbar. 
+  //for example, for Win7 theme 1920 x 1040 (full H 1080). for classic theme this will slightly differ
+  this.log('window.screen.availWidth['+window.screen.availWidth+'] availHeight['+window.screen.availHeight+']');
 };
 
 //-----------------------------------------------------------------------------

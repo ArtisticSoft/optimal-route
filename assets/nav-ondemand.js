@@ -53,11 +53,8 @@ NavigationOnDemandClass.prototype = new GenericBaseClass();//inherit from
 NavigationOnDemandClass.prototype.SuperClass = GenericBaseClass.prototype;
 
 //-----------------------------------------------------------------------------
-//адаптивность: расположить навигацию в зависимости от ширины viewport
+//Внешний интерфейс
 //-----------------------------------------------------------------------------
-//Note: здесь изменяется только положение меню вцелом
-//  многие стили влияющие на содержание меню
-//  меняются не здесь а в CSS
 
 //interface for external calls
 //the call Not included in the Constructor
@@ -65,6 +62,20 @@ NavigationOnDemandClass.prototype.SuperClass = GenericBaseClass.prototype;
 NavigationOnDemandClass.prototype.NavPlaceResponsive = function () {
   this.window_onOrientationchange();
 };
+
+//close Navigation if it is opened as a popover
+NavigationOnDemandClass.prototype.close = function () {
+  if (!this.nav_hide_btn.hidden) {
+    this.nav_hide_btn_onClick();
+  }
+};
+
+//-----------------------------------------------------------------------------
+//адаптивность: расположить навигацию в зависимости от ширины viewport
+//-----------------------------------------------------------------------------
+//Note: здесь изменяется только положение меню вцелом
+//  многие стили влияющие на содержание меню
+//  меняются не здесь а в CSS
 
 NavigationOnDemandClass.prototype._NavPlaceResponsiveDetermine = function () {
   this.log('NavPlaceResponsive');

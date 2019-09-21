@@ -8,6 +8,13 @@
 
 function RouteAppClass() {
 
+  this.log_enabled = true;
+  this.log = function (msg) {
+    if (this.log_enabled) {
+      console.log(msg);
+    }
+  };
+
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //глобальные переменные
 
@@ -138,6 +145,7 @@ function RouteAppClass() {
     console.log('navigation_item_onClick');
     var popover_id = this.navigation_items[e.target.id];
     if (popover_id && popover_id.length) {
+      this.NavigationOnDemand.close();//close nav if it is opened as a popover
       this.overlaid_Show(document.getElementById(popover_id));
     }
   };
@@ -163,13 +171,21 @@ function RouteAppClass() {
   this.navigation_help_onClick = function (e) {
     console.log('navigation_help_onClick');
     
+    this.NavigationOnDemand.close();//close nav if it is opened as a popover
+    
     //start video. the 1st param = tag.ID to insert <iframe> into
     if (!this.help_video_player) {
       //create player. it will be started in onReady handler
+      //regular size w640 h390 ratio = 
       console.log('creating video player');
+      this.log('document.documentElement.clientWidth['+document.documentElement.clientWidth+']');
+      var padding = 20;//cludge. must match the actual padding for popover
+      var w = Math.min(document.documentElement.clientWidth - 2 * padding, 640);
+      //kinida cludge. assume WH ratio always = 16:9
+      var h = Math.round(w * 9 / 16);
       this.help_video_player = new YT.Player('help-video', {
-        height: '390',
-        width: '640',
+        height: Number(h).toString(),
+        width: Number(w).toString(),
         videoId: 'zBCbbXlVOhs',
         events: {
           'onReady': this.onPlayerReady.bind(this),
