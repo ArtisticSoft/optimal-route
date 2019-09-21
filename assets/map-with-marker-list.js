@@ -592,6 +592,8 @@ MapWithMarkerListClass.prototype.MapRoute_Render = function () {
   this.route_data.polyline = L.polyline(waypoints, this.C.Map.route.options_actual);
   
   //-- from encoded polyline. this is possible with leaflet.encoded plugin
+  //!!! showstopper bug found in the Encoded: the sequence is severely corrupted at some point
+  //this is revealed in the official validator
   //the backslash '\' should be escaped like this '\' -> '\\'
 
   //minor bug in the Encoded: the last element in the Decoded array always have lng = null
@@ -612,8 +614,9 @@ MapWithMarkerListClass.prototype.MapRoute_Render = function () {
   //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
   //var polyline = L.Polyline.fromEncoded(encoded.replace('\\', '\\\\'));//not works :(
   
-  this.route_data.polyline_xperimental = polyline;
-  polyline.addTo(this.map_obj);
+  //draw the Decoded. currently disabled due to buggy Encoded
+  //this.route_data.polyline_xperimental = polyline;
+  //polyline.addTo(this.map_obj);
   
   //this better draw last
   this.route_data.polyline.addTo(this.map_obj);
