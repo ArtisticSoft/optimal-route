@@ -27,13 +27,17 @@ function MapWithMarkerListClass(options) {
     //могут использоваться различные engine для рисования маркеров и маршрутов
     //
     //possible values 'routing-lib'  'crafted'
-    renderer: 'routing-lib'
+    //renderer: 'routing-lib'
+    renderer: 'crafted'
   };
   this.map_obj = null;//главный объект карты
   this.MapCreate(options.map.id);
   
   //plugin for Leaflet
   this.LeafletRoutingMachine = null;
+  //вызывается при ошибках LeafletRoutingMachine
+  //в будущем возможно будет вызываться при других ошибках
+  this.onError = null;
   
   //иконки маркерами с нарисованным номером 0..99
   this.map_icons_pool = {};
@@ -95,8 +99,13 @@ function MapWithMarkerListClass(options) {
   this.route_optimize_btn = document.getElementById(options.route_optimize_btn_id);
   this.route_optimize_btn.disabled = true;
   this.route_optimize_btn.addEventListener('click', this.route_optimize_btn_onClick.bind(this));
+  //early draft for native routes support
+  this.route_data = {
+    json: null,
+    polyline: null
+  }
   
-  //вызывается не только после оптимизаци маршрута но и после других изменений списка адресов
+  //вызывается не только после оптимизации маршрута но и после других изменений списка адресов
   this.onLinkToShareChanged = null;
 
   //--- ключевой ассоциативный массив 
@@ -128,7 +137,6 @@ function MapWithMarkerListClass(options) {
   
   //--- вспомогательная структура данных для ускорения backend.geocode 
   this.geocode_accelerator = {};
-
   
 }
 
@@ -478,7 +486,7 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
   }
 };
 
-//некоторые методы back-end имеют необязательный параметр md_list 
+//некоторые методы back-end имеют необязательный параметр md_list, по смыслу UID списка адресов
 //включить этот параметр в запрос, если имеется валидное значение
 MapWithMarkerListClass.prototype.Query_includeListUID = function (query) {
   if (this.address_list_uid && this.address_list_uid.length) {
@@ -489,20 +497,36 @@ MapWithMarkerListClass.prototype.Query_includeListUID = function (query) {
 /*
 json sample 
 {
-  "address": {
-    "1": "93c6c7590475e6ad865f3bd63e823319",
-    "2": "de995f447bae6478753b7cd7133fffe7",
-    "3": "d7436ab02856289762f4e029062f3ba7"
+  "result":1,
+  "address":{
+  "1":"38af2f6336175c317199a69a6ed517ad",
+  "2":"b5742034fa159d987c9bd4974b17c9b4",
+  "3":"dc2c4a85b13973866d70f2318204c6a0",
+  "4":"d2977a0e452f1dcc632812db409e3054"
   },
-  "md_list": "efbdfdeb023668bab6c044601346b395",
-  "result": 1
-}
+  "route":{
+    "overview_polyline":"gkylJ_``xDkAdRGPMHo@Ia@OcAUe@?[PwAfCeClEaClE[k@Uk@w@uC_Ka`@WmAoBuHe@kBq@kDiAyFZa@zCiDt@o@nB_C~@{AnBuCLQb@kAJs@Bg@b@cLP_E?W?WxDjAtInCvBn@fCp@pGpB\JDm@|@eQrBk]t@iLBk@`Ct@~DrA`@XjAb@xA`@XyC~HtC|Aj@LJIZE|@H|@JZLPNFNARILQJYF]@cAE_@I[NWH_@~@yD|Lfc@fF|QhCdKlB~GdCdInGvU~@xD`@fBZ~BvBjObDjUxB~N`BvLvIbm@`CrP`BjLLjA?bAK|G]dTU~Sa@pWEpGnHdDnFjCnKhFfAd@xGdDpBfAb@Pj@R^C~FgBr@Yv@c@n@g@z@q@Rp@lAbE`@lA^t@TTJFd@NxHbAvAN|Cf@l@J?P@`@Jl@R^LFX?PIb@g@~CsDlBoBbB}AhGuEXOTCd@BpDj@|Ex@zAR`F|@\NTN`C`C|I`Jh@b@fCpCvAxA~GbHpGnGpCvCdA~@rAnAdAjA~K|KbSdSbDhDrGdHlA`AxAtAL`@F`@Ab@BdAN|@Zn@RPLH\@XIZ]Na@Lg@D_@@}Ad@}@PGxJqBlCa@dGwAbI{AtFy@`KqBrHyA|AKbA@^BhATp@Vt@ZtAz@xArApAbBpB`DjAxBjCvF~BvFzExKtDnJbDxI|BrGhEzMtE|NxArFtCtKzCpKf@hBV^jEtNnDfLxBhI`BtGfCpLPz@nAbJ~A`MdCdPfA`Hz@nGXdEz@lRThH?|@fDrFhK~PlGjKrJ|NnQbXpUt]GzjAfFE@oB?m@cBEAcFu@?SjKy@@?jE@pQ?pO?zD?{D?qOA{Jx@??T",
+    "points_gps":[
+      {
+      "lat":59.93668,
+      "lng":30.31568
+      },
+      {
+      "lat":59.93706,
+      "lng":30.31261
+      }
+    ]
+  },
+"md_list":"3y6x430"
 */
 MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (json) {
   this.log_heading2('Backend_OptimizeRoute_onFulfill');
 
   this.log(json);
   //this.debug_addr_id_list_pair_compare(this.addr_id_list_shadow, json.address);
+
+  this.route_data.json = json;
+  this.MapRoute_Render();
   
   //карта. удалить
   this.MapUpdate_AllSortBefore();
@@ -522,7 +546,75 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
 
 //обновить состояние кнопки Оптимизировать
 MapWithMarkerListClass.prototype.route_optimize_btn_state_update = function () {
+  //должно быть как минимум 2 адреса чтобы был маршрут
+  //не исключено что Оптимизировать имеет смысл только если имеется 3 адреса
   this.route_optimize_btn.disabled = this.address_list_html.childNodes.length < 2;
+};
+
+//реальный маршрут. нативное решение. нарисовать
+/*
+--sample JSON
+
+  "route":{
+    "overview_polyline":"gkylJ_``xDkAdRGPMHo@Ia@OcAUe@?[PwAfCeClEaClE[k@Uk@w@uC_Ka`@WmAoBuHe@kBq@kDiAyFZa@zCiDt@o@nB_C~@{AnBuCLQb@kAJs@Bg@b@cLP_E?W?WxDjAtInCvBn@fCp@pGpB\JDm@|@eQrBk]t@iLBk@`Ct@~DrA`@XjAb@xA`@XyC~HtC|Aj@LJIZE|@H|@JZLPNFNARILQJYF]@cAE_@I[NWH_@~@yD|Lfc@fF|QhCdKlB~GdCdInGvU~@xD`@fBZ~BvBjObDjUxB~N`BvLvIbm@`CrP`BjLLjA?bAK|G]dTU~Sa@pWEpGnHdDnFjCnKhFfAd@xGdDpBfAb@Pj@R^C~FgBr@Yv@c@n@g@z@q@Rp@lAbE`@lA^t@TTJFd@NxHbAvAN|Cf@l@J?P@`@Jl@R^LFX?PIb@g@~CsDlBoBbB}AhGuEXOTCd@BpDj@|Ex@zAR`F|@\NTN`C`C|I`Jh@b@fCpCvAxA~GbHpGnGpCvCdA~@rAnAdAjA~K|KbSdSbDhDrGdHlA`AxAtAL`@F`@Ab@BdAN|@Zn@RPLH\@XIZ]Na@Lg@D_@@}Ad@}@PGxJqBlCa@dGwAbI{AtFy@`KqBrHyA|AKbA@^BhATp@Vt@ZtAz@xArApAbBpB`DjAxBjCvF~BvFzExKtDnJbDxI|BrGhEzMtE|NxArFtCtKzCpKf@hBV^jEtNnDfLxBhI`BtGfCpLPz@nAbJ~A`MdCdPfA`Hz@nGXdEz@lRThH?|@fDrFhK~PlGjKrJ|NnQbXpUt]GzjAfFE@oB?m@cBEAcFu@?SjKy@@?jE@pQ?pO?zD?{D?qOA{Jx@??T",
+    "points_gps":[
+      {
+      "lat":59.93668,
+      "lng":30.31568
+      },
+      {
+      "lat":59.93706,
+      "lng":30.31261
+      }
+    ]
+  },
+*/
+MapWithMarkerListClass.prototype.MapRoute_Render = function () {
+  var encoded = this.route_data.json.route.overview_polyline;
+  var points_arr = this.route_data.json.route.points_gps;
+
+  //delete the existing Route if any
+  if (this.route_data.polyline) {
+    this.route_data.polyline.remove();
+  }
+  if (this.route_data.polyline_xperimental) {
+    this.route_data.polyline_xperimental.remove();
+  }
+  
+  //----- draw a new route
+
+  //-- from points_gps. works
+  var waypoints = [];
+  for (var i = 0; i < points_arr.length; i++) {
+    var wp = points_arr[i];
+    waypoints.push([wp.lat, wp.lng]);
+  }
+  this.route_data.polyline = L.polyline(waypoints, this.C.Map.route.options_actual);
+  this.route_data.polyline.addTo(this.map_obj);
+  
+  //-- from encoded polyline. this is possible with leaflet.encoded plugin
+  //the backslash '\' should be escaped like this '\' -> '\\'
+
+  //minor bug in the Encoded: the last element in the Decoded array always have lng = null
+  var decoded = L.PolylineUtil.decode(encoded.replace('\\', '\\\\'), 5);
+  //this.log('decoded');
+  //this.log(decoded);
+
+  //very rough test. draw only some points
+  var polyline = L.polyline(decoded.slice(0, Math.round(decoded.length / 3)), this.C.Map.route.options_xperimental);
+
+  //draw all points. //not works :(
+  //TypeError: t is null leaflet.js:5:79982
+  //var polyline = L.polyline(decoded.pop());
+
+  //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
+  //var polyline = L.polyline(L.PolylineUtil.decode(encoded.replace('\\', '\\\\'), 5));//not works :(
+
+  //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
+  //var polyline = L.Polyline.fromEncoded(encoded.replace('\\', '\\\\'));//not works :(
+  
+  this.route_data.polyline_xperimental = polyline;
+  polyline.addTo(this.map_obj);
 };
 
 //-----------------------------------------------------------------------------
@@ -660,7 +752,7 @@ MapWithMarkerListClass.prototype.AddressList_LabelsRefresh = function () {
       //обновить представление на странице
       this.PageAddress_setLabel(addr, i);
       //обновить представление на карте
-      this.MapAddress_setLabel(addr, i);
+      this.MapUpdate_MarkerSetLabel(addr, i);
     }
   }
 };
@@ -1825,6 +1917,24 @@ MapWithMarkerListClass.prototype.MapUpdate_AllSortAfter = function () {
   }
 };
 
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+MapWithMarkerListClass.prototype.MapUpdate_MarkerSetLabel = function (addr, i) {
+  switch (this.map_options.renderer) {
+    case 'routing-lib':
+      //не обновлять Label для маркеров
+      //предполагается что весь список маркеров будет
+      //удалён перед изменением списка адресов
+      //заново наполнен после изменения списка адресов
+      break;
+      
+    case 'crafted':
+      //обновить представление на карте
+      this.MapAddress_setLabel(addr, i);
+      break;
+  }
+};
+
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //добавить маркер на карту
 //address - внутреннее представление маркера = элемент this.address_list
@@ -2210,7 +2320,7 @@ MapWithMarkerListClass.prototype.MapRoute_PublishFromToObjects = function (from,
   
   var polyline = L.polyline(
     [[from.lat, from.lng], [to.lat, to.lng]],
-    this.C.Map.route.options_default
+    this.C.Map.route.options_straight
   );
   this.MapLine_Append(polyline);
   
@@ -2463,6 +2573,9 @@ MapWithMarkerListClass.prototype.MapRoutingLib_NeedObject = function (waypoints)
       createMarker: this.MapRoutingLib_createMarker.bind(this)
     }).addTo(this.map_obj);
     
+    //attach event listeners
+    this.LeafletRoutingMachine.on('routingerror', this.MapRoutingLib_onError.bind(this));
+ 
     //hide the overlaid list of route intermediate points
     this.LeafletRoutingMachine.hide();
 
@@ -2472,6 +2585,17 @@ MapWithMarkerListClass.prototype.MapRoutingLib_NeedObject = function (waypoints)
     
     //=undefined
     //this.log('LeafletRoutingMachine.getRouter().serviceUrl['+this.LeafletRoutingMachine.getRouter().serviceUrl+']');
+  }
+};
+
+MapWithMarkerListClass.prototype.MapRoutingLib_onError = function (error) {
+  this.log_heading3('MapRoutingLib_onError');
+
+  this.log('Error argument');
+  this.log(myUtils.Object_toStringPretty(error));
+  
+  if (this.onError) {
+    this.onError('leaflet-routing-machine Error');
   }
 };
 
@@ -2553,8 +2677,6 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AddressAppend = function (addr_id
 
   if (this.LeafletRoutingMachine) {
     this.LeafletRoutingMachine.spliceWaypoints(-1, 0, latlng);
-    //i am not sure. this actually Not helps in case Waypoints contains at least one ghost point
-    //this.LeafletRoutingMachine.route();
   } else {
     this.MapRoutingLib_NeedObject([latlng]);
   }
@@ -2621,8 +2743,14 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
   marker.click_animaiton_delay = 2000;
 
   var route = map.route = {};
-  var opts = route.options_default = {};
+  var opts = route.options_straight = {};
   opts.color = 'red';
+  opts.weight = 2;
+  var opts = route.options_actual = {};
+  opts.color = 'fuchsia';
+  opts.weight = 2;
+  var opts = route.options_xperimental = {};
+  opts.color = 'dodgerblue';
   opts.weight = 2;
   
   //Drag-and-Drop constants 

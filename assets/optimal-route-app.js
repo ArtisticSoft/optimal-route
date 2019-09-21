@@ -20,6 +20,13 @@ function RouteAppClass() {
   this.popover_link_share = document.getElementById('popover-link-share');
   this.link_to_share = document.getElementById('link-to-share');
   
+  //открыть поп-овер
+  this.overlaid_Show = function (overlaid_elem) {
+    this.overlay.hidden = false;
+    overlaid_elem.hidden = false;
+  };
+  
+  //поп-овер. обработчик кликов общего назначения
   this.overlaid_onClick = function (e) {
     console.log('overlaid_onClick');
     
@@ -64,32 +71,22 @@ function RouteAppClass() {
     //select link text
     window.getSelection().selectAllChildren(this.link_to_share);
     
-    this.overlay.hidden = false;
-    this.popover_link_share.hidden = false;
+    this.overlaid_Show(this.popover_link_share);
   };
   this.link_to_share_btn = document.getElementById('share-link-btn');
   this.link_to_share_btn.addEventListener('click', this.link_to_share_btn_onClick.bind(this));
   this.link_to_share_btn.disabled = !this.link_to_share_debug;
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//-----ключевые объекты
+//сообщения об ошибках
 
-  //---OSRM BackEnd
-  //this.OSRMBackEnd = new OSRMBackEndClass();
-  //this.OSRMBackEnd.log_enabled = true;
-
-  //---BackEnd  - должен быть первым
-  this.BackEnd = new BackEndClass();
-  //this.BackEnd.log_enabled = true;
-  
-  this.backend_onReject = function (xhr_obj, txt) {
+  this.notification_new = function (txt) {
     //-- new Notification = template.Clone
     var notification = this.notificaiton_template.cloneNode(true);
     //console.log('notification.constructor.name['+notification.constructor.name+']');
     var error_text = notification.getElementsByClassName('error-text')[0];
     error_text.innerHTML = txt;
     notification.hidden = false;
-    //this.overlay.hidden = false;//this is for pop-ups only
     //the first Notification will be appended below the Template
     this.notificaitons_wrapper.appendChild(notification);
     notification.addEventListener('click', this.overlaid_onClick.bind(this));
@@ -103,6 +100,21 @@ function RouteAppClass() {
       var notifications = this.notificaitons_wrapper.getElementsByClassName('error-message');
       this.notificaitons_wrapper.removeChild(notifications[1]);
     }
+  };
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//-----ключевые объекты
+
+  //---OSRM BackEnd
+  //this.OSRMBackEnd = new OSRMBackEndClass();
+  //this.OSRMBackEnd.log_enabled = true;
+
+  //---BackEnd  - должен быть первым
+  this.BackEnd = new BackEndClass();
+  //this.BackEnd.log_enabled = true;
+  
+  this.backend_onReject = function (xhr_obj, txt) {
+    this.notification_new(txt);
   };
   this.BackEnd.onReject = this.backend_onReject.bind(this);
   //this.OSRMBackEnd.onReject = this.backend_onReject.bind(this);
@@ -118,15 +130,15 @@ function RouteAppClass() {
   
   this.navigation_items = {
     'nav-about': 'popover-about',
-    'nav-contacts': '',
-    'nav-help': 'popover-help',
+    'nav-contacts': ''
+    //this pop-over contains an embedded video. it will be handled individually
+    //,'nav-help': 'popover-help'
   };
   this.navigation_item_onClick = function (e) {
     console.log('navigation_item_onClick');
     var popover_id = this.navigation_items[e.target.id];
     if (popover_id && popover_id.length) {
-      this.overlay.hidden = false;
-      document.getElementById(popover_id).hidden = false;
+      this.overlaid_Show(document.getElementById(popover_id));
     }
   };
   var keys = Object.keys(this.navigation_items);
@@ -138,6 +150,17 @@ function RouteAppClass() {
       document.getElementById(popover_id).addEventListener('click', this.overlaid_onClick.bind(this));
     }
   }
+
+  //pop-over contains an embedded video. it will be handled individually
+  this.navigation_help_onClick = function (e) {
+    console.log('navigation_help_onClick');
+    //prepare video
+    
+    //show it
+    this.overlaid_Show(document.getElementById('popover-help'));
+  };
+  this.nav_help_ref = document.getElementById('nav-help');
+  this.nav_help_ref.addEventListener('click', this.navigation_help_onClick.bind(this));
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
@@ -195,6 +218,7 @@ function RouteAppClass() {
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
+  this.MapWithMarkerList.onError = this.notification_new.bind(this);
   this.MapWithMarkerList.log_enabled = true;
   //console.log('ok');
 

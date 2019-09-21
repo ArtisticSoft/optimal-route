@@ -76,6 +76,15 @@ myUtilsClass.prototype.Object_AppendFrom = function (obj_to, obj_from) {
     obj_to[k] = obj_from[k];
   }
 };
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//some_obj.toString() is useless. it outputs just "[object Object]"
+//but where Is a native function for object pretty format
+
+myUtilsClass.prototype.Object_toStringPretty = function (obj) {
+  return JSON.stringify(obj, null, 2); // spacing level = 2
+};
+
 //-----------------------------------------------------------------------------
 //Document. убрать фокус если он есть и вернуть элемент на котором был фокус
 

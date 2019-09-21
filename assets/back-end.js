@@ -86,26 +86,35 @@ minor mis-inforamation: md_address is actually address_md
     
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 Поиск оптимального маршрута - distribution_address
-
-  URL http://testtest01.itlogist.ru/api/v1/all/distribution_address/ 
-  Пример 
-  POST - запрос 
-  Вход: переменная address содержит список md_address через запятую 
-      UPD sept09: и переменная md_list (если есть)
-  Выход: 
-  Позитивный:
-  {
+URL http://testtest01.itlogist.ru/api/v1/all/distribution_address/ 
+Пример 
+POST - запрос 
+Вход: переменная address содержит список md_address через запятую, и переменная md_list (если есть)
+ 
+Выход: 
+Позитивный:
+{
   "result":1,
-  
   "address":{
-      "1":"87365a03d2013fd966f90011021fd297",
-      "2":"d4abbd70fa959bcbdf39b1185728ec3f",
-      "3":"33ca68b2f84e30afcf6768ed9090e6b6"
-    },
-    
-  "md_list":"e7b145c8d01f4ee3f1c65357b60c727d"
-  }
-  
+  "1":"38af2f6336175c317199a69a6ed517ad",
+  "2":"b5742034fa159d987c9bd4974b17c9b4",
+  "3":"dc2c4a85b13973866d70f2318204c6a0",
+  "4":"d2977a0e452f1dcc632812db409e3054"
+  },
+  "route":{
+    "overview_polyline":"gkylJ_``xDkAdRGPMHo@Ia@OcAUe@?[PwAfCeClEaClE[k@Uk@w@uC_Ka`@WmAoBuHe@kBq@kDiAyFZa@zCiDt@o@nB_C~@{AnBuCLQb@kAJs@Bg@b@cLP_E?W?WxDjAtInCvBn@fCp@pGpB\JDm@|@eQrBk]t@iLBk@`Ct@~DrA`@XjAb@xA`@XyC~HtC|Aj@LJIZE|@H|@JZLPNFNARILQJYF]@cAE_@I[NWH_@~@yD|Lfc@fF|QhCdKlB~GdCdInGvU~@xD`@fBZ~BvBjObDjUxB~N`BvLvIbm@`CrP`BjLLjA?bAK|G]dTU~Sa@pWEpGnHdDnFjCnKhFfAd@xGdDpBfAb@Pj@R^C~FgBr@Yv@c@n@g@z@q@Rp@lAbE`@lA^t@TTJFd@NxHbAvAN|Cf@l@J?P@`@Jl@R^LFX?PIb@g@~CsDlBoBbB}AhGuEXOTCd@BpDj@|Ex@zAR`F|@\NTN`C`C|I`Jh@b@fCpCvAxA~GbHpGnGpCvCdA~@rAnAdAjA~K|KbSdSbDhDrGdHlA`AxAtAL`@F`@Ab@BdAN|@Zn@RPLH\@XIZ]Na@Lg@D_@@}Ad@}@PGxJqBlCa@dGwAbI{AtFy@`KqBrHyA|AKbA@^BhATp@Vt@ZtAz@xArApAbBpB`DjAxBjCvF~BvFzExKtDnJbDxI|BrGhEzMtE|NxArFtCtKzCpKf@hBV^jEtNnDfLxBhI`BtGfCpLPz@nAbJ~A`MdCdPfA`Hz@nGXdEz@lRThH?|@fDrFhK~PlGjKrJ|NnQbXpUt]GzjAfFE@oB?m@cBEAcFu@?SjKy@@?jE@pQ?pO?zD?{D?qOA{Jx@??T",
+    "points_gps":[
+      {
+      "lat":59.93668,
+      "lng":30.31568
+      },
+      {
+      "lat":59.93706,
+      "lng":30.31261
+      }
+    ]
+  },
+"md_list":"3y6x430"
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 Изменение порядка маршрута - distribution_hand
 
@@ -335,7 +344,7 @@ BackEndClass.prototype.XHR_debug_onRejectDump_toString = function (xhr_obj, is_f
   
   if (is_fulfilled) {
     txt += '--- json\n';
-    txt += json.toString();
+    txt += JSON.stringify(json, null, 2); // spacing level = 2. don't use toString() here. it is useless
     //this.log('response dump...');
     //this.log(xhr_obj.xhr.response);
   } else {
@@ -386,7 +395,7 @@ BackEndClass.prototype._static_properties_init = function () {
   //currently not available on the actual hosting. will be in the future
   //this.C.protocol = 'https';
   
-  this.C.timeout_delay = 10000;
+  this.C.timeout_delay = 30 * 1000;
     
   /*
   -= ссылка чтобы поделиться =-
