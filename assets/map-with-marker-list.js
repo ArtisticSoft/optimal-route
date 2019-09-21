@@ -590,7 +590,6 @@ MapWithMarkerListClass.prototype.MapRoute_Render = function () {
     waypoints.push([wp.lat, wp.lng]);
   }
   this.route_data.polyline = L.polyline(waypoints, this.C.Map.route.options_actual);
-  this.route_data.polyline.addTo(this.map_obj);
   
   //-- from encoded polyline. this is possible with leaflet.encoded plugin
   //the backslash '\' should be escaped like this '\' -> '\\'
@@ -615,6 +614,9 @@ MapWithMarkerListClass.prototype.MapRoute_Render = function () {
   
   this.route_data.polyline_xperimental = polyline;
   polyline.addTo(this.map_obj);
+  
+  //this better draw last
+  this.route_data.polyline.addTo(this.map_obj);
 };
 
 //-----------------------------------------------------------------------------
@@ -1840,7 +1842,7 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveBefore = function (addr_
       
     case 'crafted':
       //удалить из представления на карте. До удаления из модели
-      this.MapAddress_MarkerRemove(addr);
+      this.MapAddress_MarkerRemove(this.address_list[addr_id]);
       this.MapAddress_RouteRemove(addr_id);
       break;
   }
