@@ -526,7 +526,6 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   //this.debug_addr_id_list_pair_compare(this.addr_id_list_shadow, json.address);
 
   this.route_data.json = json;
-  this.MapRoute_Render();
   
   //карта. удалить
   this.MapUpdate_AllSortBefore();
@@ -549,77 +548,6 @@ MapWithMarkerListClass.prototype.route_optimize_btn_state_update = function () {
   //должно быть как минимум 2 адреса чтобы был маршрут
   //не исключено что Оптимизировать имеет смысл только если имеется 3 адреса
   this.route_optimize_btn.disabled = this.address_list_html.childNodes.length < 2;
-};
-
-//реальный маршрут. нативное решение. нарисовать
-/*
---sample JSON
-
-  "route":{
-    "overview_polyline":"gkylJ_``xDkAdRGPMHo@Ia@OcAUe@?[PwAfCeClEaClE[k@Uk@w@uC_Ka`@WmAoBuHe@kBq@kDiAyFZa@zCiDt@o@nB_C~@{AnBuCLQb@kAJs@Bg@b@cLP_E?W?WxDjAtInCvBn@fCp@pGpB\JDm@|@eQrBk]t@iLBk@`Ct@~DrA`@XjAb@xA`@XyC~HtC|Aj@LJIZE|@H|@JZLPNFNARILQJYF]@cAE_@I[NWH_@~@yD|Lfc@fF|QhCdKlB~GdCdInGvU~@xD`@fBZ~BvBjObDjUxB~N`BvLvIbm@`CrP`BjLLjA?bAK|G]dTU~Sa@pWEpGnHdDnFjCnKhFfAd@xGdDpBfAb@Pj@R^C~FgBr@Yv@c@n@g@z@q@Rp@lAbE`@lA^t@TTJFd@NxHbAvAN|Cf@l@J?P@`@Jl@R^LFX?PIb@g@~CsDlBoBbB}AhGuEXOTCd@BpDj@|Ex@zAR`F|@\NTN`C`C|I`Jh@b@fCpCvAxA~GbHpGnGpCvCdA~@rAnAdAjA~K|KbSdSbDhDrGdHlA`AxAtAL`@F`@Ab@BdAN|@Zn@RPLH\@XIZ]Na@Lg@D_@@}Ad@}@PGxJqBlCa@dGwAbI{AtFy@`KqBrHyA|AKbA@^BhATp@Vt@ZtAz@xArApAbBpB`DjAxBjCvF~BvFzExKtDnJbDxI|BrGhEzMtE|NxArFtCtKzCpKf@hBV^jEtNnDfLxBhI`BtGfCpLPz@nAbJ~A`MdCdPfA`Hz@nGXdEz@lRThH?|@fDrFhK~PlGjKrJ|NnQbXpUt]GzjAfFE@oB?m@cBEAcFu@?SjKy@@?jE@pQ?pO?zD?{D?qOA{Jx@??T",
-    "points_gps":[
-      {
-      "lat":59.93668,
-      "lng":30.31568
-      },
-      {
-      "lat":59.93706,
-      "lng":30.31261
-      }
-    ]
-  },
-*/
-MapWithMarkerListClass.prototype.MapRoute_Render = function () {
-  var encoded = this.route_data.json.route.overview_polyline;
-  var points_arr = this.route_data.json.route.points_gps;
-
-  //delete the existing Route if any
-  if (this.route_data.polyline) {
-    this.route_data.polyline.remove();
-  }
-  if (this.route_data.polyline_xperimental) {
-    this.route_data.polyline_xperimental.remove();
-  }
-  
-  //----- draw a new route
-
-  //-- from points_gps. works
-  var waypoints = [];
-  for (var i = 0; i < points_arr.length; i++) {
-    var wp = points_arr[i];
-    waypoints.push([wp.lat, wp.lng]);
-  }
-  this.route_data.polyline = L.polyline(waypoints, this.C.Map.route.options_actual);
-  
-  //-- from encoded polyline. this is possible with leaflet.encoded plugin
-  //!!! showstopper bug found in the Encoded: the sequence is severely corrupted at some point
-  //this is revealed in the official validator
-  //the backslash '\' should be escaped like this '\' -> '\\'
-
-  //minor bug in the Encoded: the last element in the Decoded array always have lng = null
-  var decoded = L.PolylineUtil.decode(encoded.replace('\\', '\\\\'), 5);
-  //this.log('decoded');
-  //this.log(decoded);
-
-  //very rough test. draw only some points
-  var polyline = L.polyline(decoded.slice(0, Math.round(decoded.length / 3)), this.C.Map.route.options_xperimental);
-
-  //draw all points. //not works :(
-  //TypeError: t is null leaflet.js:5:79982
-  //var polyline = L.polyline(decoded.pop());
-
-  //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
-  //var polyline = L.polyline(L.PolylineUtil.decode(encoded.replace('\\', '\\\\'), 5));//not works :(
-
-  //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
-  //var polyline = L.Polyline.fromEncoded(encoded.replace('\\', '\\\\'));//not works :(
-  
-  //draw the Decoded. currently disabled due to buggy Encoded
-  //this.route_data.polyline_xperimental = polyline;
-  //polyline.addTo(this.map_obj);
-  
-  //this better draw last
-  this.route_data.polyline.addTo(this.map_obj);
 };
 
 //-----------------------------------------------------------------------------
@@ -1844,6 +1772,9 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveBefore = function (addr_
       break;
       
     case 'crafted':
+      //реальный маршрут. более недействителен
+      this.MapUpdate_RouteReal_Invalidate();
+      
       //удалить из представления на карте. До удаления из модели
       this.MapAddress_MarkerRemove(this.address_list[addr_id]);
       this.MapAddress_RouteRemove(addr_id);
@@ -1858,6 +1789,8 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveAfter = function (addr_i
       break;
       
     case 'crafted':
+      //реальный маршрут. более был то нарисовать что-нибудь взамен
+      this.MapUpdate_RouteReal_needFallback();
       break;
   }
 };
@@ -1873,6 +1806,9 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveBefore = function (addr_id
       break;
       
     case 'crafted':
+      //реальный маршрут. более недействителен
+      this.MapUpdate_RouteReal_Invalidate();
+
       //удалить линии маршрутов
       this.MapAddress_RouteRemove(addr_id);
       break;
@@ -1888,9 +1824,32 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveAfter = function (addr_id)
       break;
       
     case 'crafted':
+      //реальный маршрут. более был то нарисовать что-нибудь взамен
+      this.MapUpdate_RouteReal_needFallback();
+      
       //добавить новые линии маршрутов
       this.MapRoute_Publish(addr_id);
       break;
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+//реальный маршрут. более недействителен
+//но если он был то вместо него нужно будет нарисовать прямые линии после изменения модели
+MapWithMarkerListClass.prototype.MapUpdate_RouteReal_Invalidate = function (addr_id) {
+  if (this.MapRouteReal_isAvailable()) {
+    this.MapRouteReal_AllInvalidate();
+    this.MapUpdate_RouteReal_rqFallback = true;
+  }
+};
+
+//реальный маршрут. более был то нарисовать что-нибудь взамен
+MapWithMarkerListClass.prototype.MapUpdate_RouteReal_needFallback = function (addr_id) {
+  if (this.MapUpdate_RouteReal_rqFallback) {
+    //добавить все линии маршрутов
+    this.MapRoute_AllPublish();
+    this.MapUpdate_RouteReal_rqFallback = false;
   }
 };
 
@@ -1905,6 +1864,9 @@ MapWithMarkerListClass.prototype.MapUpdate_AllSortBefore = function () {
     case 'crafted':
       //удалить все линии маршрутов
       this.MapRoute_AllRemove();
+      //реальный маршрут. более недействителен
+      //не требуется, он всё равно удалится перед новой отрисовкой
+      //this.MapRouteReal_AllInvalidate();
       break;
   }
 };
@@ -1916,8 +1878,13 @@ MapWithMarkerListClass.prototype.MapUpdate_AllSortAfter = function () {
       break;
       
     case 'crafted':
-      //добавить все линии маршрутов
-      this.MapRoute_AllPublish();
+      if (this.MapRouteReal_isAvailable()) {
+        //реальный маршрут. нарисовать
+        this.MapRouteReal_AllPublish();
+      } else {
+        //добавить все линии маршрутов
+        this.MapRoute_AllPublish();
+      }
       break;
   }
 };
@@ -2731,6 +2698,120 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AddressGetIndex = function (addr_
   return idx;
 };
 */
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//Маршруты реальные - нативное решение
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//codename = MapRouteReal
+
+//реальный маршрут. нарисовать
+/*
+--sample JSON
+
+  "route":{
+    "overview_polyline":"gkylJ_``xDkAdRGPMHo@Ia@OcAUe@?[PwAfCeClEaClE[k@Uk@w@uC_Ka`@WmAoBuHe@kBq@kDiAyFZa@zCiDt@o@nB_C~@{AnBuCLQb@kAJs@Bg@b@cLP_E?W?WxDjAtInCvBn@fCp@pGpB\JDm@|@eQrBk]t@iLBk@`Ct@~DrA`@XjAb@xA`@XyC~HtC|Aj@LJIZE|@H|@JZLPNFNARILQJYF]@cAE_@I[NWH_@~@yD|Lfc@fF|QhCdKlB~GdCdInGvU~@xD`@fBZ~BvBjObDjUxB~N`BvLvIbm@`CrP`BjLLjA?bAK|G]dTU~Sa@pWEpGnHdDnFjCnKhFfAd@xGdDpBfAb@Pj@R^C~FgBr@Yv@c@n@g@z@q@Rp@lAbE`@lA^t@TTJFd@NxHbAvAN|Cf@l@J?P@`@Jl@R^LFX?PIb@g@~CsDlBoBbB}AhGuEXOTCd@BpDj@|Ex@zAR`F|@\NTN`C`C|I`Jh@b@fCpCvAxA~GbHpGnGpCvCdA~@rAnAdAjA~K|KbSdSbDhDrGdHlA`AxAtAL`@F`@Ab@BdAN|@Zn@RPLH\@XIZ]Na@Lg@D_@@}Ad@}@PGxJqBlCa@dGwAbI{AtFy@`KqBrHyA|AKbA@^BhATp@Vt@ZtAz@xArApAbBpB`DjAxBjCvF~BvFzExKtDnJbDxI|BrGhEzMtE|NxArFtCtKzCpKf@hBV^jEtNnDfLxBhI`BtGfCpLPz@nAbJ~A`MdCdPfA`Hz@nGXdEz@lRThH?|@fDrFhK~PlGjKrJ|NnQbXpUt]GzjAfFE@oB?m@cBEAcFu@?SjKy@@?jE@pQ?pO?zD?{D?qOA{Jx@??T",
+    "points_gps":[
+      {
+      "lat":59.93668,
+      "lng":30.31568
+      },
+      {
+      "lat":59.93706,
+      "lng":30.31261
+      }
+    ]
+  },
+*/
+MapWithMarkerListClass.prototype.MapRouteReal_AllPublish = function () {
+  this.log_heading3('MapRouteReal_AllPublish');
+  
+  var encoded = this.route_data.json ? this.route_data.json.route.overview_polyline : null;
+  var points_arr = this.route_data.json ? this.route_data.json.route.points_gps : null;
+
+  //delete the existing Route if any
+  this.MapRouteReal_AllRemove();
+  
+  //----- draw a new route
+
+  //-- from points_gps. works
+  if (points_arr) {
+    var waypoints = [];
+    for (var i = 0; i < points_arr.length; i++) {
+      var wp = points_arr[i];
+      waypoints.push([wp.lat, wp.lng]);
+    }
+    this.route_data.polyline = L.polyline(waypoints, this.C.Map.route.options_actual);
+  } else {
+    this.route_data.polyline = null;
+  }
+  
+  
+  //-- from encoded polyline. this is possible with leaflet.encoded plugin
+  //!!! showstopper bug found in the Encoded: the sequence is severely corrupted at some point
+  //this is revealed in the official validator
+  //the backslash '\' should be escaped like this '\' -> '\\'
+  if (encoded) {
+    //minor bug in the Encoded: the last element in the Decoded array always have lng = null
+    var decoded = L.PolylineUtil.decode(encoded.replace('\\', '\\\\'), 5);
+    //this.log('decoded');
+    //this.log(decoded);
+
+    //very rough test. draw only some points
+    var polyline = L.polyline(decoded.slice(0, Math.round(decoded.length / 3)), this.C.Map.route.options_xperimental);
+
+    //draw all points. //not works :(
+    //TypeError: t is null leaflet.js:5:79982
+    //var polyline = L.polyline(decoded.pop());
+
+    //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
+    //var polyline = L.polyline(L.PolylineUtil.decode(encoded.replace('\\', '\\\\'), 5));//not works :(
+
+    //Error: Invalid LatLng object: (60.6082, NaN) leaflet.js:5:6614
+    //var polyline = L.Polyline.fromEncoded(encoded.replace('\\', '\\\\'));//not works :(
+    
+    //draw the Decoded. currently disabled due to buggy Encoded
+    //this.route_data.polyline_xperimental = polyline;
+    //polyline.addTo(this.map_obj);
+  } else {
+    this.route_data.polyline_xperimental = null;
+  }
+  
+  //this better draw last
+  if (this.route_data.polyline) {
+    this.route_data.polyline.addTo(this.map_obj);
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//реальный маршрут. убрать с карты
+
+MapWithMarkerListClass.prototype.MapRouteReal_AllRemove = function () {
+  this.log_heading3('MapRouteReal_AllRemove');
+  
+  //delete the existing Route if any
+  if (this.route_data.polyline) {
+    this.route_data.polyline.remove();
+  }
+  if (this.route_data.polyline_xperimental) {
+    this.route_data.polyline_xperimental.remove();
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+//реальный маршрут. присутствует ли он? 
+//например чтобы рисовать прямые линии если отсутствует
+MapWithMarkerListClass.prototype.MapRouteReal_isAvailable = function () {
+  return (this.route_data.json ? true : false);
+};
+
+//реальный маршрут. более недействителен
+MapWithMarkerListClass.prototype.MapRouteReal_AllInvalidate = function () {
+  this.log_heading3('MapRouteReal_AllInvalidate');
+  
+  this.MapRouteReal_AllRemove();
+  this.route_data.json = null;
+};
+
 //-----------------------------------------------------------------------------
 
 MapWithMarkerListClass.prototype._static_properties_init = function () {
