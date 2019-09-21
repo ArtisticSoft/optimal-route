@@ -26,7 +26,7 @@ function RouteAppClass() {
     overlaid_elem.hidden = false;
   };
   
-  //поп-овер. обработчик кликов общего назначения
+  //поповер \ сообщение. обработчик кликов общего назначения
   this.overlaid_onClick = function (e) {
     console.log('overlaid_onClick');
     
@@ -131,7 +131,7 @@ function RouteAppClass() {
   this.navigation_items = {
     'nav-about': 'popover-about',
     'nav-contacts': ''
-    //this pop-over contains an embedded video. it will be handled individually
+    //this pop-over contains an embedded video. it will requre some xtra listeners
     //,'nav-help': 'popover-help'
   };
   this.navigation_item_onClick = function (e) {
@@ -151,17 +151,63 @@ function RouteAppClass() {
     }
   }
 
-  //pop-over contains an embedded video. it will be handled individually
+  //--- pop-over contains an embedded video. it will be handled individually
+  //the pre-loaded way to start video
+  //  + on page load: create player object with new YT.Player(...)
+  //  + on NavItem click: show popover and start player
+  //
+  //the Hard way to start video
+  //  + on NavItem click: show spinner and create player object with new YT.Player(...)
+  //  + onPlayerReady: hide spinner, show popover and start player
+
   this.navigation_help_onClick = function (e) {
     console.log('navigation_help_onClick');
-    //prepare video
+    
+    //start video. the 1st param = tag.ID to insert <iframe> into
+    if (!this.help_video_player) {
+      //create player. it will be started in onReady handler
+      console.log('creating video player');
+      this.help_video_player = new YT.Player('help-video', {
+        height: '390',
+        width: '640',
+        videoId: 'zBCbbXlVOhs',
+        events: {
+          'onReady': this.onPlayerReady.bind(this),
+          'onStateChange': this.onPlayerStateChange.bind(this)
+        }
+      });
+    } else {
+      console.log('video player already created. start it.');
+      this.help_video_player.playVideo();
+    }
     
     //show it
     this.overlaid_Show(document.getElementById('popover-help'));
   };
   this.nav_help_ref = document.getElementById('nav-help');
   this.nav_help_ref.addEventListener('click', this.navigation_help_onClick.bind(this));
+  this.popover_help = document.getElementById('popover-help');
+  //attach the standard listener to have proper [X] behavior
+  this.popover_help.addEventListener('click', this.overlaid_onClick.bind(this));
+  //attach the custom [X] listener 
+  this.popover_help_onClose = function (e) {
+    console.log('stopping video...');
+    this.help_video_player.stopVideo();
+  }
+  this.popover_help.querySelector('.close-icon').addEventListener('click', this.popover_help_onClose.bind(this));
   
+  this.onPlayerReady = function (event) {
+    //console.log('onPlayerReady() called');
+    console.log('onPlayerReady. starting video...');
+    event.target.playVideo();
+  };
+  
+  this.onPlayerStateChange = function (event) {
+    //console.log('onPlayerStateChange() called');
+    //console.log('event.data String['+YTEventDataToName_Map[event.data]+'] raw['+event.data+']');
+  };
+  
+ 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
 
@@ -279,6 +325,41 @@ function RouteAppClass() {
   };
   this.SearchWithSuggestons.onStateChange = this.Search_onStateChange.bind(this);
 }
+//-----------------------------------------------------------------------------
+
+//syntax error. keys can be only Consts
+//function YTEventDataToString(data) {
+//  if (YT.PlayerState && !window.YTEventDataToString_Map) {
+//    window.YTEventDataToString_Map = {
+//      YT.PlayerState.ENDED :        'ENDED',
+//      YT.PlayerState.PLAYING :      'PLAYING',
+//      YT.PlayerState.PAUSED :       'PAUSED',
+//      YT.PlayerState.BUFFERING :    'BUFFERING',
+//      YT.PlayerState.CUED :         'CUED'
+//    };
+//  }
+//  return window.YTEventDataToString_Map[data];
+//} 
+
+/*
+    -1 (unstarted)
+    0 (ended)
+    1 (playing)
+    2 (paused)
+    3 (buffering)
+    5 (video cued).
+*/
+var YTEventDataToName_Map = {
+  '-1': 'UNSTARTED',
+  0:  'ENDED',
+  1:  'PLAYING',
+  2:  'PAUSED',
+  3:  'BUFFERING',
+  5:  'CUED'
+};
+
+
+
 //-----------------------------------------------------------------------------
 //когда загрузка документа завершена - выполнить onDocumentLoaded
 /*

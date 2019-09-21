@@ -277,11 +277,15 @@
         <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
       </header>
 
-      <div class="help-content">
+      <div id="help-video" class="help-content">
+      <!-- 
+      embed video. simple but not very nice method
+      
         <iframe width="560" height="315" 
           src="https://www.youtube-nocookie.com/embed/zBCbbXlVOhs" frameborder="0" 
           allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
         </iframe>
+        -->
       </div>
     </div>
 
@@ -329,6 +333,16 @@
   </script>
   <noscript><div><img src="https://mc.yandex.ru/watch/55242178" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
   <!-- /Yandex.Metrika counter -->
+
+  <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
+  <!-- скрипты нужные только в некоторых случаях -->
+  
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+      function onYouTubeIframeAPIReady() {
+        console.log('onYouTubeIframeAPIReady() called');
+      }
+    </script>
 
   </body>
 </html>
