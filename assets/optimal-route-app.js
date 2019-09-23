@@ -175,6 +175,7 @@ function RouteAppClass() {
     
     //start video. the 1st param = tag.ID to insert <iframe> into
     if (!this.help_video_player) {
+      var video_element = document.getElementById('help-video');
       //create player. it will be started in onReady handler
       //regular size w640 h390 ratio = 
       console.log('creating video player');
@@ -186,7 +187,7 @@ function RouteAppClass() {
       this.help_video_player = new YT.Player('help-video', {
         height: Number(h).toString(),
         width: Number(w).toString(),
-        videoId: 'zBCbbXlVOhs',
+        videoId: video_element.dataset.helpVideoId,//'zBCbbXlVOhs' - test video
         events: {
           'onReady': this.onPlayerReady.bind(this),
           'onStateChange': this.onPlayerStateChange.bind(this)
