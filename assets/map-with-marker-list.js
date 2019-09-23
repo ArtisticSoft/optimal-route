@@ -2787,7 +2787,7 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
   var opts = route.options_actual = {};
   opts.color = 'red';//customer's requirement
   //opts.color = 'fuchsia';
-  opts.weight = 2 * 3;//customer's requirement
+  opts.weight = 4;//customer's requirement
   var opts = route.options_xperimental = {};
   opts.color = 'dodgerblue';
   opts.weight = 2;
