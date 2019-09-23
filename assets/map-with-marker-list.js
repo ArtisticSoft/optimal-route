@@ -652,6 +652,20 @@ MapWithMarkerListClass.prototype.Address_merge_GeoCode = function (addr_id_tmp, 
   return addr_id;
 };
 
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+MapWithMarkerListClass.prototype.Address_debug_Id_ToStrMin = function (addr_id) {
+  var s = '';
+  if (addr_id) {
+    if (this.address_list[addr_id]) {
+      s = 'addr_id['+addr_id+'] title['+this.address_list[addr_id].title+']\n';
+    } else {
+      s = 'addr_id['+addr_id+'] Not found in address_list\n';
+    }
+  }
+  return s;
+};
+
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //перенумеровать список адресов
 //в том порядке как они расположены на странице
@@ -1756,7 +1770,7 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressAppend = function (addr_id) {
       //карта. добавить маркер
       this.MapAddress_Publish(addr_id, {pan: true});
       //карта. добавить линии до предыдущего + следующего
-      this.MapRoute_Publish(addr_id);
+      this.MapAddress_RoutePublish(addr_id);
       break;
   }
 };
@@ -1824,11 +1838,14 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveAfter = function (addr_id)
       break;
       
     case 'crafted':
-      //реальный маршрут. более был то нарисовать что-нибудь взамен
-      this.MapUpdate_RouteReal_needFallback();
+      //реальный маршрут. если ранее был но стал невалидным 
+      //то нарисовать прямые взамен. если это отрабатывает как надо 
+      //то рисовать отдельно прямые для перемещённого адреса не требуется
+      if (!this.MapUpdate_RouteReal_needFallback()) {
+        //добавить новые линии маршрутов
+        this.MapAddress_RoutePublish(addr_id);
+      }
       
-      //добавить новые линии маршрутов
-      this.MapRoute_Publish(addr_id);
       break;
   }
 };
@@ -1846,11 +1863,13 @@ MapWithMarkerListClass.prototype.MapUpdate_RouteReal_Invalidate = function (addr
 
 //реальный маршрут. более был то нарисовать что-нибудь взамен
 MapWithMarkerListClass.prototype.MapUpdate_RouteReal_needFallback = function (addr_id) {
-  if (this.MapUpdate_RouteReal_rqFallback) {
+  var rq = this.MapUpdate_RouteReal_rqFallback;
+  if (rq) {
     //добавить все линии маршрутов
     this.MapRoute_AllPublish();
     this.MapUpdate_RouteReal_rqFallback = false;
   }
+  return rq;
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
@@ -1865,7 +1884,7 @@ MapWithMarkerListClass.prototype.MapUpdate_AllSortBefore = function () {
       //удалить все линии маршрутов
       this.MapRoute_AllRemove();
       //реальный маршрут. более недействителен
-      //не требуется, он всё равно удалится перед новой отрисовкой
+      //удаление не требуется, он всё равно удалится перед новой отрисовкой
       //this.MapRouteReal_AllInvalidate();
       break;
   }
@@ -2182,7 +2201,8 @@ MapWithMarkerListClass.prototype.MapIconsPool_Create = function (color) {
 MapWithMarkerListClass.prototype.MapRoute_AllPublish = function () {
   this.log_heading3('MapRoute_AllPublish');
 
-  this.polylines_pool = [];
+  //сначала удалить все линии маршрута. это перестраховка т.к обычно линии уже удалены
+  this.MapRoute_AllRemove();
   
   for (var i = 0; i < this.addr_id_list.length; i++) {
     var from_id = this.addr_id_list[i];
@@ -2218,14 +2238,16 @@ MapWithMarkerListClass.prototype.MapRoute_AllRemove = function () {
 //+ необходимо сначала удалить линию предыдущий-следующий если она есть
 //  соседние ID ищутся по this.addr_id_list
 
-MapWithMarkerListClass.prototype.MapRoute_Publish = function (addr_id) {
-  this.log_heading4('MapRoute_Publish');
+MapWithMarkerListClass.prototype.MapAddress_RoutePublish = function (addr_id) {
+  this.log_heading4('MapAddress_RoutePublish addr_id['+addr_id+']');
   
-  //this.Map_debug_Route_AllDump('Before');
-
   var prev_id = this.Address_getPrevId(addr_id, 'actual');
   var next_id = this.Address_getNextId(addr_id, 'actual');
   
+  //this.log(this.Address_debug_Id_ToStrMin(addr_id) + this.Address_debug_Id_ToStrMin(prev_id) + this.Address_debug_Id_ToStrMin(next_id));
+  
+  //this.Map_debug_Route_AllDump('Before');
+
   //удалить линию предыдущий-следующий если она есть
   this.MapRoute_RemoveFromTo(prev_id, next_id);
   
@@ -2244,11 +2266,13 @@ MapWithMarkerListClass.prototype.MapRoute_Publish = function (addr_id) {
 MapWithMarkerListClass.prototype.MapAddress_RouteRemove = function (addr_id) {
   this.log_heading4('MapAddress_RouteRemove addr_id['+addr_id+']');
 
-  //this.Map_debug_Route_AllDump('Before');
-
   var addr = this.address_list[addr_id];
   var prev = addr.map_routes.prev;
   var next = addr.map_routes.next;
+
+  //this.log(this.Address_debug_Id_ToStrMin(addr_id) + this.Address_debug_Id_ToStrMin(prev.addr_id) + this.Address_debug_Id_ToStrMin(next.addr_id));
+
+  //this.Map_debug_Route_AllDump('Before');
 
   //удалить две линии до предыдущего и следующего адресов
   this.MapRoute_RemoveFromToObjects(prev.addr, addr);
@@ -2265,6 +2289,7 @@ MapWithMarkerListClass.prototype.MapAddress_RouteRemove = function (addr_id) {
 //нарисовать линию маршрута по паре ID
 MapWithMarkerListClass.prototype.MapRoute_PublishFromTo = function (from_id, to_id) {
   this.log_heading5('MapRoute_PublishFromTo. from_id['+from_id+'] to_id['+to_id+']');
+  this.log(this.Address_debug_Id_ToStrMin(from_id) + this.Address_debug_Id_ToStrMin(to_id));
   
   var from = this.address_list[from_id];
   var to = this.address_list[to_id];
@@ -2304,21 +2329,31 @@ MapWithMarkerListClass.prototype.MapRoute_PublishFromToObjects = function (from,
 //удалить линию между парой адресов по ID
 MapWithMarkerListClass.prototype.MapRoute_RemoveFromTo = function (from_id, to_id) {
   this.log_heading5('MapRoute_RemoveFromTo. from_id['+from_id+'] to_id['+to_id+']');
+  this.log(this.Address_debug_Id_ToStrMin(from_id) + this.Address_debug_Id_ToStrMin(to_id));
+  
   var from = this.address_list[from_id];
   var to = this.address_list[to_id];
   this.MapRoute_RemoveFromToObjects(from, to);
 };
 //удалить линию между парой адресов по объектам модели
 MapWithMarkerListClass.prototype.MapRoute_RemoveFromToObjects = function (from, to) {
-  //this.log_heading5('MapRoute_RemoveFromToObjects');
+  this.log_heading5('MapRoute_RemoveFromToObjects');
   
-  if (from && to) {
-    if (from.map_routes.next.line == to.map_routes.prev.line && from.map_routes.next.line && to.map_routes.prev.line) {
+  if (from && to && from.map_routes.next.line && to.map_routes.prev.line) {
+    if (from.map_routes.next.line == to.map_routes.prev.line) {
       this.MapLine_Remove(from.map_routes.next.line);
       from.map_routes.next = {};
       to.map_routes.prev = {};
     } else {
-      this.log('warning: line from<->to not match or not exists');
+      this.log('warning: line from<->to not match');
+      this.log('from.title['+from.title+']');
+      this.log('prev= '+this.Address_debug_Id_ToStrMin(from.map_routes.prev.addr_id));
+      this.log('next= '+this.Address_debug_Id_ToStrMin(from.map_routes.next.addr_id));
+      this.log('to.title['+to.title+']');
+      this.log('prev= '+this.Address_debug_Id_ToStrMin(to.map_routes.prev.addr_id));
+      this.log('next= '+this.Address_debug_Id_ToStrMin(to.map_routes.next.addr_id));
+      //this.log('from.map_routes.next.line['+this.Map_debug_Line_getId(from.map_routes.next.line)+']');
+      //this.log('to.map_routes.prev.line['+this.Map_debug_Line_getId(to.map_routes.prev.line)+']');
     }
   }
 };
@@ -2356,11 +2391,14 @@ MapWithMarkerListClass.prototype.MapLine_Remove = function (polyline) {
 MapWithMarkerListClass.prototype.MapLine_AllRemove = function () {
   this.log_heading5('MapLine_AllRemove');
   
+  //удалить с карты
   for (var i = 0; i < this.polylines_pool.length; i++) {
-    //this.log('i['+i+'] polylines_pool[i].id['+this.Map_debug_Line_getId(this.polylines_pool[i])+']');
+    this.log('i['+i+'] polylines_pool[i].id['+this.Map_debug_Line_getId(this.polylines_pool[i])+']');
     this.polylines_pool[i].remove();
   }
-  this.polylines_pool = null;
+
+  //очистить список. должно быть именно [], не '= null' т.к. весь остальной код предполагает polylines_pool = [...]
+  this.polylines_pool = [];
 };
 
 MapWithMarkerListClass.prototype.Map_debug_Line_getId = function (polyline) {
