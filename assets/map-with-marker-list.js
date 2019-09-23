@@ -1762,8 +1762,6 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressAppend = function (addr_id) {
   switch (this.map_options.renderer) {
     case 'routing-lib':
       this.MapRoutingLib_AllPublish();
-      //Not work :(
-      //this.MapRoutingLib_AddressAppend(addr_id);
       break;
       
     case 'crafted':
@@ -1781,8 +1779,6 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveBefore = function (addr_
   switch (this.map_options.renderer) {
     case 'routing-lib':
       this.MapRoutingLib_AllRemove();
-      //Not work :(
-      //this.MapRoutingLib_AddressRemove(addr_id);
       break;
       
     case 'crafted':
@@ -1815,8 +1811,6 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveBefore = function (addr_id
   switch (this.map_options.renderer) {
     case 'routing-lib':
       this.MapRoutingLib_AllRemove();
-      //Not work :(
-      //this.MapRoutingLib_AddressMoveBefore(addr_id);
       break;
       
     case 'crafted':
@@ -1833,8 +1827,6 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressMoveAfter = function (addr_id)
   switch (this.map_options.renderer) {
     case 'routing-lib':
       this.MapRoutingLib_AllPublish();
-      //Not work :(
-      //this.MapRoutingLib_AddressMoveAfter(addr_id);
       break;
       
     case 'crafted':
@@ -2609,18 +2601,6 @@ MapWithMarkerListClass.prototype.MapRoutingLib_onError = function (error) {
   }
 };
 
-/*
-Abandoned
-//dirty hack: delete routing control. currently this is the only way to see the Routes
-MapWithMarkerListClass.prototype.MapRoutingLib_HackIt = function () {
-  this.log_heading3('MapRoutingLib_HackIt');
-  
-  if (this.LeafletRoutingMachine) {
-    this.LeafletRoutingMachine.remove();
-  }
-};
-*/
-
 MapWithMarkerListClass.prototype.MapRoutingLib_AllRemove = function () {
   this.log_heading3('MapRoutingLib_AllRemove');
   
@@ -2670,72 +2650,6 @@ MapWithMarkerListClass.prototype.MapRoutingLib_createMarker = function (i, waypo
   return mrk;
 };
 
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-/*
-Not works with spliceWaypoints. the easy way is to use setWaypoints for the full addr list
-
-MapWithMarkerListClass.prototype.MapRoutingLib_AddressAppend = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressAppend');
-
-  var addr = this.address_list[addr_id];
-  var latlng = L.latLng(addr.lat, addr.lng);
-  
-  //this.log('addr');
-  //this.log(addr);
-  //this.log('latlng');
-  //this.log(latlng);
-
-  if (this.LeafletRoutingMachine) {
-    this.LeafletRoutingMachine.spliceWaypoints(-1, 0, latlng);
-  } else {
-    this.MapRoutingLib_NeedObject([latlng]);
-  }
-};
-*/
-
-/*
-All
-Abandoned
-
-MapWithMarkerListClass.prototype.MapRoutingLib_AddressRemove = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressRemove. addr_id['+addr_id+']');
-  var i = this.MapRoutingLib_AddressGetIndex(addr_id);
-  if (i >= 0) {
-    this.LeafletRoutingMachine.spliceWaypoints(i, 1);
-  } else {
-    this.log('warning: address not found id['+addr_id+']');
-  }
-};
-
-MapWithMarkerListClass.prototype.MapRoutingLib_AddressMoveBefore = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressMoveBefore. addr_id['+addr_id+']');
-  this.MapRoutingLib_AddressRemove(addr_id);
-};
-
-MapWithMarkerListClass.prototype.MapRoutingLib_AddressMoveAfter = function (addr_id) {
-  this.log_heading3('MapRoutingLib_AddressMoveAfter. addr_id['+addr_id+']');
-  var addr = this.address_list[addr_id];
-  var i = this.Address_getIndex(addr_id, 'actual');
-  this.LeafletRoutingMachine.spliceWaypoints(i, 0, L.latLng(addr.lat, addr.lng));
-};
-
-MapWithMarkerListClass.prototype.MapRoutingLib_AddressGetIndex = function (addr_id) {
-  //this.log_heading4('MapRoutingLib_AddressGetIndex. addr_id['+addr_id+']');
-  
-  var addr = this.address_list[addr_id];
-  var idx = -1;
-  var waypoints = this.LeafletRoutingMachine.getWaypoints();
-
-  for (var i = 0; i < waypoints.length; i++) {
-    var wp = waypoints[i];
-    if (addr.lat == wp.latLng.lat && addr.lng == wp.latLng.lng) {
-      idx = i;
-      break;
-    }
-  }
-  return idx;
-};
-*/
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //Маршруты реальные - нативное решение
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2871,8 +2785,9 @@ MapWithMarkerListClass.prototype._static_properties_init = function () {
   opts.color = 'red';
   opts.weight = 2;
   var opts = route.options_actual = {};
-  opts.color = 'fuchsia';
-  opts.weight = 2;
+  opts.color = 'red';//customer's requirement
+  //opts.color = 'fuchsia';
+  opts.weight = 2 * 3;//customer's requirement
   var opts = route.options_xperimental = {};
   opts.color = 'dodgerblue';
   opts.weight = 2;
