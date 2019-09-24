@@ -130,24 +130,17 @@ function MapWithMarkerListClass(options) {
   //используется для оптимизированного обновления представлений
   //
   //для распечатки в консоли
-  //Application.MapWithMarkerList.addr_id_list
-  //Application.MapWithMarkerList.addr_id_list_shadow
-  this.addr_id_list = [];
-  this.addr_id_list_shadow = null;
-  
+  //Application.MapWithMarkerList.address_list_index.actual
+  //Application.MapWithMarkerList.address_list_index.shadow
+  this.address_list_index = {actual:[], shadow: null};
+
   //--- вспомогательная структура данных для ускорения backend.geocode 
-  this.geocode_accelerator = {};
+  this.geocode = {count: 0, cache: []};
   
 }
 
 MapWithMarkerListClass.prototype = new GenericBaseClass();//inherit from
 MapWithMarkerListClass.prototype.SuperClass = GenericBaseClass.prototype;
-
-//авто-увеличивающийся ID для эл-тов списка адресов
-//начальное значение большое чтобы не спутать с порядковым номером эл-та в списке
-//этот механизм работает только для адресов добавленных без использования BackEnd.geocode
-
-MapWithMarkerListClass.address_id_to_assign = 1000;
 
 //-----------------------------------------------------------------------------
 //Добавить Адрес вручную
@@ -176,58 +169,47 @@ MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) 
   //защита от повторных кликов кнопки Добавить
   //сейчас эта защита не актуальна т.к. поле ввода очищается сразу после вызова данного метода
   //но оставлена для красоты
-  if (this.addr_str_to_add_shadow != addr_str && addr_str && addr_str.length) {
+  if (addr_str && addr_str.length && this.addr_str_to_add_shadow != addr_str) {
     this.log('addr_str ['+addr_str+']');
     
     //защита от добавления дубля
     if (!this.AddressList_findId_byTitle(addr_str)) {
 
-      //this.AddressList_debug_Dump();
+      //this.AddressIndex_debug_Dump();
 
-      //информировать приложение что ссылка недействительна
+      //информировать UI что ссылка недействительна
       this.LinkToShare_Set(null);
       
-      //Модель. добавить адрес
+      //Модель. добавить полуготовый адрес
       //добавить неполные данные которые будут дополнены после завершения Backend.Geocode
-      //ID будет назначен временный, при помощи fall-back механизма
-      var addr_id = this.Address_AddFromLatLng(0, 0, addr_str);
-      this.log('temporary addr_id assigned ['+addr_id+']');
-      //отметить что этот адрес полу-готовый чтобы к нему например не создавались линии на карте
-      this.address_list[addr_id].incomplete = true;
+      var addr_id = this.Address_AddFromLatLng(null, null, addr_str);
+      this.log('addr_id assigned ['+addr_id+']');
 
-      //вспомогательный список. добавить ID 
-      this.AddressList_Append(addr_id, 'actual');
-      
       //Список на Странице. добавить адрес
       this.PageAddress_Publish(addr_id);
       
+      //вспомогательный список. добавить ID 
+      this.AddressIndex_Append(addr_id, 'actual');
+      
       //проверить выполнилось ли ускоренное получение результата backend.geocode 
       //или возможно ещё не выполнилось но было запущено
-      if (addr_str == this.geocode_accelerator.wait_for) {
+      var cache_item = this.Backend_Geocode_cacheItemByAddrString(addr_str);
+      if (cache_item) {
         //если результаты backend.geocode готовы то сразу дополнить полу-готовый адрес
-        if (this.geocode_accelerator.json) {
+        if (cache_item.json) {
           this.log('feeling lucky! the GeoCode result is already available');
-          //трюк. имитируется завершение backend.geocode 
-          this.Backend_Geocode_onFulfill(addr_id, this.geocode_accelerator.json);
+          this.Backend_Geocode_AddrFulfill(addr_id, cache_item.json);
         } else {
-          //ускоренное получение результата backend.geocode 
-          //было запущено но пока ещё не выполнилось
-          //отметить что нужен вызов 
-          //Backend_Geocode_onFulfill \ Backend_Geocode_onReject после завершения
-          this.geocode_accelerator.addr_id = addr_id;
-          this.geocode_accelerator.call_settle_on_finish = true;
+          //получение результата backend.geocode было запущено но пока ещё не выполнилось
+          //отметить что нужно дополнить адрес
+          cache_item.addr_id = addr_id;
         }
       } else {
-        //backend.geocode - старт
-        this.back_end.XHR_Start(
-          this.back_end.AddressGeocode, 
-          {address: addr_str}, 
-          this.Backend_Geocode_onFulfill.bind(this, addr_id),
-          this.Backend_Geocode_onReject.bind(this, addr_id)
-        )
+        this.Backend_Geocode_start(addr_str, addr_id);
       }
     } else {
-      this.log('ignored. address already exists');
+      this.log('ignored. address Title already exists');
+      //TODO: callback to UI
     }
     this.addr_str_to_add_shadow = addr_str;
     
@@ -236,134 +218,206 @@ MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) 
   }
 };
 
-//дополнить адрес из структуры данных возвращённой из BackEnd
-//TODO
-//check if this addr_id is already present in the list
-MapWithMarkerListClass.prototype.Backend_Geocode_onFulfill = function (addr_id_tmp, json) {
-  this.log_heading2('Backend_Geocode_onFulfill addr_id_tmp['+addr_id_tmp+']');
-
-  this.log('json');
-  this.log(json);
-
-  //this.AddressList_debug_Dump();
-  
-  //Модель. дополнить данные. ID при этом заменяется
-  //TODO: return not ID but status 'ok' 'duplicate' 'not_found' etc...
-  var addr_id = this.Address_merge_GeoCode(addr_id_tmp, json.address_md, json.lat, json.lng);
-  
-  if (addr_id) {
-    var addr = this.address_list[addr_id];
-
-    //вспомогательный список. заменить ID
-    this.AddressList_Replace(addr_id_tmp, addr_id, 'actual');
-    
-    //Список на Странице. обновить ID
-    this.PageAddress_setId(this.address_list[addr_id].page_element, addr_id);
-    
-    //отметить адрес как полностью сформированный
-    //должно быть до добавления линий
-    delete this.address_list[addr_id].incomplete;
-    
-    //карта. добавить адрес
-    this.MapUpdate_AddressAppend(addr_id);
-    
-    //this.AddressList_debug_Dump();
-    
-    //this.Map_debug_Route_AllDump();
-    
-    this.AddressList_AfterChange();
-  } else {
-    //адрес не найден по addr_id_tmp
-    this.log('Warning: address not found by addr_id_tmp['+addr_id_tmp+']');
-    //удалить полу-готовый адрес
-    this.Backend_Geocode_onReject(addr_id_tmp);
-  }
-}
-
-//backend.geocode завершён неудачно
-//удалить полу-готовый адрес
-//
-//возможно адрес был удалён вручную(например) пока выполнялся запрос к backEnd
-//это значит что удалять полу-готовый адрес необходимо мягко,
-//проверяя сначала его наличие
-MapWithMarkerListClass.prototype.Backend_Geocode_onReject = function (addr_id_tmp) {
-  this.log_heading2('Backend_Geocode_onReject addr_id_tmp['+addr_id_tmp+']');
-
-  //Список на Странице. удалить из
-  //  особый случай. объект возможно уже удалён из модели данных
-  //  по этой причине нельзя использовать обычное удаление по объекту addr
-  this.PageAddress_FindByIdAndRemove(addr_id_tmp);
-
-  //вспомогательный список. удалить ID
-  if (this.AddressList_getIdList_byWhere('actual').includes(addr_id_tmp)) {
-    this.AddressList_Remove(addr_id_tmp, 'actual');
-  }
-
-  //Модель. удалить
-  if (this.address_list[addr_id_tmp]) {
-    delete this.address_list[addr_id_tmp];
-  }
-  
-};
-
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//ускорение backend.geocode 
-//  может запускаться заранее, до добавления адреса
-//  в момент когда пользователь делает выбор из списка предположений
-//
-//addr_str служит уникальным идентификатором запроса к backEnd
-//благодаря этому идентификатору
-//если будет одновремено несколько запросов 
-//то результат выполнения будет учтён только у последнего из запущеных запросов
+//backend geocode. start
+//  addr_id - необязательный параметр. используется для вызова из Address_AppendFromString 
+//  обычно эта ф-я вызывается из Address_Append_earlyPeek. передаётся только addr_str
 
-MapWithMarkerListClass.prototype.Address_Append_earlyPeek = function (addr_str) {
-  this.log_heading2('Address_Append_earlyPeek');
-  this.log('addr_str ['+addr_str+']');
+MapWithMarkerListClass.prototype.Backend_Geocode_start = function (addr_str, addr_id) {
+  this.log_heading3('Backend_Geocode_start. addr_str ['+addr_str+'] addr_id['+addr_id+']');
 
-  this.geocode_accelerator = {wait_for: addr_str};
-  //json=null означает что запрос ещё не завершён
-  this.geocode_accelerator.json = null;
-
+  var cache_id = this.Backend_Geocode_cacheAppend(addr_str);
+  if (addr_id) {
+    this.geocode.cache[cache_id].addr_id = addr_id;
+  }
+  
   //backend.geocode - старт
   this.back_end.XHR_Start(
     this.back_end.AddressGeocode, 
     {address: addr_str}, 
-    this.Backend_Geocode_earlyPeek_onFulfill.bind(this, addr_str),
-    this.Backend_Geocode_earlyPeek_onReject.bind(this, addr_str)
+    this.Backend_Geocode_onFulfill.bind(this, cache_id),
+    this.Backend_Geocode_onReject.bind(this, cache_id)
   )
 };
 
-//сохранить структуру данных возвращённую из BackEnd
-MapWithMarkerListClass.prototype.Backend_Geocode_earlyPeek_onFulfill = function (addr_str, json) {
-  this.log_heading2('Backend_Geocode_earlyPeek_onFulfill');
-  
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//backend.geocode завершён успешно
+//дополнить адрес из структуры данных возвращённой из BackEnd
+
+MapWithMarkerListClass.prototype.Backend_Geocode_onFulfill = function (cache_id, json) {
+  this.log_heading2('Backend_Geocode_onFulfill cache_id['+cache_id+']');
+
   this.log('json');
   this.log(json);
 
-  if (addr_str == this.geocode_accelerator.wait_for) {
-    this.geocode_accelerator.json = json;
-    if (this.geocode_accelerator.call_settle_on_finish) {
-      this.Backend_Geocode_onFulfill(this.geocode_accelerator.addr_id, json);
-    }
+  //this.AddressIndex_debug_Dump();
+  
+  //запомнить результат geocode. это необходимо независимо от того присутствует ли addr_id
+  var cache_item = this.geocode.cache[cache_id];
+  cache_item.json = json;
+  
+  //если присутствует addr_id 
+  //дополнить данные адреса и отобразить недостающие представления
+  if (cache_item.addr_id) {
+    this.Backend_Geocode_AddrFulfill(cache_item.addr_id, json);
   }
 };
 
+//дополнить полу-готовый адрес
+//  возможно адрес был удалён вручную(например) пока выполнялся запрос к backEnd
+//  это значит что дополнять полу-готовый адрес необходимо мягко, проверяя сначала его наличие
+
+MapWithMarkerListClass.prototype.Backend_Geocode_AddrFulfill = function (addr_id, json) {
+  this.log_heading3('Backend_Geocode_AddrFulfill. addr_id['+addr_id+']');
+  
+  //Модель. дополнить данные
+  var merge_status = this.Address_merge_GeoCode(addr_id, json.address_md, json.lat, json.lng);
+  switch (merge_status) {
+    case 'ok':
+      var addr = this.address_list[addr_id];
+
+      //карта. добавить адрес
+      this.MapUpdate_AddressAppend(addr_id);
+      
+      //this.AddressIndex_debug_Dump();
+      
+      //this.Map_debug_Route_AllDump();
+      
+      this.AddressList_AfterChange();
+      break;
+
+    case 'not_found':
+      break;
+
+    case 'duplicate':
+      break;
+  }
+  
+  //если дополнение данных неуспешно - удалить полуготовый адрес
+  if (merge_status != 'ok') {
+    this.log('Warning: Address_merge_GeoCode went wrong. status['+merge_status+']');
+    //удалить полу-готовый адрес
+    this.Backend_Geocode_AddrRollback(addr_id);
+  }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //backend.geocode завершён неудачно
-//
-//в каком случае может быть вызван этот обработчик. последовательность событий
-//
-//+ Address_Append_earlyPeek. [addr_str] remembered, XHR_Start back_end.AddressGeocode
-//+ Address_AppendFromString. [addr_id_tmp] assigned, geocode_accelerator.call_settle_on_finish = true
-//+ back_end.AddressGeocode Failed. the whole Append should be rolled back
 
-MapWithMarkerListClass.prototype.Backend_Geocode_earlyPeek_onReject = function (addr_str) {
-  this.log_heading2('Backend_Geocode_earlyPeek_onReject');
+MapWithMarkerListClass.prototype.Backend_Geocode_onReject = function (cache_id) {
+  this.log_heading2('Backend_Geocode_onReject cache_id['+cache_id+']');
 
-  if (addr_str == this.geocode_accelerator.wait_for) {
-    if (this.geocode_accelerator.call_settle_on_finish) {
-      this.Backend_Geocode_onReject(this.geocode_accelerator.addr_id);
+  var cache_item = this.geocode.cache[cache_id];
+  
+  //удалить полу-готовый адрес, если есть
+  if (cache_item.addr_id) {
+    this.Backend_Geocode_AddrRollback(cache_item.addr_id);
+  }
+  
+  //удалить эл-т cache
+  this.Backend_Geocode_cacheRemove(cache_id);
+};
+
+//удалить полу-готовый адрес
+//  возможно адрес был удалён вручную(например) пока выполнялся запрос к backEnd
+//  это значит что удалять полу-готовый адрес необходимо мягко, проверяя сначала его наличие
+
+MapWithMarkerListClass.prototype.Backend_Geocode_AddrRollback = function (addr_id) {
+  this.log_heading3('Backend_Geocode_AddrRollback. addr_id['+addr_id+']');
+  
+  //Список на Странице. удалить из
+  //  особый случай. объект возможно уже удалён из модели данных
+  //  по этой причине нельзя использовать обычное удаление по объекту addr
+  var elem = this.PageAddress_ElementById(cache_item.addr_id);
+  if (elem) {
+    elem.parentNode.removeChild(elem);
+  }
+
+  //вспомогательный список. удалить ID
+  this.AddressIndex_Remove(cache_item.addr_id, 'actual');//addr_id existance is checked here
+
+  //Модель. удалить
+  this.AddressList_Remove(cache_item.addr_id);//addr_id existance is checked here
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//запускается в момент когда пользователь делает выбор из списка предположений
+//  addr_str служит уникальным идентификатором запроса к backEnd
+
+MapWithMarkerListClass.prototype.Address_Append_earlyPeek = function (addr_str) {
+  this.log_heading2('Address_Append_earlyPeek. addr_str['+addr_str+']');
+  
+  this.Backend_Geocode_start(addr_str);
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//cache для запросов Geocode
+//
+//  эл-ты идентифицируются по индексу, по этой причине удаление из cache 
+//  при помощи splice недопустимо, в том числе при добавлении нового эл-та
+//
+//  запуск Geocode может происходить в 2х местах
+//  + при выборе пользователем адреса из drop-down списка
+//    в этом случае эл-т кэша будет содержать только title в качестве идентификатора
+//    позже может быть добавлен addr_id, в том числе и до завршения запроса
+//  + при клике Добавить адрес
+//    в этом случае эл-т кэша будет содержать только title + addr_id
+//
+//  если запрос завершился неуспешно, эл-т кэша заменяется undefined
+//    это необходимо учитывать например при поиске эл-тов
+
+//Geocode cache. добавить эл-т и вернуть его индекс
+MapWithMarkerListClass.prototype.Backend_Geocode_cacheAppend = function (addr_str) {
+  this.log_heading6('Backend_Geocode_cacheAppend. addr_str['+addr_str+']');
+  
+  var item = {addr_str: addr_str};
+  var cache = this.geocode.cache;
+  
+  cache.push(item);
+  this.geocode.count++;
+  
+  //TODO: if too many elements - delete the oldest
+
+  return cache.length - 1;//return the appended item's index
+};
+
+//Geocode cache. удалить эл-т по индексу
+MapWithMarkerListClass.prototype.Backend_Geocode_cacheRemove = function (cache_id) {
+  this.log_heading6('Backend_Geocode_cacheRemove cache_id['+cache_id+']');
+  
+  //удалить эл-т cache. в cache останется пустота вместо удалённого эл-та
+  //splice в данном случае неприменимо
+  delete this.geocode.cache[cache_id];
+  this.geocode.count--;
+  if (this.geocode.count == 0) {
+    //playing safe. check if all entries are actually undefined
+    var is_all_undefined = true;
+    for (var i = 0; i < this.geocode.cache.length; i++) {
+      if (this.geocode.cache[i]) {
+        is_all_undefined = false;
+        break;
+      }
+    }
+    if (!is_all_undefined) {
+      this.log('warning: Geocode cache. not all entries are empty then they expected to be');
+    }
+    this.geocode.cache = [];
+  }
+};
+
+//найти в cache определённый address.title
+MapWithMarkerListClass.prototype.Backend_Geocode_cacheItemByAddrString = function (addr_str) {
+  this.log_heading6('Backend_Geocode_cacheFindTitle');
+  
+  var item = null;
+  var cache = this.geocode.cache;
+
+  for (var i = 0; i < cache.length; i++) {
+    if (cache[i] && cache[i].addr_str == addr_str) {
+      item = cache[i];
     }
   }
+  return item;
 };
 
 //-----------------------------------------------------------------------------
@@ -436,8 +490,8 @@ MapWithMarkerListClass.prototype.Addresses_ItemMoved = function (element) {
   
   //проверить изменился ли порядок эл-тов
   //бывает что эл-т был перемещён в ту-же самую позицию
-  this.addr_id_list = this.PageAddressList_getIdArray();
-  if (!this.AddressList_ActualEqualShadow()) {
+  this.AddressIndex_ActualUpdate();
+  if (!this.AddressIndex_ActualEqShadow()) {
     var addr_id = this.PageAddress_getId(element);
     
     //карта. удалить
@@ -460,18 +514,18 @@ MapWithMarkerListClass.prototype.Addresses_ItemMoved = function (element) {
 MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
   this.log_heading2('route_optimize_btn_onClick');
   
-  var address_list_joined = this.PageAddressList_getIdArray().join(',');
+  var addr_lst_joined = this.AddressList_getDbIdsJoined();
   
   //защита от повторных кликов кнпоки Оптимизировать
-  if (this.address_lst_to_optimize_shadow != address_list_joined && address_list_joined.length) {
-    this.log('address_list_joined ['+address_list_joined+']');
+  if (this.address_lst_to_optimize_shadow != addr_lst_joined && addr_lst_joined.length) {
+    this.log('addr_lst_joined ['+addr_lst_joined+']');
     
     //информировать приложение что ссылка недействительна
     this.LinkToShare_Set(null);
     
     //запустить сортировку списка адресов. процесс включает в себя promise resolve
     //по завершении будет сформирована новая ссылка
-    var query = {address: address_list_joined};
+    var query = {address: addr_lst_joined};
     this.Query_includeListUID(query);
     
     this.back_end.XHR_Start(
@@ -480,7 +534,7 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
       this.Backend_OptimizeRoute_onFulfill.bind(this)
     )
     
-    this.address_lst_to_optimize_shadow = address_list_joined;
+    this.address_lst_to_optimize_shadow = addr_lst_joined;
   } else {
     this.log('ignored. input data looks the same as previous one');
   }
@@ -523,15 +577,15 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   this.log_heading2('Backend_OptimizeRoute_onFulfill');
 
   this.log(json);
-  //this.debug_addr_id_list_pair_compare(this.addr_id_list_shadow, json.address);
+  //this.debug_addr_id_list_pair_compare(this.AddressIndex_getList('shadow'), json.address);
 
   this.route_data.json = json;
   
   //карта. удалить
   this.MapUpdate_AllSortBefore();
   
-  //пере-сортировать список адресов
-  this.PageAddressList_ReorderByIdAssociativeArray(json.address);
+  //пере-сортировать список адресов. при этом label не изменяются, только переставляются адреса 
+  this.PageAddressList_ReorderByDbIdAssociativeArray(json.address);
   
   //перенумеровать список адресов
   this.AddressList_LabelsRefresh();
@@ -583,10 +637,10 @@ MapWithMarkerListClass.prototype.LinkToShare_Set = function (link) {
 //title - адрес или часть адреса, 
 //  на карте будет отображаться в ToolTip или PopUp
 
-MapWithMarkerListClass.prototype.Address_AddFromLatLng = function (lat, lng, title, addr_id, label_idx) {
+MapWithMarkerListClass.prototype.Address_AddFromLatLng = function (lat, lng, title, db_id, label_idx) {
   //this.log('Address_AddFromLatLng lat lng['+lat+']['+lng+'] title['+title+']');
   
-  addr_id = addr_id || 'address-' + this.C.address_id_to_assign;
+  var addr_id = this.C.address_factory.id_prefix + this.C.address_factory.id_num;
   label_idx = label_idx || Object.keys(this.address_list).length;
   
   if (this.address_list[addr_id]) {
@@ -598,6 +652,8 @@ MapWithMarkerListClass.prototype.Address_AddFromLatLng = function (lat, lng, tit
     lng: lng,
     label_idx: label_idx, 
     title: title,
+    //DB ref
+    db_id: db_id || null,
     //Map refs
     map_marker: null,
     map_routes: {prev: {}, next: {}},
@@ -607,7 +663,7 @@ MapWithMarkerListClass.prototype.Address_AddFromLatLng = function (lat, lng, tit
   
   this.address_list[addr_id] = addr;
   
-  this.C.address_id_to_assign++;
+  this.C.address_factory.id_num++;
 
   //this.log('addr_id=['+addr_id+']');
   //this.log(addr);
@@ -615,41 +671,65 @@ MapWithMarkerListClass.prototype.Address_AddFromLatLng = function (lat, lng, tit
   return addr_id;
 };
 
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //дополнить незавершённый адрес результатом выполнения backend.geocode 
 //
-//нетривиально - необходимо присвоить новый ID
-//
 //при этом учесть что 
-//- такой ID может уже существовать. такое возможно если один и тот-же адрес добавляется второй раз
-//- временный ID может быть не найден. такое возможно если пока выполялся запрос объект был удалён
+//  - такой DB_ID может уже существовать. такое возможно если один и тот-же адрес добавляется второй раз
+//  - addr_id может быть не найден. такое возможно если пока выполялся запрос объект был удалён
 
-MapWithMarkerListClass.prototype.Address_merge_GeoCode = function (addr_id_tmp, addr_id_new, lat, lng) {
-  var addr_id;
-  var addr = this.address_list[addr_id_tmp];
+MapWithMarkerListClass.prototype.Address_merge_GeoCode = function (addr_id, addr_db_id, lat, lng) {
+  var status = 'ok';
+  var addr = this.address_list[addr_id];
 
   //пока выполнялся метод BackEnd, данные которого переданы данной ф-ии
   //адрес мог быть удалён. проверка на это
   if (addr) {
-    //дополнить данные
-    addr.lat = lat;
-    addr.lng = lng;
-    
-    //заменить ID в модели
-    //сначала проверить существует ли уже такой ID который требуется merge
-    if (!this.address_list[addr_id_new]) {
-      this.address_list[addr_id_new] = addr;
-      delete this.address_list[addr_id_tmp];
-      addr_id = addr_id_new;
+    //проверить существует ли уже такой DB_ID который требуется merge
+    var maybe_duplicate_id = this.AddressList_findId_byDbId(addr_db_id);
+    if (maybe_duplicate_id) {
+      status = 'duplicate';
+      //this.log('Warning: addr_db_id duplicate ['+addr_db_id+'] addr_id['+addr_id+']');
     } else {
-      //this.log('Warning: address addr_id_new duplicate ['+addr_id_new+'] addr_id_tmp['+addr_id_tmp+']');
-      //looks like the Address to be merged is a duplicate
-      //delete it from model
-      delete this.address_list[addr_id_tmp];
+      //дополнить данные
+      addr.db_id = addr_db_id;
+      addr.lat = lat;
+      addr.lng = lng;
     }
   } else {
-    //this.log('Warning: address not found in this.address_list by addr_id_tmp['+addr_id_tmp+']');
+    status = 'not_found';
+    //this.log('Warning: address not found in this.address_list by addr_id['+addr_id+']');
+  }
+  return status;
+};
+
+//найти адрес по DB_ID
+MapWithMarkerListClass.prototype.AddressList_findId_byDbId = function (addr_db_id) {
+  var addr_id = null;
+
+  var keys = Object.keys(this.address_list);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (this.address_list[k].db_id == addr_db_id) {
+      addr_id = k;
+      break;
+    }
   }
   return addr_id;
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+//Модель. удалить адрес по id
+MapWithMarkerListClass.prototype.AddressList_Remove = function (addr_id) {
+  if (this.address_list[addr_id]) {
+    delete this.address_list[addr_id];
+  }
+};
+
+//адрес. имеются ли координаты? если geocode не завершён - координаты пустые (=0 или =null)
+MapWithMarkerListClass.prototype.Address_hasLatLng = function (addr) {
+  return addr ? (addr.lat && addr.lng) : false;
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
@@ -678,19 +758,19 @@ MapWithMarkerListClass.prototype.Address_debug_Id_ToStrMin = function (addr_id) 
 MapWithMarkerListClass.prototype.AddressList_LabelsRefresh = function () {
   this.log_heading4('AddressList_LabelsRefresh');
   
-  var addr_id_list = this.addr_id_list = this.PageAddressList_getIdArray();
-  var lst_shadow = this.addr_id_list_shadow;
+  var id_lst = this.AddressIndex_ActualUpdate();
+  var id_lst_shadow = this.address_list_index.shadow;
   
-  //this.log('addr_id_list');
-  //this.log(addr_id_list);
-  //this.log('lst_shadow');
-  //this.log(lst_shadow);
+  //this.log('id_lst');
+  //this.log(id_lst);
+  //this.log('id_lst_shadow');
+  //this.log(id_lst_shadow);
   
-  for (var i = 0; i < addr_id_list.length; i++) {
-    var addr_id = addr_id_list[i];
+  for (var i = 0; i < id_lst.length; i++) {
+    var addr_id = id_lst[i];
 
-    //this.log('i['+i+'] page addr_id['+addr_id+'] shadow addr_id['+lst_shadow[i]+']');
-    if (addr_id != lst_shadow[i]) {
+    //this.log('i['+i+'] page addr_id['+addr_id+'] shadow addr_id['+id_lst_shadow[i]+']');
+    if (addr_id != id_lst_shadow[i]) {
       //this.log('addr_id mismatch. update label...');
       var addr = this.address_list[addr_id];
 
@@ -716,7 +796,7 @@ MapWithMarkerListClass.prototype.AddressList_AfterChange = function (json) {
   this.route_optimize_btn_state_update();
   
   //запомнить текущий порядок адресов на странице
-  this.addr_id_list_shadow = this.addr_id_list;
+  this.address_list_index.shadow = this.address_list_index.actual;
   
   if (!json) {
     //информировать приложение что ссылка недействительна
@@ -744,10 +824,10 @@ MapWithMarkerListClass.prototype.AddressList_UniqueID_Refresh_Require = function
 MapWithMarkerListClass.prototype.Backend_DistributionHand_Start = function () {
   this.log_heading5('Backend_DistributionHand_Start');
   
-  var address_list_joined = this.PageAddressList_getIdArray().join(',');
+  var addr_lst_joined = this.AddressList_getDbIdsJoined();
   
-  if (address_list_joined.length) {
-    var query = {address: address_list_joined};
+  if (addr_lst_joined.length) {
+    var query = {address: addr_lst_joined};
     this.Query_includeListUID(query);
     
     this.back_end.XHR_Start(
@@ -775,6 +855,24 @@ MapWithMarkerListClass.prototype.Backend_DistributionHand_onFulfill = function (
   
   //сформировать ссылку которой можно поделиться
   this.LinkToShare_BuildFromJson(json);
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+
+//получить список DB ID адресов 
+//в виде строки 'idA,idB, ...'
+//используется как аргумент для некоторых методов back-end
+//порядок адресов = как они расположены на странице
+MapWithMarkerListClass.prototype.AddressList_getDbIdsJoined = function () {
+  var id_lst = this.AddressIndex_getList('actual');
+  var db_id_lst = [];
+  
+  for (var i = 0; i < id_lst.length; i++) {
+    var addr = this.address_list[id_lst[i]];
+    db_id_lst.push(addr.db_id);
+  }
+
+  return db_id_lst.join(',');
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -817,8 +915,7 @@ MapWithMarkerListClass.prototype.AddressList_AllHas_LatLng = function () {
   var keys = Object.keys(this.address_list);
   for (var i = 0; i < keys.length; i++) {
     var k = keys[i];
-    var addr = this.address_list[k];
-    if (!(addr.lat && addr.lng)) {
+    if (!this.Address_hasLatLng(this.address_list[k])) {
       ok = false;
       break;
     }
@@ -828,18 +925,18 @@ MapWithMarkerListClass.prototype.AddressList_AllHas_LatLng = function () {
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-MapWithMarkerListClass.prototype.debug_addr_id_list_pair_compare = function (addr_id_list_old, addr_id_list_new) {
+MapWithMarkerListClass.prototype.debug_addr_id_list_pair_compare = function (addr_id_lst_old, addr_id_lst_new) {
   this.log('debug_addr_id_list_pair_compare');
   
   //авто-определить начальный индекс
-  var idx_base = addr_id_list_new[0] ? 0 : 1;
-  this.log('addr_id_list_old.length['+addr_id_list_old.length+'] addr_id_list_new.length['+addr_id_list_new.length - idx_base+'] equal=['+(addr_id_list_old.length == addr_id_list_new.length - idx_base)+']');
+  var idx_base = addr_id_lst_new[0] ? 0 : 1;
+  this.log('addr_id_lst_old.length['+addr_id_lst_old.length+'] addr_id_lst_new.length['+addr_id_lst_new.length - idx_base+'] equal=['+(addr_id_lst_old.length == addr_id_lst_new.length - idx_base)+']');
   
   var is_diff = false;
   
-  for (var i = 0; i < addr_id_list_old.length; i++) {
-    var old_id = addr_id_list_old[i];
-    var new_id = addr_id_list_new[i + idx_base];
+  for (var i = 0; i < addr_id_lst_old.length; i++) {
+    var old_id = addr_id_lst_old[i];
+    var new_id = addr_id_lst_new[i + idx_base];
     if (old_id != new_id) {
       this.log('diff at i['+i+'] old['+this.address_list[old_id].title+']          new['+this.address_list[new_id].title+']');
       is_diff = true;
@@ -874,77 +971,91 @@ MapWithMarkerListClass.prototype.debug_addr_id_list_pair_compare = function (add
 //  по умолчанию = 'shadow'
 //  можно передавать 'actual'
 
-MapWithMarkerListClass.prototype.Address_getPrevId = function (addr_id, where) {
-  return this.Address_getSiblingId(addr_id, -1, where);
+MapWithMarkerListClass.prototype.AddressIndex_getPrevId = function (addr_id, where) {
+  return this.AddressIndex_getSiblingId(addr_id, -1, where);
 };
 
-MapWithMarkerListClass.prototype.Address_getNextId = function (addr_id, where) {
-  return this.Address_getSiblingId(addr_id, 1, where);
+MapWithMarkerListClass.prototype.AddressIndex_getNextId = function (addr_id, where) {
+  return this.AddressIndex_getSiblingId(addr_id, 1, where);
 };
 
-MapWithMarkerListClass.prototype.Address_getLastId = function (where) {
-  return this.Address_getSiblingId(null, -1, where);
+MapWithMarkerListClass.prototype.AddressIndex_getLastId = function (where) {
+  return this.AddressIndex_getSiblingId(null, -1, where);
 };
 
-MapWithMarkerListClass.prototype.Address_getIndex = function (addr_id, where) {
-  return this.Address_getSiblingId(addr_id, 0, where);
+MapWithMarkerListClass.prototype.AddressIndex_getIdx = function (addr_id, where) {
+  return this.AddressIndex_getSiblingId(addr_id, 0, where);
 };
 
-MapWithMarkerListClass.prototype.Address_getSiblingId = function (addr_id, offset, where) {
+MapWithMarkerListClass.prototype.AddressIndex_getSiblingId = function (addr_id, offset, where) {
   //this.log('Address_getSiblingId addr_id['+addr_id+'] offset['+offset+'] where['+where+']');
   
-  var addr_id_list = this.AddressList_getIdList_byWhere(where);
+  var id_lst = this.AddressIndex_getList(where);
   var id;
   
-  if (addr_id_list && addr_id_list.length) {
+  if (id_lst && id_lst.length) {
     if (addr_id) {
-      var i = addr_id_list.indexOf(addr_id);
-      id = addr_id_list[i + offset];
+      var i = id_lst.indexOf(addr_id);
+      id = id_lst[i + offset];
     } else {
       if (offset >= 0) {
-        id = addr_id_list[offset];
+        id = id_lst[offset];
       } else {
-        id = addr_id_list[addr_id_list.length + offset];
+        id = id_lst[id_lst.length + offset];
       }
     }
   }
   return id;
 };
 
-MapWithMarkerListClass.prototype.AddressList_getIdList_byWhere = function (where) {
+MapWithMarkerListClass.prototype.AddressIndex_getList = function (where) {
   where = where || 'shadow';
-  return {'actual': this.addr_id_list, 'shadow': this.addr_id_list_shadow}[where];
+  return this.address_list_index[where];
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
-//вспомогательный список. добавить ID
-MapWithMarkerListClass.prototype.AddressList_Append = function (addr_id, where) {
-  var addr_id_list = this.AddressList_getIdList_byWhere(where);
-  addr_id_list.push(addr_id);
+//индекс. добавить ID
+MapWithMarkerListClass.prototype.AddressIndex_Append = function (addr_id, where) {
+  var id_lst = this.AddressIndex_getList(where);
+  id_lst.push(addr_id);
 };
 
-//вспомогательный список. удалить ID 
-MapWithMarkerListClass.prototype.AddressList_Remove = function (addr_id, where) {
-  var addr_id_list = this.AddressList_getIdList_byWhere(where);
-  var i = addr_id_list.indexOf(addr_id);
-  addr_id_list.splice(i, 1);
+//индекс. удалить ID 
+MapWithMarkerListClass.prototype.AddressIndex_Remove = function (addr_id, where) {
+  var result = true;
+  var id_lst = this.AddressIndex_getList(where);
+  var i = id_lst.indexOf(addr_id);
+  if (i >= 0) {
+    id_lst.splice(i, 1);
+  } else {
+    result = false;//addr_id not found
+  }
+  return result;
 };
 
-//вспомогательный список. заменить ID
-MapWithMarkerListClass.prototype.AddressList_Replace = function (addr_id_old, addr_id_new, where) {
-  var addr_id_list = this.AddressList_getIdList_byWhere(where);
-  var i = addr_id_list.indexOf(addr_id_old);
-  addr_id_list[i] = addr_id_new;
+/*
+Abandoned
+//индекс. заменить ID
+MapWithMarkerListClass.prototype.AddressIndex_Replace = function (addr_id_old, addr_id_new, where) {
+  var id_lst = this.AddressIndex_getList(where);
+  var i = id_lst.indexOf(addr_id_old);
+  id_lst[i] = addr_id_new;
 };
+*/
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
-//сравнить текущий массив с shadow
-MapWithMarkerListClass.prototype.AddressList_ActualEqualShadow = function () {
+//обновить текущий индекс. вернуть ссылку на обновлённый список
+MapWithMarkerListClass.prototype.AddressIndex_ActualUpdate = function () {
+  return this.address_list_index.actual = this.PageAddressList_getIdArray();
+};
+
+//сравнить текущий индекс с shadow
+MapWithMarkerListClass.prototype.AddressIndex_ActualEqShadow = function () {
   var equal = false;
-  var actual = this.AddressList_getIdList_byWhere('actual');
-  var shadow = this.AddressList_getIdList_byWhere('shadow');
+  var actual = this.AddressIndex_getList('actual');
+  var shadow = this.AddressIndex_getList('shadow');
   if (actual && shadow && actual.length == shadow.length) {
     equal = true;
     for (var i = 0; i < actual.length; i++) {
@@ -960,22 +1071,26 @@ MapWithMarkerListClass.prototype.AddressList_ActualEqualShadow = function () {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //debug
 
-MapWithMarkerListClass.prototype.AddressList_debug_Dump = function () {
+MapWithMarkerListClass.prototype.AddressIndex_debug_Dump = function () {
   this.log('AddressList_debug_Dump');
-  //this.AddressList_debug_DumpLength('addr_id_list', this.addr_id_list);
-  //this.AddressList_debug_DumpLength('addr_id_list_shadow', this.addr_id_list_shadow);
+  
+  var id_lst = this.AddressIndex_getList('actual');
+  var id_lst_shadow = this.AddressIndex_getList('shadow');
+  
+  //this.AddressIndex_debug_DumpLength('actual', id_lst);
+  //this.AddressIndex_debug_DumpLength('shadow', id_lst_shadow);
 
   var concat1 = '';
   var concat2 = '';
   var s;
   var len_arr = [
-    this.addr_id_list ? this.addr_id_list.length : 0, 
-    this.addr_id_list_shadow ? this.addr_id_list_shadow.length : 0
+    id_lst ? id_lst.length : 0, 
+    id_lst_shadow ? id_lst_shadow.length : 0
   ];
 
   for (var i = 0; i < Math.max(len_arr[0], len_arr[1]); i++) {
-    var id = this.addr_id_list ? this.addr_id_list[i] : '';
-    var id_shadow = this.addr_id_list_shadow ? this.addr_id_list_shadow[i] : '';
+    var id = id_lst ? id_lst[i] : '';
+    var id_shadow = id_lst_shadow ? id_lst_shadow[i] : '';
     var le = Math.max(id.length, id_shadow.length);
 
     s = id;
@@ -997,15 +1112,15 @@ MapWithMarkerListClass.prototype.AddressList_debug_Dump = function () {
     concat2 = s;
     
   }
-  this.log('addr_id_list        len['+len_arr[0]+'] ['+concat1+']');
-  this.log('addr_id_list_shadow len['+len_arr[1]+'] ['+concat2+']');
+  this.log('actual id_list len['+len_arr[0]+'] ['+concat1+']');
+  this.log('shadow id_list len['+len_arr[1]+'] ['+concat2+']');
 };
 
-MapWithMarkerListClass.prototype.AddressList_debug_DumpLength = function (name, list) {
+MapWithMarkerListClass.prototype.AddressIndex_debug_DumpLength = function (name, list) {
   if (list) {
     this.log(''+name+'.length['+list.length+']');
   } else {
-    this.log(''+name+' has no length');
+    this.log(''+name+' looks =null or undefined. length n\a');
   }
 };
 
@@ -1082,16 +1197,6 @@ MapWithMarkerListClass.prototype.PageAddress_Remove = function (addr) {
   this.address_list_html.removeChild(addr.page_element);
 };
 
-//удалить адрес из представления на странице
-//  особый случай. объект уже удалён из модели данных
-
-MapWithMarkerListClass.prototype.PageAddress_FindByIdAndRemove = function (addr_id) {
-  var elem = this.PageAddress_ElementById(addr_id);
-  if (elem) {
-    this.address_list_html.removeChild(elem);
-  }
-};
-
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //получить внутренний ID адреса по событию, 
 //произошедшему в одном из дочерних эл-тов Адреса
@@ -1133,21 +1238,21 @@ MapWithMarkerListClass.prototype.PageAddress_ElementFromEvent = function (evt) {
 
 MapWithMarkerListClass.prototype.PageAddressList_getIdArray = function () {
   var children = this.address_list_html.childNodes;
-  var id_array = [];
+  var id_arr = [];
   
   for (var i = 0; i < children.length; i++) {
     var addr_id = this.PageAddress_getId(children[i]);
-    id_array[i] = addr_id;
+    id_arr.push(addr_id);
   }
   
-  return id_array;
+  return id_arr;
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //найти эл-т на странице по ID
 
 MapWithMarkerListClass.prototype.PageAddress_ElementById = function (addr_id) {
-  var elem;
+  var elem = null;
   var children = this.address_list_html.childNodes;
   
   for (var i = 0; i < children.length; i++) {
@@ -1167,44 +1272,44 @@ MapWithMarkerListClass.prototype.PageAddress_ElementById = function (addr_id) {
 //предполагается что кол-во эл-тов в массиве и на странице совпадает
 //индексы массива могут начинаться не с 0 а с 1
 //
-//this.addr_id_list_shadow здесь не используется т.к список изменяется днамически
+//address_list index shadow здесь не используется т.к список изменяется динамически
 //и shadow станет неактуальным уже после первого изменения
 
 //обёртка конвертирующая объект-ассоциативный массив в простой массив
 //внимание: иногда BackEnd возвращает не ассоциативный а простой массив, необходима проверка на это
-MapWithMarkerListClass.prototype.PageAddressList_ReorderByIdAssociativeArray = function (associative_array) {
-  this.log_heading5('PageAddressList_ReorderByIdAssociativeArray');
+MapWithMarkerListClass.prototype.PageAddressList_ReorderByDbIdAssociativeArray = function (associative_array) {
+  this.log_heading5('PageAddressList_ReorderByDbIdAssociativeArray');
   
   if (associative_array instanceof Object) {
-    this.PageAddressList_ReorderByIdList(Object.values(associative_array));//not work in IE
+    this.PageAddressList_ReorderByDbIdArray(Object.values(associative_array));//not work in IE
     
-    //var addr_id_list = [];
+    //var id_lst = [];
     //var keys = Object.keys(associative_array);
     //for (var i = 0; i < keys.length; i++) {
-    //  addr_id_list.push(associative_array[keys[i]]);
+    //  id_lst.push(associative_array[keys[i]]);
     //}
-    //this.PageAddressList_ReorderByIdList(addr_id_list);
+    //this.PageAddressList_ReorderByDbIdArray(id_lst);
   } else if (associative_array instanceof Array) {
-    this.PageAddressList_ReorderByIdList(associative_array);
+    this.PageAddressList_ReorderByDbIdArray(associative_array);
   } else {
     this.log('Warning: argument has an unknown type');
   }
 };
 
-MapWithMarkerListClass.prototype.PageAddressList_ReorderByIdList = function (addr_id_list) {
-  this.log_heading5('PageAddressList_ReorderByIdList');
+MapWithMarkerListClass.prototype.PageAddressList_ReorderByDbIdArray = function (addr_db_id_arr) {
+  this.log_heading5('PageAddressList_ReorderByDbIdArray');
   
-  //this.log('addr_id_list');
-  //this.log(addr_id_list);
+  //this.log('addr_db_id_arr');
+  //this.log(addr_db_id_arr);
   
-  if (addr_id_list.length) {
+  if (addr_db_id_arr.length) {
     //авто-определить начальный индекс
-    var idx_base = addr_id_list[0] ? 0 : 1;
+    var idx_base = addr_db_id_arr[0] ? 0 : 1;
     //=live nodes list
     var children = this.address_list_html.childNodes;
     
-    for (var i = idx_base; i < addr_id_list.length; i++) {
-      var addr_id = addr_id_list[i];
+    for (var i = idx_base; i < addr_db_id_arr.length; i++) {
+      var addr_id = this.AddressList_findId_byDbId(addr_db_id_arr[i]);
       var existing_elem = children[i - idx_base];
       //this.log('existing_elem');
       //this.log(existing_elem);
@@ -1221,7 +1326,7 @@ MapWithMarkerListClass.prototype.PageAddressList_ReorderByIdList = function (add
       }
     }
   } else {
-    this.log('Warning: addr_id_list is empty');
+    this.log('Warning: addr_db_id_arr is empty');
   }
 };
 
@@ -2092,10 +2197,11 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     
     //L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     L.tileLayer(protocol + '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: 'Maps by <a href="http://openstreetmap.org/">OpenStreetMap</a>. ' +
-        'Routes from <a href="http://project-osrm.org/">OSRM</a>, ' +
-        'data uses <a href="http://opendatacommons.org/licenses/odbl/">ODbL</a> license',
-      maxZoom: 18
+      attribution: 'Maps by <a href="http://openstreetmap.org/">OpenStreetMap</a>.'
+        //the following two lines are for leaflet-routing-machine use only
+        //+ ' Routes from <a href="http://project-osrm.org/">OSRM</a>, ' +
+        //'data uses <a href="http://opendatacommons.org/licenses/odbl/">ODbL</a> license'
+      ,maxZoom: 18
     }).addTo(this.map_obj);
     //this.map_obj.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
 
@@ -2184,8 +2290,8 @@ MapWithMarkerListClass.prototype.MapIconsPool_Create = function (color) {
 //распечатать в консоли
 //Application.MapWithMarkerList.polylines_pool
 //
-//для получения текущего порядка адресов используется this.addr_id_list
-//Но this.addr_id_list_shadow Не используется
+//для получения текущего порядка адресов используется this.address_list_index.actual
+//Но this.address_list_index.shadow Не используется
 //вместо этого для линий реализован отдельный механизм 
 //хранения addr.map_routes.prev\next. addr addr_id
 
@@ -2196,9 +2302,10 @@ MapWithMarkerListClass.prototype.MapRoute_AllPublish = function () {
   //сначала удалить все линии маршрута. это перестраховка т.к обычно линии уже удалены
   this.MapRoute_AllRemove();
   
-  for (var i = 0; i < this.addr_id_list.length; i++) {
-    var from_id = this.addr_id_list[i];
-    var to_id = this.addr_id_list[i + 1];
+  var id_lst = this.AddressIndex_getList('actual');
+  for (var i = 0; i < id_lst.length; i++) {
+    var from_id = id_lst[i];
+    var to_id = id_lst[i + 1];
     if (from_id && to_id) {
       this.MapRoute_PublishFromTo(from_id, to_id);
     }
@@ -2228,13 +2335,13 @@ MapWithMarkerListClass.prototype.MapRoute_AllRemove = function () {
 //нарисовать две линии маршрута по одному ID. 
 //нетривиально. 
 //+ необходимо сначала удалить линию предыдущий-следующий если она есть
-//  соседние ID ищутся по this.addr_id_list
+//  соседние ID ищутся по actual индексу 
 
 MapWithMarkerListClass.prototype.MapAddress_RoutePublish = function (addr_id) {
   this.log_heading4('MapAddress_RoutePublish addr_id['+addr_id+']');
   
-  var prev_id = this.Address_getPrevId(addr_id, 'actual');
-  var next_id = this.Address_getNextId(addr_id, 'actual');
+  var prev_id = this.AddressIndex_getPrevId(addr_id, 'actual');
+  var next_id = this.AddressIndex_getNextId(addr_id, 'actual');
   
   //this.log(this.Address_debug_Id_ToStrMin(addr_id) + this.Address_debug_Id_ToStrMin(prev_id) + this.Address_debug_Id_ToStrMin(next_id));
   
@@ -2286,7 +2393,7 @@ MapWithMarkerListClass.prototype.MapRoute_PublishFromTo = function (from_id, to_
   var from = this.address_list[from_id];
   var to = this.address_list[to_id];
   
-  if (from && to && !from.incomplete && !to.incomplete) {
+  if (this.Address_hasLatLng(from) && this.Address_hasLatLng(to)) {
     var polyline = this.MapRoute_PublishFromToObjects(from, to);
     
     from.map_routes.next.line = polyline;
@@ -2299,7 +2406,6 @@ MapWithMarkerListClass.prototype.MapRoute_PublishFromTo = function (from_id, to_
   } else {
     var msg = 'can not draw a line. ';
     msg += 'from_id['+from_id+'] to_id['+to_id+']';
-    msg += ' from.incomplete['+ (from_id ? from.incomplete : '') +'] to.incomplete['+ (to_id ? to.incomplete : '') +']';
     this.log(msg);
   }
 };
@@ -2409,9 +2515,9 @@ MapWithMarkerListClass.prototype.Map_debug_Route_AllDump = function (comment) {
   err_cnt += this.Map_debug_Polylines_AllDump();
   
   //Object.keys(this.address_list);//poor option
-  err_cnt += this.Map_debug_Routes_Dump_ForAddrIdList('this.addr_id_list', this.addr_id_list);
+  err_cnt += this.Map_debug_Routes_Dump_ForAddrIdList('actual', this.AddressIndex_getList('actual'));
 
-  err_cnt += this.Map_debug_Routes_Dump_ForAddrIdList('this.addr_id_list_shadow', this.addr_id_list_shadow);
+  err_cnt += this.Map_debug_Routes_Dump_ForAddrIdList('shadow', this.AddressIndex_getList('shadow'));
 
   if (err_cnt) {
     this.log('--- !!! errors found :( ['+err_cnt+']');
@@ -2428,19 +2534,19 @@ MapWithMarkerListClass.prototype.Map_debug_Polylines_AllDump = function () {
   if (this.polylines_pool && this.polylines_pool.length) {
     txt += 'polylines_pool.length['+this.polylines_pool.length+']\n';
     
-    var lines_collected = this.Map_debug_Routes_Collect_ForAddrIdList(this.addr_id_list);
-    var lines_collected_shadow = this.Map_debug_Routes_Collect_ForAddrIdList(this.addr_id_list_shadow);
+    var lines_collected = this.Map_debug_Routes_Collect_ForAddrIdList(this.AddressIndex_getList('actual'));
+    var lines_collected_shadow = this.Map_debug_Routes_Collect_ForAddrIdList(this.AddressIndex_getList('shadow'));
     
     for (var i = 0; i < this.polylines_pool.length; i++) {
       var line = this.polylines_pool[i];
       txt += 'i['+i+'] polylines_pool[i].id['+this.Map_debug_Line_getId(line)+']\n';
       
       if (!lines_collected.includes(line)) {
-        txt += '! this line not found in [addr_id_list]\n';
+        txt += '! this line not found in [actual]index\n';
         err_cnt++;
       }
       if (!lines_collected_shadow.includes(line)) {
-        txt += '! this line not found in [addr_id_list_shadow]\n';
+        txt += '! this line not found in [shadow]index\n';
         err_cnt++;
       }
       
@@ -2457,16 +2563,16 @@ MapWithMarkerListClass.prototype.Map_debug_Polylines_AllDump = function () {
   return err_cnt;
 };
 
-MapWithMarkerListClass.prototype.Map_debug_Routes_Dump_ForAddrIdList = function (name, addr_id_list) {
+MapWithMarkerListClass.prototype.Map_debug_Routes_Dump_ForAddrIdList = function (name, addr_id_lst) {
   var err_cnt = 0;
   var warn_cnt = 0;
   var txt = '---['+name+']\n';
 
-  if (addr_id_list && addr_id_list.length) {
-    txt += 'list.length['+addr_id_list.length+']\n';
+  if (addr_id_lst && addr_id_lst.length) {
+    txt += 'list.length['+addr_id_lst.length+']\n';
 
-    for (var i = 0; i < addr_id_list.length; i++) {
-      var id = addr_id_list[i];
+    for (var i = 0; i < addr_id_lst.length; i++) {
+      var id = addr_id_lst[i];
       var addr = this.address_list[id];
       var routes = addr.map_routes;
       
@@ -2508,14 +2614,14 @@ MapWithMarkerListClass.prototype.Map_debug_Routes_Dump_ForAddrIdList = function 
   return err_cnt;
 };
 
-MapWithMarkerListClass.prototype.Map_debug_Routes_Collect_ForAddrIdList = function (addr_id_list) {
-  if (addr_id_list && addr_id_list.length) {
-    //this.log('addr_id_list.length['+addr_id_list.length+']');
+MapWithMarkerListClass.prototype.Map_debug_Routes_Collect_ForAddrIdList = function (addr_id_lst) {
+  if (addr_id_lst && addr_id_lst.length) {
+    //this.log('addr_id_lst.length['+addr_id_lst.length+']');
     
     var lines_collected = [];
 
-    for (var i = 0; i < addr_id_list.length; i++) {
-      var id = addr_id_list[i];
+    for (var i = 0; i < addr_id_lst.length; i++) {
+      var id = addr_id_lst[i];
       var addr = this.address_list[id];
       var routes = addr.map_routes;
       //this.log('i['+i+'] addr_id['+id+']');
@@ -2552,8 +2658,9 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AllPublish = function () {
   
   var waypoints = [];
   
-  for (var i = 0; i < this.addr_id_list.length; i++) {
-    var id = this.addr_id_list[i];
+  var id_lst = this.AddressIndex_getList('actual');
+  for (var i = 0; i < id_lst.length; i++) {
+    var id = id_lst[i];
     var addr = this.address_list[id];
     waypoints.push(L.latLng(addr.lat, addr.lng));
   }
@@ -2623,7 +2730,7 @@ MapWithMarkerListClass.prototype.MapRoutingLib_AllRemove = function () {
 MapWithMarkerListClass.prototype.MapRoutingLib_createMarker = function (i, waypoint) {
   this.log_heading4('MapRoutingLib_createMarker');
   
-  var addr_id = this.AddressList_getIdList_byWhere('actual')[i];
+  var addr_id = this.AddressIndex_getList('actual')[i];
   var addr = this.address_list[addr_id];
   var icon_color = this.C.Map.marker.icon.color.default;
   
@@ -2769,6 +2876,14 @@ MapWithMarkerListClass.prototype.MapRouteReal_AllInvalidate = function () {
 MapWithMarkerListClass.prototype._static_properties_init = function () {
   this.log('MapWithMarkerListClass._static_properties_init');
   
+  //авто-увеличивающийся ID для эл-тов списка адресов
+  //начальное значение большое чтобы не спутать с порядковым номером эл-та в списке
+  //этот механизм работает для всех адресов но только в пределах UI
+  //для методов back-end используется .db_id
+  var af = this.C.address_factory = {};
+  af.id_num = 1000;
+  af.id_prefix = 'address-';
+
   //Map constants 
   var map = this.C.Map = {};
   var marker = map.marker = {};

@@ -35,7 +35,7 @@ function RouteAppClass() {
   
   //поповер \ сообщение. обработчик кликов общего назначения
   this.overlaid_onClick = function (e) {
-    console.log('overlaid_onClick');
+    this.log('overlaid_onClick');
     
     //кнопка Закрыть в поп-овере
     var classes = e.currentTarget.classList;
@@ -55,7 +55,7 @@ function RouteAppClass() {
 //кнопка Копировать в поп-овере
 
   this.link_copy_btn_onClick = function (e) {
-    console.log('link_copy_btn_onClick');
+    this.log('link_copy_btn_onClick');
     window.getSelection().selectAllChildren(this.link_to_share);
 		document.execCommand('copy');
   };
@@ -68,7 +68,7 @@ function RouteAppClass() {
   //this.link_to_share_debug = true;
 
   this.link_to_share_btn_onClick = function (e) {
-    console.log('link_to_share_btn_onClick');
+    this.log('link_to_share_btn_onClick');
     
     //lose focus. this is the first step to make close by ESC
     this.saved_focus = myUtils.Document_Blur();
@@ -90,7 +90,7 @@ function RouteAppClass() {
   this.notification_new = function (txt) {
     //-- new Notification = template.Clone
     var notification = this.notificaiton_template.cloneNode(true);
-    //console.log('notification.constructor.name['+notification.constructor.name+']');
+    //this.log('notification.constructor.name['+notification.constructor.name+']');
     var error_text = notification.getElementsByClassName('error-text')[0];
     error_text.innerHTML = txt;
     notification.hidden = false;
@@ -101,7 +101,7 @@ function RouteAppClass() {
     //-- prevent overflow
     var wrapper_style = window.getComputedStyle(this.notificaitons_wrapper);
     //Note: getComputedStyle.height has String format '150px'
-    console.log('wrapper_style.height['+wrapper_style.height +'] window.innerHeight['+window.innerHeight+'] window.outerHeight['+window.outerHeight+']');
+    this.log('wrapper_style.height['+wrapper_style.height +'] window.innerHeight['+window.innerHeight+'] window.outerHeight['+window.outerHeight+']');
     if (parseFloat(wrapper_style.height, 10) > window.innerHeight) {
       //remove the Topmost child except the Template
       var notifications = this.notificaitons_wrapper.getElementsByClassName('error-message');
@@ -118,7 +118,7 @@ function RouteAppClass() {
 
   //---BackEnd  - должен быть первым
   this.BackEnd = new BackEndClass();
-  //this.BackEnd.log_enabled = true;
+  this.BackEnd.log_enabled = true;
   
   this.backend_onReject = function (xhr_obj, txt) {
     this.notification_new(txt);
@@ -142,7 +142,7 @@ function RouteAppClass() {
     //,'nav-help': 'popover-help'
   };
   this.navigation_item_onClick = function (e) {
-    console.log('navigation_item_onClick');
+    this.log('navigation_item_onClick');
     var popover_id = this.navigation_items[e.target.id];
     if (popover_id && popover_id.length) {
       this.NavigationOnDemand.close();//close nav if it is opened as a popover
@@ -169,7 +169,7 @@ function RouteAppClass() {
   //  + onPlayerReady: hide spinner, show popover and start player
 
   this.navigation_help_onClick = function (e) {
-    console.log('navigation_help_onClick');
+    this.log('navigation_help_onClick');
     
     this.NavigationOnDemand.close();//close nav if it is opened as a popover
     
@@ -177,7 +177,7 @@ function RouteAppClass() {
     if (!this.help_video_player) {
       //create player. it will be started in onReady handler
       //regular size w640 h390 ratio = 
-      console.log('creating video player');
+      this.log('creating video player');
       this.log('document.documentElement.clientWidth['+document.documentElement.clientWidth+']');
       var padding = 20;//cludge. must match the actual padding for popover
       var w = Math.min(document.documentElement.clientWidth - 2 * padding, 640);
@@ -193,7 +193,7 @@ function RouteAppClass() {
         }
       });
     } else {
-      console.log('video player already created. start it.');
+      this.log('video player already created. start it.');
       this.help_video_player.playVideo();
     }
     
@@ -207,27 +207,27 @@ function RouteAppClass() {
   this.popover_help.addEventListener('click', this.overlaid_onClick.bind(this));
   //attach the custom [X] listener 
   this.popover_help_onClose = function (e) {
-    console.log('stopping video...');
+    this.log('stopping video...');
     this.help_video_player.stopVideo();
   }
   this.popover_help.querySelector('.close-icon').addEventListener('click', this.popover_help_onClose.bind(this));
   
   this.onPlayerReady = function (event) {
-    //console.log('onPlayerReady() called');
-    console.log('onPlayerReady. starting video...');
+    //this.log('onPlayerReady() called');
+    this.log('onPlayerReady. starting video...');
     event.target.playVideo();
   };
   
   this.onPlayerStateChange = function (event) {
-    //console.log('onPlayerStateChange() called');
-    //console.log('event.data String['+YTEventDataToName_Map[event.data]+'] raw['+event.data+']');
+    //this.log('onPlayerStateChange() called');
+    //this.log('event.data String['+YTEventDataToName_Map[event.data]+'] raw['+event.data+']');
   };
   
  
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
 
-  //console.log('SearchWithSuggestons creating...');
+  //this.log('SearchWithSuggestons creating...');
   this.SearchWithSuggestons = new SearchWithSuggestonsClass({
     back_end: this.BackEnd,
     input_id: 'address-input', suggestion_dropdown_id: 'address-suggestions', 
@@ -235,7 +235,7 @@ function RouteAppClass() {
   });
   this.SearchWithSuggestons.log_enabled = true;
   //this.SearchWithSuggestons.test_inp_val();
-  //console.log('ok');
+  //this.log('ok');
   
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---список адресов
@@ -243,7 +243,7 @@ function RouteAppClass() {
   //callback для списка адресов
   //ссылка которой можно поделиться изменилась
   this.link_to_share_onChange = function (link) {
-    console.log('link_to_share_onChange. link['+link+']');
+    this.log('link_to_share_onChange. link['+link+']');
     
     if (link && link.length) {
       this.link_to_share.innerHTML = link;
@@ -267,7 +267,7 @@ function RouteAppClass() {
   //задать значение по умолчанию для ссылки которой можно поделиться
   this.link_to_share_onChange(false);
 
-  //console.log('MapWithMarkerList creating...');
+  //this.log('MapWithMarkerList creating...');
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
     
@@ -282,11 +282,11 @@ function RouteAppClass() {
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
   this.MapWithMarkerList.onError = this.notification_new.bind(this);
   this.MapWithMarkerList.log_enabled = true;
-  //console.log('ok');
+  //this.log('ok');
 
   //-- test cases
   //=[?testtest_add_files=1]
-  //console.log('document.location.search ['+document.location.search+']');
+  //this.log('document.location.search ['+document.location.search+']');
   if (document.location.search.includes('testtest_add_files=1')) {
     this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
@@ -308,11 +308,11 @@ function RouteAppClass() {
 //передаёт данные между объектами SearchWithSuggestons => MapWithMarkerList
 
   this.address_add_btn_onClick = function (e) {
-    console.log('address_add_btn_onClick');
+    this.log('address_add_btn_onClick');
     
     if (this.SearchWithSuggestons.state == 'value_from_suggestion') {
-      //console.log('SearchWithSuggestons.state  OK');
-      //console.log('SearchWithSuggestons.getValue ['+this.SearchWithSuggestons.getValue()+']');
+      //this.log('SearchWithSuggestons.state  OK');
+      //this.log('SearchWithSuggestons.getValue ['+this.SearchWithSuggestons.getValue()+']');
       this.MapWithMarkerList.Address_AppendFromString(this.SearchWithSuggestons.getValue());
       
       //вернуть фокус в поле ввода адреса
