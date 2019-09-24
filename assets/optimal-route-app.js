@@ -87,12 +87,17 @@ function RouteAppClass() {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //сообщения об ошибках
 
-  this.notification_new = function (txt) {
+  this.notification_new = function (title, txt) {
+    title = title || 'Ошибка';
     //-- new Notification = template.Clone
     var notification = this.notificaiton_template.cloneNode(true);
     //this.log('notification.constructor.name['+notification.constructor.name+']');
-    var error_text = notification.getElementsByClassName('error-text')[0];
-    error_text.innerHTML = txt;
+
+    var notification_title = notification.getElementsByClassName('notification-title')[0];
+    notification_title.innerHTML = title;
+    var notification_text = notification.getElementsByClassName('notification-text')[0];
+    notification_text.innerHTML = txt;
+
     notification.hidden = false;
     //the first Notification will be appended below the Template
     this.notificaitons_wrapper.appendChild(notification);
@@ -121,7 +126,7 @@ function RouteAppClass() {
   this.BackEnd.log_enabled = true;
   
   this.backend_onReject = function (xhr_obj, txt) {
-    this.notification_new(txt);
+    this.notification_new('', txt);
   };
   this.BackEnd.onReject = this.backend_onReject.bind(this);
   //this.OSRMBackEnd.onReject = this.backend_onReject.bind(this);
@@ -281,7 +286,8 @@ function RouteAppClass() {
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
-  this.MapWithMarkerList.onError = this.notification_new.bind(this);
+  //this.MapWithMarkerList.onError = this.notification_new.bind(this);
+  this.MapWithMarkerList.UI_display_message_callback = this.notification_new.bind(this);
   this.MapWithMarkerList.log_enabled = true;
   //this.log('ok');
 

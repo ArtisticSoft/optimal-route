@@ -12,6 +12,9 @@ function MapWithMarkerListClass(options) {
   this.C = MapWithMarkerListClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
   
+  //для вывода сообщений в UI
+  this.UI_display_message_callback = null;
+  
   this.back_end = options.back_end;
   
   //--- Карта. ключевой объект на странице
@@ -35,9 +38,6 @@ function MapWithMarkerListClass(options) {
   
   //plugin for Leaflet
   this.LeafletRoutingMachine = null;
-  //вызывается при ошибках LeafletRoutingMachine
-  //в будущем возможно будет вызываться при других ошибках
-  this.onError = null;
   
   //иконки маркерами с нарисованным номером 0..99
   this.map_icons_pool = {};
@@ -103,7 +103,7 @@ function MapWithMarkerListClass(options) {
   this.route_data = {
     json: null,
     polyline: null
-  }
+  };
   
   //вызывается не только после оптимизации маршрута но и после других изменений списка адресов
   this.onLinkToShareChanged = null;
@@ -143,15 +143,27 @@ MapWithMarkerListClass.prototype = new GenericBaseClass();//inherit from
 MapWithMarkerListClass.prototype.SuperClass = GenericBaseClass.prototype;
 
 //-----------------------------------------------------------------------------
+//вывод сообщений в UI
+//-----------------------------------------------------------------------------
+
+MapWithMarkerListClass.prototype.UI_warning = function (msg) {
+  this.UI_display_message('Обратите внимание', msg);
+};
+
+MapWithMarkerListClass.prototype.UI_display_message = function (title, msg) {
+  if (this.UI_display_message_callback) {
+    this.UI_display_message_callback(title, msg);
+  }
+};
+
+//-----------------------------------------------------------------------------
 //Добавить Адрес вручную
 //-----------------------------------------------------------------------------
 /*
 ранее добавление адреса выполнялось только после завершения backend.geocode
 когда все данные Адреса - и для карты и для страницы готовы
 
-но потребовалось ускорить процесс
-
-для ускорения 
+но потребовалось ускорить процесс. для ускорения 
 
 + на страницу Адрес добавляется сразу, на карту- после завершения backend.geocode 
   если backend.geocode завершён неудачно - Адрес должен быть удалён со страницы
@@ -159,17 +171,17 @@ MapWithMarkerListClass.prototype.SuperClass = GenericBaseClass.prototype;
 + backend.geocode теперь может запускаться заранее, до добавления адреса
   в момент когда пользователь делает выбор из списка предположений
   
-TODO
-check if this addr string is already present in the list
-
 */
 MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) {
   this.log_heading2('Address_AppendFromString');
   
+
   //защита от повторных кликов кнопки Добавить
   //сейчас эта защита не актуальна т.к. поле ввода очищается сразу после вызова данного метода
-  //но оставлена для красоты
-  if (addr_str && addr_str.length && this.addr_str_to_add_shadow != addr_str) {
+  //if (addr_str && addr_str.length && this.addr_str_to_add_shadow != addr_str) {
+
+  if (addr_str && addr_str.length) {
+
     this.log('addr_str ['+addr_str+']');
     
     //защита от добавления дубля
@@ -210,12 +222,32 @@ MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) 
     } else {
       this.log('ignored. address Title already exists');
       //TODO: callback to UI
+      this.UI_warning('такой адрес уже присутствует');
     }
     this.addr_str_to_add_shadow = addr_str;
     
   } else {
     this.log('ignored. input data is either empty or looks the same as the previous one');
   }
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//запускается в момент когда пользователь делает выбор из списка предположений
+//  addr_str служит уникальным идентификатором запроса к backEnd
+
+MapWithMarkerListClass.prototype.Address_Append_earlyPeek = function (addr_str) {
+  this.log_heading2('Address_Append_earlyPeek. addr_str['+addr_str+']');
+  
+  //требование заказчика от 22.09.2019
+  //Добавить действие «Добавить адрес» при клике на адрес из авто-подбора адреса. 
+  //Текущий сценатрий: 
+  //а) Пользователь ввел адрес, б) Кликнул по адресу из списка, в) Нажал на кнопку Добавить адрес, г) Адрес добавился в список. 
+  //Как должно быть: 
+  //а) Пользователь ввел адрес б) Кликнул по адресу из списка в) Адрес добавился в список.
+  this.Address_AppendFromString(addr_str);
+  
+  //по старинке. ранний запуск Geocode
+  //this.Backend_Geocode_start(addr_str);
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
@@ -338,16 +370,6 @@ MapWithMarkerListClass.prototype.Backend_Geocode_AddrRollback = function (addr_i
 
   //Модель. удалить
   this.AddressList_Remove(cache_item.addr_id);//addr_id existance is checked here
-};
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//запускается в момент когда пользователь делает выбор из списка предположений
-//  addr_str служит уникальным идентификатором запроса к backEnd
-
-MapWithMarkerListClass.prototype.Address_Append_earlyPeek = function (addr_str) {
-  this.log_heading2('Address_Append_earlyPeek. addr_str['+addr_str+']');
-  
-  this.Backend_Geocode_start(addr_str);
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
