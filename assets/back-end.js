@@ -187,10 +187,10 @@ function BackEndClass() {
   
   //пул запросов. дерево. для каждого метода своя ветка с массивом запросов
   this.xhr_pool = {
-    addr_suggestions: {list:[], wait_for_idx: null},
-    addr_geocode: {list:[]},
-    distribution_address: {list:[]},
-    distribution_hand: {list:[]}
+    addr_suggestions: {count: 0, list:[], wait_for_idx: null},
+    addr_geocode: {count: 0, list:[]},
+    distribution_address: {count: 0, list:[]},
+    distribution_hand: {count: 0, list:[]}
   };
 }
 
@@ -205,15 +205,9 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_resolve, on_rejec
   this.log('query');
   this.log(query);
   
-  var pool = this.xhr_pool[method.name];
-  
   var xhr_obj = new XHRClass({timeout: this.C.timeout_delay});
-  var xhr_idx = pool.list.push(xhr_obj) - 1;
+  var xhr_idx = this.xhr_pool_append(method.name, xhr_obj);//this includes wait_for_idx update if any
   xhr_obj.handle = {method: method, idx: xhr_idx};
-  
-  if (method.accept_only_latest) {
-    pool.wait_for_idx = xhr_idx;
-  }
   
   //xhr_obj.log_enabled = true;
   //XHRClass native callback
@@ -244,6 +238,75 @@ BackEndClass.prototype.XHR_Start = function (method, query, on_resolve, on_rejec
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//xhr pool append \ remove
+
+BackEndClass.prototype.xhr_pool_append = function (method_name, xhr_obj) {
+  this.log_heading5('xhr_pool_append');
+
+  var pool = this.xhr_pool[method_name];
+  var idx = pool.list.push(xhr_obj) - 1;//-1 because push returns new length, not index
+  //sort of trick. if wait_for_idx missed, it == undefined. 
+  //if wait_for_idx defined, it == null or something
+  if (pool.wait_for_idx !== undefined) {
+    pool.wait_for_idx = idx;
+  }
+  pool.count++;
+  if (pool.count > 1) {
+    this.log(this.xhr_pool_toStr('pool dump after', method_name));
+  }
+  return idx;
+};
+
+BackEndClass.prototype.xhr_pool_waitFor_match = function (method_name, idx) {
+  var pool = this.xhr_pool[method_name];
+  return (pool.wait_for_idx === undefined) || (pool.wait_for_idx == idx);
+};
+
+BackEndClass.prototype.xhr_pool_remove = function (method_name, idx) {
+  this.log_heading5('xhr_pool_remove');
+
+  var pool = this.xhr_pool[method_name];
+  delete pool.list[idx];//length will remain unchanged. the given entry become undefined
+  pool.count--;
+  if (pool.count == 0) {
+    //playing safe. check if all entries are actually undefined
+    var is_all_undefined = true;
+    for (var i = 0; i < pool.list.length; i++) {
+      if (pool.list[i]) {
+        is_all_undefined = false;
+        break;
+      }
+    }
+    if (!is_all_undefined) {
+      this.log('warning: not all entries are empty in a pool for method ['+method_name+']');
+    }
+    //pool.list clear 
+    pool.list = [];
+  }
+  if (pool.count) {
+    this.log(this.xhr_pool_toStr('pool dump after', method_name));
+  }
+  return pool.count;
+};
+
+BackEndClass.prototype.xhr_pool_toStr = function (prefix, method_name) {
+  var pool = this.xhr_pool[method_name];
+
+  var s = prefix + '. method_name['+method_name+']';
+  if (pool) {
+    s += ' pool.list.length['+pool.list.length+'] pool.count['+pool.count+']';
+    s += pool.wait_for_idx !== undefined ? ' pool.wait_for_idx['+pool.wait_for_idx+']' : '';
+    if (pool.list.length > 1) {
+      s += '\n';
+      for (var i = 0; i < pool.list.length; i++) {
+        s += pool.list[i] ? '+' : '.';
+      }
+    }
+  }
+  return s;
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 
 BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
   this.log_heading3('XHR_onSettle. is_fulfilled ['+is_fulfilled+']');
@@ -259,10 +322,9 @@ BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
     var xhr = xhr_obj.xhr;
     
     var handle = xhr_obj.handle;
-    var pool = this.xhr_pool[handle.method.name];
     
     //-- get JSON 
-    if (!pool.wait_for_idx || (pool.wait_for_idx == handle.idx)) {
+    if (this.xhr_pool_waitFor_match(handle.method.name, handle.idx)) {
       //usual responseType = json, response class = Object
       var resp_typ = xhr.responseType;
       //=json
@@ -294,13 +356,10 @@ BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
           this.log('unsupported responseType ['+xhr.responseType+']');
       }
       
-      //-- delete the XHR object from pool
-      pool.list.splice(handle.idx, 1);
-      
       //-- process the JSON
       if (json_obj && json_obj.result == 1) {
       
-        this.log('XHR result = success. pool.list.length ['+pool.list.length+']');
+        this.log('XHR result = success');
         //this.log(json_obj);
         
         if (handle.method.json_main_key) {
@@ -312,9 +371,13 @@ BackEndClass.prototype.XHR_onSettle = function (xhr_obj, is_fulfilled) {
     }
   }
   
+  //XHR might be rejected on low-level Or on protocol level json.result != 1
   if (rq_reject) {
     this.XHR_onReject(xhr_obj, is_fulfilled, json_obj);
   }
+  
+  //delete the XHR object from the pool
+  this.xhr_pool_remove(handle.method.name, handle.idx);
 };
 
 BackEndClass.prototype.XHR_onReject = function (xhr_obj, is_fulfilled, json) {
