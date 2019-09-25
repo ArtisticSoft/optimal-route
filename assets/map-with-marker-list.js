@@ -221,7 +221,6 @@ MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) 
       }
     } else {
       this.log('ignored. address Title already exists');
-      //TODO: callback to UI
       this.UI_warning('такой адрес уже присутствует');
     }
     this.addr_str_to_add_shadow = addr_str;
@@ -475,40 +474,20 @@ MapWithMarkerListClass.prototype.address_delete_onClick = function (e) {
 //Адрес в списке Перемещён вручную
 //-----------------------------------------------------------------------------
 
-/*
-TODO: integrate this
-
+MapWithMarkerListClass.prototype.crafted_DnD_DragStartNotify = function (element) {
   //if dragged is an Address, indicate this on the map
-  if (dnd.current.dragged.classList.contains('address')) {
-    var addr = this.PageAddress_getAddrObj(dnd.current.dragged);
+  if (element.classList.contains('address')) {
+    var addr = this.PageAddress_getAddrObj(element);
     this.MapAddress_setState(addr, 'active');
     this.MapAddress_PanTo(addr);
     //animation Will restart on each Node remove\append. stop the animaiton to prevent restarts
     //animation might be in progress if the corresponding marker is clicked shortly before
     this.PageAddress_AnimationStop(addr);
   }
-  
-*/
+};
 
-/*
-TODO: 
-
-  this.onDrop = null;
-
-
-TODO: integrate this
-
-  //if dragged is an Address, indicate this on the map
-  if (dnd.current.dragged.classList.contains('address')) {
-    var addr = this.PageAddress_getAddrObj(dnd.current.dragged);
-    this.MapAddress_setState(addr, 'default');
-  }
-    
-
-*/
-
-MapWithMarkerListClass.prototype.Addresses_ItemMoved = function (element) {
-  this.log_heading2('Addresses_ItemMoved');
+MapWithMarkerListClass.prototype.crafted_DnD_DropNotify = function (element) {
+  this.log_heading2('crafted_DnD_DropNotify');
   
   //проверить изменился ли порядок эл-тов
   //бывает что эл-т был перемещён в ту-же самую позицию
@@ -1409,15 +1388,8 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragStart = function (e, dragged)
   saved_style.width = dragged.style.width;
   saved_style.height = dragged.style.height;
   
-  //if dragged is an Address, indicate this on the map
-  if (dnd.dragged_node.classList.contains('address')) {
-    var addr = this.PageAddress_getAddrObj(dnd.dragged_node);
-    this.MapAddress_setState(addr, 'active');
-    this.MapAddress_PanTo(addr);
-    //animation Will restart on each Node remove\append. stop the animaiton to prevent restarts
-    //animation might be in progress if the corresponding marker is clicked shortly before
-    this.PageAddress_AnimationStop(addr);
-  }
+  //notify the main app
+  this.crafted_DnD_DragStartNotify(dnd.dragged_node);
   
   //read the curent Dragged style. this is useful to 
   //  copy styles to a placeholder
@@ -1565,7 +1537,7 @@ MapWithMarkerListClass.prototype.crafted_DnD_onDragEnd = function (e, is_cancell
   //restore saved styles
   myUtils.Object_AppendFrom(dragged.style, dnd.saved.style);
   
-  this.Addresses_ItemMoved(dragged);
+  this.crafted_DnD_DropNotify(dragged);
 
   dragged.classList.remove('dragged');
   dnd.dragged_node = null;
@@ -2067,12 +2039,7 @@ MapWithMarkerListClass.prototype.MapAddress_Publish = function (addr_id, options
 
   if (options.pan) {
     //прокрутить вид карты к расположению нового маркера
-    var lat_lng = new L.LatLng(addr.lat, addr.lng); 
-
-    //too obtrusive. zoom level lost
-    //this.map_obj.setView(lat_lng, this.map_options.zoom_default);
-
-    this.map_obj.setView(lat_lng);//retain the current zoom level
+    this.MapAddress_PanTo(addr);
   }
 };
 
@@ -2150,31 +2117,44 @@ MapWithMarkerListClass.prototype.MapAddress_setLabel = function (addr, label_idx
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-//вызывается из Drag-and-Drop
+//прокрутить вид карты к расположению нового маркера
+//вызывается в том числе из Drag-and-Drop
 MapWithMarkerListClass.prototype.MapAddress_PanTo = function (addr) {
   var lat_lng = new L.LatLng(addr.lat, addr.lng);
   
-  //var bounds = this.map_obj.getBounds();
-  //bounds.getNorthWest();
-  
-  //Marker.getLatLng()
+  if (!this.MapBoundsContains(this.map_obj.getBounds(), lat_lng)) {
+    this.map_obj.setView(lat_lng);
+  }
 
   //not works :(
   //if (this.map_obj.getBounds().contains(lat_lng)) {
-
-  //not works :(
-  //if (this.MapBoundsContains(this.map_obj.getBounds(), lat_lng)) {
-    this.map_obj.setView(lat_lng);
-    //this.map_obj.setView(lat_lng, this.map_options.zoom_default);//too obtrusive. zoom adjustment lost
-  //}
 };
 
+/*
+--- this.map_obj.getBounds() sample
+
+looks like Min coords
+"_southWest": {
+  "lat": 59.663579139024066,
+  "lng": 29.74685668945313
+},
+
+looks like Max coords
+"_northEast": {
+  "lat": 60.20707506634915,
+  "lng": 30.89767456054688
+}
+
+*/
 MapWithMarkerListClass.prototype.MapBoundsContains = function (bounds, point) {
   var ne = bounds.getNorthEast();
   var sw = bounds.getSouthWest();
-  this.log('');
-  var lng = ne.lng < point.lng && point.lng < sw.lng;
-  var lat = ne.lat < point.lat && point.lat < sw.lat;
+  //intentionally '<' not '<=' to not allow half-visible markers
+  var lat = sw.lat < point.lat && point.lat < ne.lat;
+  var lng = sw.lng < point.lng && point.lng < ne.lng;
+  this.log('sw.lat['+sw.lat+'] point.lat['+point.lat+'] ne.lat['+ne.lat+']');
+  this.log('sw.lng['+sw.lng+'] point.lng['+point.lng+'] ne.lng['+ne.lng+']');
+  this.log('lat['+lat+'] lng['+lng+']');
   return lng && lat;
 };
 
@@ -2773,7 +2753,7 @@ MapWithMarkerListClass.prototype.MapRoutingLib_createMarker = function (i, waypo
   
   if (this.map_options.marker.on_publish.pan) {
     //прокрутить вид карты к расположению нового маркера
-    this.map_obj.setView(new L.LatLng(addr.lat, addr.lng));//retain the current zoom level
+    this.MapAddress_PanTo(addr);
   }
   
   return mrk;

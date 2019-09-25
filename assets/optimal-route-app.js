@@ -188,7 +188,7 @@ function RouteAppClass() {
       var padding = 20;//cludge. must match the actual padding for popover
       var w = Math.min(document.documentElement.clientWidth - 2 * padding, 640);
       //kinida cludge. assume WH ratio always = 16:9
-      var h = Math.round(w * 9 / 16);
+      var h = Math.min(Math.round(w * 9 / 16), document.documentElement.clientHeight - 2 * padding);
       this.help_video_player = new YT.Player('help-video', {
         height: Number(h).toString(),
         width: Number(w).toString(),
@@ -286,7 +286,6 @@ function RouteAppClass() {
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
-  //this.MapWithMarkerList.onError = this.notification_new.bind(this);
   this.MapWithMarkerList.UI_display_message_callback = this.notification_new.bind(this);
   this.MapWithMarkerList.log_enabled = true;
   //this.log('ok');
