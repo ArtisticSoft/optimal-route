@@ -20,7 +20,7 @@ function MapWithMarkerListClass(options) {
   //--- Карта. ключевой объект на странице
   //опции отображения карты
   this.map_options = {
-    zoom_default: options.map.zoom_default,
+    zoom_default: options.map.zoom_default || 10,//deperecated. to be removed. more advanced method implemented
     marker: {
       on_publish: {
         pan: true
@@ -2178,13 +2178,30 @@ MapWithMarkerListClass.prototype.MapMarker_AllRemove = function () {
 
 MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
   this.log_heading2('MapCreate');
-  if (this.MapExists()) {
+  
+  var map_element = document.getElementById(map_id);
+  if (this.MapLibExists() && map_element) {
+
+    //получить значения по умолчанию из HTML
+    var defaults = this.MapDefaultsFetch(map_element);
+    //this.log('Map defaults');
+    //this.log(defaults);
+    
+    //apply fallbacks to defaults
+    var peterburg = new L.LatLng(59.939095,30.315868);
+    var moscow = new L.LatLng(55.755814,37.617635);
+    defaults.loc = defaults.loc || peterburg;
+    defaults.zoom = defaults.zoom || this.map_options.zoom_default;
+    defaults.autodetect_failed_loc = defaults.autodetect_failed_loc || defaults.loc;
+    defaults.autodetect_failed_zoom = defaults.autodetect_failed_zoom || defaults.autodetect_failed_zoom;
+    
+    //создать карту
     this.map_obj = new L.Map(map_id);
 
     //NOTE: if site uses HTTPS then tileLayer must use HTTPS too, 
     //else XHR requests for tiles will be blocked by the Browser (FireFox at least)
     
-    //autodetect
+    //tiles server protocol autodetect. should == page protocol
     var protocol = myUtils.http_protocol_detect();
     this.log('protocol autodetected['+protocol+']');
 
@@ -2206,11 +2223,12 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     }).addTo(this.map_obj);
     //this.map_obj.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
 
-    var peterburg = new L.LatLng(59.939095,30.315868);
-    var moscow = new L.LatLng(55.755814,37.617635);
+    //задать координаты по умолчанию
+    //если координаты не заданы то карта будет пустая
+    this.map_obj.setView(defaults.loc, defaults.zoom);
     
-    //без этой строки карта пустая
-    this.map_obj.setView(peterburg, this.map_options.zoom_default);
+    //test
+    //var test_mrk = L.marker(defaults.loc).addTo(this.map_obj);
     
     //no use for markers
     //this.map_obj.on('click', this.map_onClick.bind(this));
@@ -2221,6 +2239,49 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
   }
 };
 
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//значения по умолчанию. получить из HTML
+MapWithMarkerListClass.prototype.MapDefaultsFetch = function (element) {
+  var output = {};
+  
+  var template = {
+    loc: {name: 'defaultLocation',  type: 'loc'},
+    zoom: {name: 'defaultZoom',  type: 'zoom'},
+    autodetect_failed_loc: {name: 'autodetectFailedLocation',  type: 'loc'},
+    autodetect_failed_zoom: {name: 'autodetectFailedZoom',  type: 'zoom'}
+  };
+
+  var keys = Object.keys(template);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var desc = template[k];
+    var v = element.dataset[desc.name];
+    if (v) {
+      output[k] = this.MapDefaultsConvert(desc.type, v);
+    }
+  }
+  
+  return output;
+};
+
+//значения по умолчанию. преобразовать из строк в соотв. типы данных
+MapWithMarkerListClass.prototype.MapDefaultsConvert = function (type, val) {
+  var output;
+  switch (type) {
+    case 'loc':
+      var a = val.split(',');
+      output = new L.LatLng(a[0], a[1]);
+      break;
+
+    case 'zoom':
+      //also exists Number.parseInt(string,[ radix]) But will not work in IE
+      output = parseInt(val, 10);
+      break;
+  }
+  return output;
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //клик на маркере не bubbles для карты
 //так что этот обработчик нельзя использовать для кликов на маркерах
 MapWithMarkerListClass.prototype.map_onClick = function (e) {
@@ -2243,7 +2304,7 @@ MapWithMarkerListClass.prototype.map_onClick = function (e) {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 
 //подключена ли библиотека карт?
-MapWithMarkerListClass.prototype.MapExists = function () {
+MapWithMarkerListClass.prototype.MapLibExists = function () {
   return (window.L ? true : false);
 };
 

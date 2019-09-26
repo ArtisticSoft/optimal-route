@@ -264,10 +264,6 @@ function RouteAppClass() {
       //требование заказчика
       //не запрещать кнопку Поделиться
       //this.link_to_share_btn.disabled = true;
-      
-      //требование заказчика
-      //не использовать
-      //this.link_to_share.innerHTML = window.location.href;//fallback
     }
   };
   //задать значение по умолчанию для ссылки которой можно поделиться
@@ -282,7 +278,7 @@ function RouteAppClass() {
     //10 city-scale zoom. large city and it's outskirts are visible
     //5 region-scale zoom. nearby cities are visible
 
-    map: {id: 'map', zoom_default: 10},
+    map: {id: 'map'},
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
