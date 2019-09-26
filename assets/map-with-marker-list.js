@@ -174,7 +174,6 @@ MapWithMarkerListClass.prototype.UI_display_message = function (title, msg) {
 */
 MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) {
   this.log_heading2('Address_AppendFromString');
-  
 
   //защита от повторных кликов кнопки Добавить
   //сейчас эта защита не актуальна т.к. поле ввода очищается сразу после вызова данного метода

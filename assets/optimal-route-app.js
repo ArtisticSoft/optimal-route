@@ -321,15 +321,7 @@ function RouteAppClass() {
       //this.log('SearchWithSuggestons.getValue ['+this.SearchWithSuggestons.getValue()+']');
       this.MapWithMarkerList.Address_AppendFromString(this.SearchWithSuggestons.getValue());
       
-      //вернуть фокус в поле ввода адреса
-      this.SearchWithSuggestons.focus();
-      
-      //требование заказчика
-      //очистить поле ввода
-      this.SearchWithSuggestons.setValue('');
-      
-      //ссылка которой можно поделиться становится не-валидной
-      this.link_to_share_onChange(false);
+      this.address_add_after();//требование заказчика
     }
   }
   this.address_add_btn = document.getElementById('address-add-btn');
@@ -337,15 +329,27 @@ function RouteAppClass() {
   //some browsers remember the Enabled state for buttons so make sure it is Disabled
   this.address_add_btn.disabled = true;
   
+  //поле ввода. состояние изменилось. 
+  //самый интересный случай - было выбрано значение из списка предположений
   this.Search_onStateChange = function(state) {
     this.address_add_btn.disabled = (state != 'value_from_suggestion');
     
     if (state == 'value_from_suggestion') {
       this.MapWithMarkerList.Address_Append_earlyPeek(this.SearchWithSuggestons.getValue());
+      
+      this.address_add_after();//требование заказчика
     }
     
   };
   this.SearchWithSuggestons.onStateChange = this.Search_onStateChange.bind(this);
+
+  this.address_add_after = function() {
+    //очистить поле ввода
+    this.SearchWithSuggestons.setValue('');
+
+    //вернуть фокус в поле ввода адреса
+    this.SearchWithSuggestons.focus();
+  };
 }
 //-----------------------------------------------------------------------------
 
