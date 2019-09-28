@@ -44,13 +44,13 @@ function RouteAppClass() {
         e.currentTarget.hidden = true;
         this.overlay.hidden = true;
       } else if (classes.contains('error-message')) {
-        e.currentTarget.parentNode.removeChild(e.currentTarget);
+        this.notification_close(e.currentTarget);
       }
       e.preventDefault();
     }
   };
   this.popover_link_share.addEventListener('click', this.overlaid_onClick.bind(this));
-
+  
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //кнопка Копировать в поп-овере
 
@@ -112,6 +112,18 @@ function RouteAppClass() {
       var notifications = this.notificaitons_wrapper.getElementsByClassName('error-message');
       this.notificaitons_wrapper.removeChild(notifications[1]);
     }
+    
+    //требование заказчика
+    //После появления ошибки, скрыть ее через 3 секунды
+    window.setTimeout(
+      this.notification_close.bind(this, notification),
+      3 * 1000
+    );
+  };
+
+  //notification. close
+  this.notification_close = function (notification) {
+    notification.parentNode.removeChild(notification);
   };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
