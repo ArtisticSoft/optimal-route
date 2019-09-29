@@ -243,6 +243,53 @@ myUtilsClass.prototype.Element_findParent_hasDataNameValue = function (element, 
   return {parent: prnt, is_found: is_found};
 };
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//HTML Element. сформировать ассоциативный массив значений из атрибутов data-* 
+//по дескриптору определённого формата
+//
+//пример дескриптора
+//
+//  var descriptor = {
+//    zoom: {name: 'defaultZoom',  type: 'int'},
+//    enabled: {name: 'enabled',  type: 'bool'},
+//    failed_zoom: {name: 'failedZoom',  type: 'int'}
+//  };
+
+myUtilsClass.prototype.Element_datasetFetchValues = function (element, descriptor, converter) {
+  converter = converter || this.datasetValConvert.bind(this);
+  var output = {};
+
+  var keys = Object.keys(descriptor);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var desc = descriptor[k];
+    var v = element.dataset[desc.name];
+    if (v) {
+      output[k] = converter(desc.type, v);
+    }
+  }
+  
+  return output;
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//HTML Element. конвертировать значение заданного атрибута data-* в один из типов JS 
+
+myUtilsClass.prototype.datasetValConvert = function (type, val) {
+  var output;
+  switch (type) {
+    case 'int':
+      //also exists Number.parseInt(string,[ radix]) But will not work in IE
+      output = parseInt(val, 10);
+      break;
+
+    case 'bool':
+      output = (val == '1') ? true : false;
+      break;
+  }
+  return output;
+};
+
 //-----------------------------------------------------------------------------
 //HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
 

@@ -20,7 +20,12 @@ function MapWithMarkerListClass(options) {
   //--- Карта. ключевой объект на странице
   //опции отображения карты
   this.map_options = {
-    zoom_default: options.map.zoom_default || 10,//deperecated. to be removed. more advanced method implemented
+    //--- zoom levels
+    //20 very zoomed. streets are clearly visible
+    //10 city-scale zoom. large city and it's outskirts are visible
+    //5 region-scale zoom. nearby cities are visible
+    zoom_default: 10,
+    auto_detect_loc: true,
     marker: {
       on_publish: {
         pan: true
@@ -2183,7 +2188,7 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
   if (this.MapLibExists() && map_element) {
 
     //получить значения по умолчанию из HTML
-    var defaults = this.MapDefaultsFetch(map_element);
+    var defaults = this.map_options.defaults = this.MapDefaultsFetch(map_element);
     //this.log('Map defaults');
     //this.log(defaults);
     
@@ -2233,6 +2238,20 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
     //no use for markers
     //this.map_obj.on('click', this.map_onClick.bind(this));
     
+    //---start user location auto-detect by IP
+    if (defaults.autodetect_enabled) {
+      this.map_obj.on('locationfound', this.Map_onLocationFound.bind(this));
+      this.map_obj.on('locationerror', this.Map_onLocationError.bind(this));
+      
+      //Note: if geolocation failedif geolocation failed, world view is set 
+      //      only if some view is not already set with .setView
+      //
+      //setView   If true, automatically sets the map view to the user location with respect to detection accuracy, 
+      //          or to world view if geolocation failed.
+      //maxZoom   The maximum zoom for automatic view setting when using setView option.
+      this.map_obj.locate({setView: true, maxZoom: defaults.zoom});
+    }
+    
     this.log('-----finished ok');
   } else {
     document.getElementById(map_id).innerHTML("карта недоступна");
@@ -2240,28 +2259,43 @@ MapWithMarkerListClass.prototype.MapCreate = function (map_id) {
 };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
+//user location auto-detect by IP
+
+MapWithMarkerListClass.prototype.Map_onLocationFound = function (e) {
+  this.log_heading3('Map_onLocationFound ['+e.latlng+']');
+  this.log('e.latlng');
+  this.log(e.latlng);
+  
+  //var radius = e.accuracy / 2;
+  //var location = e.latlng;
+  //L.marker(location).addTo(map);
+  //L.circle(location, radius).addTo(map);
+};
+
+//if user cancels the geolocation prompt
+//  e.message[Geolocation error: User denied geolocation prompt.] 
+//  e.code[1]
+//
+//on error, the view is actualy Not set to whole world 
+//  only if some view is not already set with .setView
+MapWithMarkerListClass.prototype.Map_onLocationError = function (e) {
+  this.log_heading3('Map_onLocationError e.message['+e.message+'] e.code['+e.code+']');
+  var defaults = this.map_options.defaults;
+  this.map_obj.setView(defaults.autodetect_failed_loc, defaults.autodetect_failed_zoom);
+};
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //значения по умолчанию. получить из HTML
 MapWithMarkerListClass.prototype.MapDefaultsFetch = function (element) {
-  var output = {};
-  
-  var template = {
+  var descriptor = {
     loc: {name: 'defaultLocation',  type: 'loc'},
-    zoom: {name: 'defaultZoom',  type: 'zoom'},
+    zoom: {name: 'defaultZoom',  type: 'int'},
+    autodetect_enabled: {name: 'autodetectEnabled',  type: 'bool'},
     autodetect_failed_loc: {name: 'autodetectFailedLocation',  type: 'loc'},
-    autodetect_failed_zoom: {name: 'autodetectFailedZoom',  type: 'zoom'}
+    autodetect_failed_zoom: {name: 'autodetectFailedZoom',  type: 'int'}
   };
 
-  var keys = Object.keys(template);
-  for (var i = 0; i < keys.length; i++) {
-    var k = keys[i];
-    var desc = template[k];
-    var v = element.dataset[desc.name];
-    if (v) {
-      output[k] = this.MapDefaultsConvert(desc.type, v);
-    }
-  }
-  
-  return output;
+  return myUtils.Element_datasetFetchValues(element, descriptor, this.MapDefaultsConvert.bind(this));
 };
 
 //значения по умолчанию. преобразовать из строк в соотв. типы данных
@@ -2272,11 +2306,9 @@ MapWithMarkerListClass.prototype.MapDefaultsConvert = function (type, val) {
       var a = val.split(',');
       output = new L.LatLng(a[0], a[1]);
       break;
-
-    case 'zoom':
-      //also exists Number.parseInt(string,[ radix]) But will not work in IE
-      output = parseInt(val, 10);
-      break;
+      
+    default:
+      output = myUtils.datasetValConvert(type, val);
   }
   return output;
 };
