@@ -285,11 +285,6 @@ function RouteAppClass() {
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
     
-    //--- zoom levels
-    //20 very zoomed. streets are clearly visible
-    //10 city-scale zoom. large city and it's outskirts are visible
-    //5 region-scale zoom. nearby cities are visible
-
     map: {id: 'map'},
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
