@@ -20,10 +20,6 @@ function RouteAppClass() {
 
   this.overlay = document.getElementById('overlay');
 
-  this.notificaitons_wrapper = document.getElementById('notificaitons-wrapper');
-  //this can't be done with simple .childNodes[0]
-  this.notificaiton_template = this.notificaitons_wrapper.getElementsByClassName('error-message')[0];
-
   this.popover_link_share = document.getElementById('popover-link-share');
   this.link_to_share = document.getElementById('link-to-share');
   
@@ -87,6 +83,11 @@ function RouteAppClass() {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //сообщения об ошибках
 
+  this.notificaitons_wrapper = document.getElementById('notificaitons-wrapper');
+  //this can't be done with simple .childNodes[0]
+  this.notificaiton_template = this.notificaitons_wrapper.getElementsByClassName('error-message')[0];
+  this.notification_close_delay = myUtils.datasetValConvert('int', this.notificaitons_wrapper.dataset.closeDelay);
+
   this.notification_new = function (title, txt) {
     title = title || 'Ошибка';
     //-- new Notification = template.Clone
@@ -117,7 +118,7 @@ function RouteAppClass() {
     //После появления ошибки, скрыть ее через 3 секунды
     window.setTimeout(
       this.notification_close.bind(this, notification),
-      3 * 1000
+      this.notification_close_delay 
     );
   };
 
@@ -125,7 +126,7 @@ function RouteAppClass() {
   this.notification_close = function (notification) {
     notification.parentNode.removeChild(notification);
   };
-
+  
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
 
@@ -149,7 +150,7 @@ function RouteAppClass() {
 
   this.NavigationOnDemand = new NavigationOnDemandClass({
   });
-  this.NavigationOnDemand.log_enabled = true;
+  //this.NavigationOnDemand.log_enabled = true;
   this.NavigationOnDemand.NavPlaceResponsive();
   
   this.navigation_items = {
