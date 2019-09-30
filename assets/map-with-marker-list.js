@@ -25,7 +25,6 @@ function MapWithMarkerListClass(options) {
     //10 city-scale zoom. large city and it's outskirts are visible
     //5 region-scale zoom. nearby cities are visible
     zoom_default: 10,
-    auto_detect_loc: true,
     marker: {
       on_publish: {
         pan: true
