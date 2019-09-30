@@ -538,6 +538,13 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
       this.Backend_OptimizeRoute_onFulfill.bind(this)
     )
     
+    //требование заказчика
+    //пока не завершён запрос к backEnd
+    //холодить и менять текст «Расчёт маршрута...»
+    this.route_optimize_btn.disabled = true;
+    this.route_optimize_btn_caption = this.route_optimize_btn.innerHTML;//save the current caption
+    this.route_optimize_btn.innerHTML = this.route_optimize_btn.dataset.captionDisabled;
+    
     this.address_lst_to_optimize_shadow = addr_lst_joined;
   } else {
     this.log('ignored. input data looks the same as previous one');
@@ -599,6 +606,12 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   
   //md_list из json будет сохранён
   this.AddressList_AfterChange(json);
+
+  //требование заказчика
+  //пока не завершён запрос к backEnd
+  //холодить и менять текст «Расчёт маршрута...»
+  this.route_optimize_btn.disabled = false;
+  this.route_optimize_btn.innerHTML = this.route_optimize_btn_caption;//restore the caption from saved
 };
 
 //обновить состояние кнопки Оптимизировать
