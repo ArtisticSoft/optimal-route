@@ -116,10 +116,13 @@ function RouteAppClass() {
     
     //требование заказчика
     //После появления ошибки, скрыть ее через 3 секунды
-    window.setTimeout(
-      this.notification_close.bind(this, notification),
-      this.notification_close_delay 
-    );
+    //если задержка =0 или отсутствует то не скрывать
+    if (this.notification_close_delay > 0) {
+      window.setTimeout(
+        this.notification_close.bind(this, notification),
+        this.notification_close_delay 
+      );
+    }
   };
 
   //notification. close

@@ -265,7 +265,7 @@ myUtilsClass.prototype.Element_datasetFetchValues = function (element, descripto
     var desc = descriptor[k];
     var v = element.dataset[desc.name];
     if (v) {
-      output[k] = converter(desc.type, v);
+      output[k] = converter(desc.type, v, desc.default);
     }
   }
   
@@ -275,17 +275,29 @@ myUtilsClass.prototype.Element_datasetFetchValues = function (element, descripto
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
 //HTML Element. конвертировать значение заданного атрибута data-* в один из типов JS 
 
-myUtilsClass.prototype.datasetValConvert = function (type, val) {
-  var output;
-  switch (type) {
-    case 'int':
-      //also exists Number.parseInt(string,[ radix]) But will not work in IE
-      output = parseInt(val, 10);
-      break;
+myUtilsClass.datasetValConvert_defaults = {
+  'int': 0,
+  'bool': false
+};
 
-    case 'bool':
-      output = (val == '1') ? true : false;
-      break;
+//'val_default' works while 'default' is a syntax error
+
+myUtilsClass.prototype.datasetValConvert = function (type, val, val_default) {
+  var output;
+  //if some data-* attr is missed it will =undefined. check this condition
+  if (val !== undefined) {
+    switch (type) {
+      case 'int':
+        //also exists Number.parseInt(string,[ radix]) But will not work in IE
+        output = parseInt(val, 10);
+        break;
+
+      case 'bool':
+        output = (val == '1') ? true : false;
+        break;
+    }
+  } else {
+    output = val_default || this.C.datasetValConvert_defaults[type];
   }
   return output;
 };
