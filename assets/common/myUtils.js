@@ -188,6 +188,16 @@ myUtilsClass.prototype.Element_classList_AddRemove = function (element, class_na
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//HTML Element. выделить содержимое (как текст) и опционально скопировать в clipboard
+
+myUtilsClass.prototype.Element_innerHTML_select = function (element, do_copy) {
+  window.getSelection().selectAllChildren(element);
+  if (do_copy) {
+    document.execCommand('copy');
+  }
+};
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //HTML Element. получить смещение относительно документа
 
 myUtilsClass.prototype.Element_offsetRelativeToDocument = function (element) {

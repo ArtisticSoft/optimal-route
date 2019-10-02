@@ -71,17 +71,25 @@ ol, ul {
 /*Positioning for overlaid elements*/
 /*---------------------------------------------------------------------------*/
 
-.pos_fixed_center {
+.pos-fixed-center {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
-.pos_fixed_bottom_right {
+.pos-fixed-bottom-right {
   position: fixed;
   right: 0;
   bottom: 0;
+}
+
+.pos-absolute-stretch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
 }
 
 /*---------------------------------------------------------------------------*/

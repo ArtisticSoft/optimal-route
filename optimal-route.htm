@@ -230,7 +230,7 @@
     
     <div id="overlay" class="overlay" hidden></div>
     
-    <div id="popover-link-share" class="popover alert overlaid pos_fixed_center" hidden>
+    <div id="popover-link-share" class="popover alert overlaid pos-fixed-center" hidden>
       <header>
         <strong>Отправить ссылку</strong>
         <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
@@ -249,6 +249,7 @@
           <img class="icon" src = "./assets/images/odnoklasniki.svg" alt="OK"/>
           <p>Одноклассники</p>
         </a>
+        
       </div>
 
       <div class="link-to-share">
@@ -262,32 +263,34 @@
         <button id="link-copy-btn" class="my-btn btn-special">Копировать</button>
       </div>
         <!-- 
-      <p>нажмите Ctrl-C чтобы скопировать ссылку</p>
+        <p>нажмите Ctrl-C чтобы скопировать ссылку</p>
         -->
+        
+      <div class="popover-disable pos-absolute-stretch" hidden=""></div>
     </div>
 
   <!--   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -->
 
-    <div id="popover-about" class="popover alert overlaid pos_fixed_center" hidden>
+    <div id="popover-about" class="popover alert overlaid pos-fixed-center" hidden>
       <header>
         <strong>О проекте</strong>
         <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
       </header>
 
       <div class="about-content">
-        здесь должен быть текст О проекте
+        О проекте.
       </div>
     </div>
 
   <!--   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -->
 
-    <div id="popover-help" class="popover alert overlaid pos_fixed_center" hidden>
+    <div id="popover-help" class="popover alert overlaid pos-fixed-center" hidden>
       <header>
         <strong>Помощь</strong>
         <img class="close-icon clickable" src = "./assets/images/close-gray.svg" alt="x"/>
       </header>
 
-      <div id="help-video" class="help-content" data-help-video-id="VphymHHIpB4">
+      <div id="help-video" class="help-content" data-help-video-id="pvTgznmdCzc">
       <!-- 
       embed video. simple but not very nice method
       
@@ -301,7 +304,7 @@
 
   <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 
-    <div id="notificaitons-wrapper" class="notificaitons-wrapper pos_fixed_bottom_right" data-close-delay="3000">
+    <div id="notificaitons-wrapper" class="notificaitons-wrapper pos-fixed-bottom-right" data-close-delay="3000">
       <div class="error-message alert overlaid" hidden>
         <header>
           <strong class="notification-title"></strong>
@@ -319,12 +322,13 @@
     <script src="./assets/common/base-classes.js"></script>
     <script src="./assets/common/XHRClass.js"></script>
     
-    <script src="./assets/social-networks.js"></script>
     <script src="./assets/nav-ondemand.js"></script>
     <script src="./assets/back-end.js"></script>
     <script src="./assets/search-with-suggestons.js"></script>
     <script src="./assets/map-with-marker-list.js"></script>
     
+    <script src="./assets/social-networks.js"></script>
+    <script src="./assets/link-to-share.js"></script>
     <script src="./assets/optimal-route-app.js"></script>
   
   <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
@@ -350,7 +354,7 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
       function onYouTubeIframeAPIReady() {
-        console.log('onYouTubeIframeAPIReady() called');
+        //console.log('onYouTubeIframeAPIReady() called');
       }
     </script>
 

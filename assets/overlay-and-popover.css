@@ -40,6 +40,9 @@ can have an arbitrary WH
 
 }
 */
+.popover-disable {
+  background-color: rgba(255, 255, 255, 0.5);
+}
 /*---------------------------------------------------------------------------*/
 
 .notificaitons-wrapper {

@@ -12,6 +12,9 @@ function MapWithMarkerListClass(options) {
   this.C = MapWithMarkerListClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way
   
+  //для тестов
+  this.test_ListFillFinish_callback = null;
+  
   //для вывода сообщений в UI
   this.UI_display_message_callback = null;
   
@@ -193,7 +196,7 @@ MapWithMarkerListClass.prototype.Address_AppendFromString = function (addr_str) 
       //this.AddressIndex_debug_Dump();
 
       //информировать UI что ссылка недействительна
-      this.LinkToShare_Set(null);
+      this.LinkToShare_Set();
       
       //Модель. добавить полуготовый адрес
       //добавить неполные данные которые будут дополнены после завершения Backend.Geocode
@@ -362,16 +365,16 @@ MapWithMarkerListClass.prototype.Backend_Geocode_AddrRollback = function (addr_i
   //Список на Странице. удалить из
   //  особый случай. объект возможно уже удалён из модели данных
   //  по этой причине нельзя использовать обычное удаление по объекту addr
-  var elem = this.PageAddress_ElementById(cache_item.addr_id);
+  var elem = this.PageAddress_ElementById(addr_id);
   if (elem) {
     elem.parentNode.removeChild(elem);
   }
 
   //вспомогательный список. удалить ID
-  this.AddressIndex_Remove(cache_item.addr_id, 'actual');//addr_id existance is checked here
+  this.AddressIndex_Remove(addr_id, 'actual');//addr_id existance is checked here
 
   //Модель. удалить
-  this.AddressList_Remove(cache_item.addr_id);//addr_id existance is checked here
+  this.AddressList_Remove(addr_id);//addr_id existance is checked here
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -525,7 +528,7 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     this.log('addr_lst_joined ['+addr_lst_joined+']');
     
     //информировать приложение что ссылка недействительна
-    this.LinkToShare_Set(null);
+    this.LinkToShare_Set();
     
     //запустить сортировку списка адресов. процесс включает в себя promise resolve
     //по завершении будет сформирована новая ссылка
@@ -535,7 +538,8 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     this.back_end.XHR_Start(
       this.back_end.DistributionAddress, 
       query, 
-      this.Backend_OptimizeRoute_onFulfill.bind(this)
+      this.Backend_OptimizeRoute_onFulfill.bind(this),
+      this.Backend_OptimizeRoute_onReject.bind(this)
     )
     
     //требование заказчика
@@ -612,6 +616,9 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   //холодить и менять текст «Расчёт маршрута...»
   this.route_optimize_btn.disabled = false;
   this.route_optimize_btn.innerHTML = this.route_optimize_btn_caption;//restore the caption from saved
+  
+  //test case. Works
+  //window.setTimeout(this.Backend_OptimizeRoute_onReject.bind(this), 2000);
 };
 
 //обновить состояние кнопки Оптимизировать
@@ -619,6 +626,14 @@ MapWithMarkerListClass.prototype.route_optimize_btn_state_update = function () {
   //должно быть как минимум 2 адреса чтобы был маршрут
   //не исключено что Оптимизировать имеет смысл только если имеется 3 адреса
   this.route_optimize_btn.disabled = this.address_list_html.childNodes.length < 2;
+};
+
+//оптимизация завершилась ошибкой
+//информировать UI об этом. если открыт поповер со ссылкой то он должен быть авто-закрыт
+//сообщение об ошибке появится в любом случае благодаря BackEnd.onReject
+MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onReject = function () {
+  //информировать приложение что формирование ссылки завершилось ошибкой
+  this.LinkToShare_Set(null);
 };
 
 //-----------------------------------------------------------------------------
@@ -817,7 +832,7 @@ MapWithMarkerListClass.prototype.AddressList_AfterChange = function (json) {
   
   if (!json) {
     //информировать приложение что ссылка недействительна
-    this.LinkToShare_Set(null);
+    this.LinkToShare_Set();
     //обновить Unique ID списка адресов. процесс включает в себя promise resolve
     //по завершении будет сформирована новая ссылка
     this.AddressList_UniqueID_Refresh_Require();
@@ -3148,13 +3163,15 @@ MapWithMarkerListClass.prototype.test_AddressFill_engine = function () {
       var timeout = a.finalization_tmr >= this.C.test_address_sets.finalization_timeout;
       if (this.AddressList_AllHas_LatLng() || timeout) {
       
-        //this make a sense only for no-pause Add Add Add...
-        //this.MapRoute_AllRemove();
-        //this.MapRoute_AllPublish();
         
         window.clearInterval(a.timer);
       }
-      if (timeout) {
+      if (!timeout) {
+        this.log('test: finished normally');
+        if (this.test_ListFillFinish_callback) {
+          this.test_ListFillFinish_callback();
+        }
+      } else {
         this.log('test: finished by timeout');
       }
       break;

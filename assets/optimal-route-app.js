@@ -8,7 +8,7 @@
 
 function RouteAppClass() {
 
-  this.log_enabled = true;
+  this.log_enabled = document.location.search.includes('debug_log=1');
   this.log = function (msg) {
     if (this.log_enabled) {
       console.log(msg);
@@ -16,70 +16,39 @@ function RouteAppClass() {
   };
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//глобальные переменные
+//Поповеры
 
   this.overlay = document.getElementById('overlay');
 
-  this.popover_link_share = document.getElementById('popover-link-share');
-  this.link_to_share = document.getElementById('link-to-share');
-  
-  //открыть поп-овер
-  this.overlaid_Show = function (overlaid_elem) {
+  //поповер. открыть 
+  this.popoverShow = function (overlaid_elem) {
     this.overlay.hidden = false;
     overlaid_elem.hidden = false;
   };
+
+  //поповер. закрыть 
+  this.popoverHide = function (overlaid_elem) {
+    overlaid_elem.hidden = true;
+    this.overlay.hidden = true;
+  };
   
-  //поповер \ сообщение. обработчик кликов общего назначения
-  this.overlaid_onClick = function (e) {
-    this.log('overlaid_onClick');
+  //поповер. обработчик кликов общего назначения
+  this.popoverClickHandler = function (e) {
+    this.log('popoverClickHandler');
     
-    //кнопка Закрыть в поп-овере
-    var classes = e.currentTarget.classList;
+    //кнопка Закрыть [X]
     if (e.target.classList.contains('close-icon')) {
-      if (classes.contains('popover')) {
-        e.currentTarget.hidden = true;
-        this.overlay.hidden = true;
-      } else if (classes.contains('error-message')) {
-        this.notification_close(e.currentTarget);
-      }
+      this.popoverHide(e.currentTarget);
       e.preventDefault();
     }
   };
-  this.popover_link_share.addEventListener('click', this.overlaid_onClick.bind(this));
   
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//кнопка Копировать в поп-овере
-
-  this.link_copy_btn_onClick = function (e) {
-    this.log('link_copy_btn_onClick');
-    window.getSelection().selectAllChildren(this.link_to_share);
-		document.execCommand('copy');
-  };
-  this.link_copy_btn = document.getElementById('link-copy-btn');
-  this.link_copy_btn.addEventListener('click', this.link_copy_btn_onClick.bind(this));
-
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//кнопка Поделиться. открывает поп-овер
-
-  //this.link_to_share_debug = true;
-
-  this.link_to_share_btn_onClick = function (e) {
-    this.log('link_to_share_btn_onClick');
-    
-    //lose focus. this is the first step to make close by ESC
-    this.saved_focus = myUtils.Document_Blur();
-    
-    this.SocialNetworks.LinkToShare_BuildAll(this.link_to_share.innerHTML);
-    
-    //select link text
-    window.getSelection().selectAllChildren(this.link_to_share);
-    
-    this.overlaid_Show(this.popover_link_share);
-  };
-  this.link_to_share_btn = document.getElementById('share-link-btn');
-  this.link_to_share_btn.addEventListener('click', this.link_to_share_btn_onClick.bind(this));
-  this.link_to_share_btn.disabled = !this.link_to_share_debug;
-
+  //поповеры. найти их все на странице и назначить обработчик(и)
+  var popover_arr = document.querySelectorAll('.popover');
+  for (var i = 0; i < popover_arr.length; i++) {
+    popover_arr[i].addEventListener('click', this.popoverClickHandler.bind(this));
+  }
+  
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //сообщения об ошибках
 
@@ -102,7 +71,7 @@ function RouteAppClass() {
     notification.hidden = false;
     //the first Notification will be appended below the Template
     this.notificaitons_wrapper.appendChild(notification);
-    notification.addEventListener('click', this.overlaid_onClick.bind(this));
+    notification.addEventListener('click', this.notificationClickHandler.bind(this));
     
     //-- prevent overflow
     var wrapper_style = window.getComputedStyle(this.notificaitons_wrapper);
@@ -130,16 +99,27 @@ function RouteAppClass() {
     notification.parentNode.removeChild(notification);
   };
   
+  //сообщение. обработчик кликов общего назначения
+  this.notificationClickHandler = function (e) {
+    this.log('notificationClickHandler');
+    
+    //кнопка Закрыть [X]
+    if (e.target.classList.contains('close-icon')) {
+      this.notification_close(e.currentTarget);
+      e.preventDefault();
+    }
+  };
+  
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
 
   //---OSRM BackEnd
   //this.OSRMBackEnd = new OSRMBackEndClass();
-  //this.OSRMBackEnd.log_enabled = true;
+  //this.OSRMBackEnd.log_enabled = this.log_enabled;
 
   //---BackEnd  - должен быть первым
   this.BackEnd = new BackEndClass();
-  this.BackEnd.log_enabled = true;
+  this.BackEnd.log_enabled = this.log_enabled;
   
   this.backend_onReject = function (xhr_obj, txt) {
     this.notification_new('', txt);
@@ -153,7 +133,7 @@ function RouteAppClass() {
 
   this.NavigationOnDemand = new NavigationOnDemandClass({
   });
-  //this.NavigationOnDemand.log_enabled = true;
+  //this.NavigationOnDemand.log_enabled = this.log_enabled;
   this.NavigationOnDemand.NavPlaceResponsive();
   
   this.navigation_items = {
@@ -167,17 +147,17 @@ function RouteAppClass() {
     var popover_id = this.navigation_items[e.target.id];
     if (popover_id && popover_id.length) {
       this.NavigationOnDemand.close();//close nav if it is opened as a popover
-      this.overlaid_Show(document.getElementById(popover_id));
+      this.popoverShow(document.getElementById(popover_id));
     }
   };
   var keys = Object.keys(this.navigation_items);
   for (var i = 0; i < keys.length; i++) {
     var k = keys[i];
     document.getElementById(k).addEventListener('click', this.navigation_item_onClick.bind(this));
-    var popover_id = this.navigation_items[k];
-    if (popover_id && popover_id.length) {
-      document.getElementById(popover_id).addEventListener('click', this.overlaid_onClick.bind(this));
-    }
+    //var popover_id = this.navigation_items[k];
+    //if (popover_id && popover_id.length) {
+    //  document.getElementById(popover_id).addEventListener('click', this.popoverClickHandler.bind(this));
+    //}
   }
 
   //--- pop-over contains an embedded video. it will be handled individually
@@ -220,13 +200,11 @@ function RouteAppClass() {
     }
     
     //show it
-    this.overlaid_Show(document.getElementById('popover-help'));
+    this.popoverShow(document.getElementById('popover-help'));
   };
   this.nav_help_ref = document.getElementById('nav-help');
   this.nav_help_ref.addEventListener('click', this.navigation_help_onClick.bind(this));
   this.popover_help = document.getElementById('popover-help');
-  //attach the standard listener to have proper [X] behavior
-  this.popover_help.addEventListener('click', this.overlaid_onClick.bind(this));
   //attach the custom [X] listener 
   this.popover_help_onClose = function (e) {
     this.log('stopping video...');
@@ -245,7 +223,6 @@ function RouteAppClass() {
     //this.log('event.data String['+YTEventDataToName_Map[event.data]+'] raw['+event.data+']');
   };
   
- 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---поиск адресов - должен быть перед 'список адресов'
 
@@ -255,67 +232,55 @@ function RouteAppClass() {
     input_id: 'address-input', suggestion_dropdown_id: 'address-suggestions', 
     length_min: 3, delay_to_xhr_start: 1000
   });
-  this.SearchWithSuggestons.log_enabled = true;
+  this.SearchWithSuggestons.log_enabled = this.log_enabled;
   //this.SearchWithSuggestons.test_inp_val();
   //this.log('ok');
   
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-//---список адресов
-  
-  //callback для списка адресов
-  //ссылка которой можно поделиться изменилась
-  this.link_to_share_onChange = function (link) {
-    this.log('link_to_share_onChange. link['+link+']');
-    
-    if (link && link.length) {
-      this.link_to_share.innerHTML = link;
-      this.link_copy_btn.disabled = false;
-      //кнопкa Поделиться будет разрешена после формирования первой не-пустой ссылки
-      this.link_to_share_btn.disabled = false;
-    } else {
-      if (!this.link_to_share_debug) {
-        this.link_to_share.innerHTML = '';
-      }
-      this.link_copy_btn.disabled = true;
-      //требование заказчика
-      //не запрещать кнопку Поделиться
-      //this.link_to_share_btn.disabled = true;
-    }
-  };
-  //задать значение по умолчанию для ссылки которой можно поделиться
-  this.link_to_share_onChange(false);
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//--- Ссылка-которой-можно-поделиться
 
-  //this.log('MapWithMarkerList creating...');
+  this.LinkToShare = new LinkToShareClass(
+    this,
+    {
+      log_enabled: this.log_enabled,
+      open_btn_id: 'share-link-btn',
+      popover_id: 'popover-link-share',
+      link_id: 'link-to-share',
+      copy_btn_id: 'link-copy-btn'
+    },
+    {
+      list_id: 'social-networks', 
+      item_tag: 'a',
+      attribute_name: 'name'
+    }
+  );
+
+//--- список адресов
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
-    
     map: {id: 'map'},
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
-  this.MapWithMarkerList.onLinkToShareChanged = this.link_to_share_onChange.bind(this);
+  this.MapWithMarkerList.onLinkToShareChanged = this.LinkToShare.link_changeHandler.bind(this.LinkToShare);
   this.MapWithMarkerList.UI_display_message_callback = this.notification_new.bind(this);
-  this.MapWithMarkerList.log_enabled = true;
+  this.MapWithMarkerList.log_enabled = this.log_enabled;
   //this.log('ok');
 
   //-- test cases
-  //=[?testtest_add_files=1]
+  this.test_ListFillFinish = function () {
+    this.MapWithMarkerList.route_optimize_btn_onClick();
+    this.LinkToShare.open_btn_clickHandler();
+  };
   //this.log('document.location.search ['+document.location.search+']');
-  if (document.location.search.includes('testtest_add_files=1')) {
+  if (document.location.search.includes('test_fill_list=1')) {
+    if (document.location.search.includes('test_link_to_share=1')) {
+      this.MapWithMarkerList.test_ListFillFinish_callback = this.test_ListFillFinish.bind(this);
+    }
     this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
     //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
   }
   
-//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
-  //---социальные сети
-  this.SocialNetworks = new SocialNetworksClass({
-    list_id: 'social-networks', 
-    item_tag: 'a',
-    attribute_name: 'name'
-  });
-  this.SocialNetworks.log_enabled = true;
-  //this.SocialNetworks.LinkToShare_BuildAll('!!!test!!!');
-
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //кнопка Добавить адрес
 //передаёт данные между объектами SearchWithSuggestons => MapWithMarkerList
@@ -412,7 +377,7 @@ It is a common mistake to use load where DOMContentLoaded would be more appropri
 var Application;
 
 function onDocumentLoaded() {
-  console.log('-----onDocumentLoaded');
+  //console.log('-----onDocumentLoaded');
   Application = new RouteAppClass();
 }
 
