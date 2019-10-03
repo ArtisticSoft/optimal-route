@@ -9,8 +9,6 @@
 //.open_btn_id   .popover_id   .link_id   .copy_btn_id   
 
 function LinkToShareClass(popover_engine, options, social_networks_options) {
-  this.log_enabled = options.log_enabled;
-  
   //this.C = this.constructor;
   this.C = LinkToShareClass;//less elegant alternative in case pre-ES6 browsers don't support constructor
   this.SuperClass.static_properties_init.call(this);//can be called only in a special way

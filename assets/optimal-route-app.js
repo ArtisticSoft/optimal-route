@@ -18,39 +18,16 @@ function RouteAppClass() {
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //Поповеры
 
-  this.overlay = document.getElementById('overlay');
-
-  //поповер. открыть 
-  this.popoverShow = function (overlaid_elem) {
-    this.overlay.hidden = false;
-    overlaid_elem.hidden = false;
-  };
-
-  //поповер. закрыть 
-  this.popoverHide = function (overlaid_elem) {
-    overlaid_elem.hidden = true;
-    this.overlay.hidden = true;
-  };
+  this.PopoverEngine = new PopoverEngineClass({
+    overlay_id: 'overlay',
+    popover_class: 'popover',
+    close_btn_class: 'close-icon'
+  });
+  this.PopoverEngine.log_enabled = this.log_enabled;
   
-  //поповер. обработчик кликов общего назначения
-  this.popoverClickHandler = function (e) {
-    this.log('popoverClickHandler');
-    
-    //кнопка Закрыть [X]
-    if (e.target.classList.contains('close-icon')) {
-      this.popoverHide(e.currentTarget);
-      e.preventDefault();
-    }
-  };
-  
-  //поповеры. найти их все на странице и назначить обработчик(и)
-  var popover_arr = document.querySelectorAll('.popover');
-  for (var i = 0; i < popover_arr.length; i++) {
-    popover_arr[i].addEventListener('click', this.popoverClickHandler.bind(this));
-  }
   
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//сообщения об ошибках
+//сообщения, в том числе об ошибках
 
   this.notificaitons_wrapper = document.getElementById('notificaitons-wrapper');
   //this can't be done with simple .childNodes[0]
@@ -117,7 +94,7 @@ function RouteAppClass() {
   //this.OSRMBackEnd = new OSRMBackEndClass();
   //this.OSRMBackEnd.log_enabled = this.log_enabled;
 
-  //---BackEnd  - должен быть первым
+  //---BackEnd - должен быть первым
   this.BackEnd = new BackEndClass();
   this.BackEnd.log_enabled = this.log_enabled;
   
@@ -147,17 +124,13 @@ function RouteAppClass() {
     var popover_id = this.navigation_items[e.target.id];
     if (popover_id && popover_id.length) {
       this.NavigationOnDemand.close();//close nav if it is opened as a popover
-      this.popoverShow(document.getElementById(popover_id));
+      this.PopoverEngine.popoverShow(popover_id);
     }
   };
   var keys = Object.keys(this.navigation_items);
   for (var i = 0; i < keys.length; i++) {
     var k = keys[i];
     document.getElementById(k).addEventListener('click', this.navigation_item_onClick.bind(this));
-    //var popover_id = this.navigation_items[k];
-    //if (popover_id && popover_id.length) {
-    //  document.getElementById(popover_id).addEventListener('click', this.popoverClickHandler.bind(this));
-    //}
   }
 
   //--- pop-over contains an embedded video. it will be handled individually
@@ -200,8 +173,9 @@ function RouteAppClass() {
     }
     
     //show it
-    this.popoverShow(document.getElementById('popover-help'));
+    this.PopoverEngine.popoverShow('popover-help');
   };
+  
   this.nav_help_ref = document.getElementById('nav-help');
   this.nav_help_ref.addEventListener('click', this.navigation_help_onClick.bind(this));
   this.popover_help = document.getElementById('popover-help');
@@ -227,10 +201,12 @@ function RouteAppClass() {
 //---поиск адресов - должен быть перед 'список адресов'
 
   //this.log('SearchWithSuggestons creating...');
+  var address_input = document.getElementById('address-input');
   this.SearchWithSuggestons = new SearchWithSuggestonsClass({
     back_end: this.BackEnd,
     input_id: 'address-input', suggestion_dropdown_id: 'address-suggestions', 
-    length_min: 3, delay_to_xhr_start: 1000
+    length_min: myUtils.datasetValConvert('int', address_input.dataset.lengthMin), 
+    debounce_delay: myUtils.datasetValConvert('int', address_input.dataset.debounceDelay)
   });
   this.SearchWithSuggestons.log_enabled = this.log_enabled;
   //this.SearchWithSuggestons.test_inp_val();
@@ -240,9 +216,8 @@ function RouteAppClass() {
 //--- Ссылка-которой-можно-поделиться
 
   this.LinkToShare = new LinkToShareClass(
-    this,
+    this.PopoverEngine,
     {
-      log_enabled: this.log_enabled,
       open_btn_id: 'share-link-btn',
       popover_id: 'popover-link-share',
       link_id: 'link-to-share',
@@ -254,6 +229,7 @@ function RouteAppClass() {
       attribute_name: 'name'
     }
   );
+  this.LinkToShare.log_enabled = this.log_enabled;
 
 //--- список адресов
   this.MapWithMarkerList = new MapWithMarkerListClass({

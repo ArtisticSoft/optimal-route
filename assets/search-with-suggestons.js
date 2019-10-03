@@ -22,7 +22,7 @@ function SearchWithSuggestonsClass(options) {
   //константа. минимальное кол-во символов для которого будет выполнен XHR запрос
   this.length_min = options.length_min || 5;
   //константа. через какое время после последнего введённого символа выполнится XHR запрос
-  this.delay_to_xhr_start = options.delay_to_xhr_start || 3000;
+  this.debounce_delay = options.debounce_delay || 3000;
   
   //--- ключевой объект на странице. поле ввода 
   this.input_html = document.getElementById(options.input_id);
@@ -216,7 +216,7 @@ SearchWithSuggestonsClass.prototype.input_onInput = function (e) {
         {address: this.input_html.value}, 
         this.suggestions_populate.bind(this)
       ),
-      this.delay_to_xhr_start
+      this.debounce_delay
     );
   } else {
     this.suggestions_set_visible(false);
