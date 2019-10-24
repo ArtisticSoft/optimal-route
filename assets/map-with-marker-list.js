@@ -522,9 +522,10 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
   this.log_heading2('route_optimize_btn_onClick');
   
   var addr_lst_joined = this.AddressList_getDbIdsJoined();
+  var addr_lst_sorted = this.AddressList_getDbIdsJoined(true);
   
   //защита от повторных кликов кнпоки Оптимизировать
-  if (this.address_lst_to_optimize_shadow != addr_lst_joined && addr_lst_joined.length) {
+  if (this.address_lst_to_optimize_shadow != addr_lst_sorted && addr_lst_joined.length) {
     this.log('addr_lst_joined ['+addr_lst_joined+']');
     
     //информировать приложение что ссылка недействительна
@@ -549,7 +550,7 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     this.route_optimize_btn_caption = this.route_optimize_btn.innerHTML;//save the current caption
     this.route_optimize_btn.innerHTML = this.route_optimize_btn.dataset.captionDisabled;
     
-    this.address_lst_to_optimize_shadow = addr_lst_joined;
+    this.address_lst_to_optimize_shadow = addr_lst_sorted;
   } else {
     this.log('ignored. input data looks the same as previous one');
   }
@@ -894,14 +895,30 @@ MapWithMarkerListClass.prototype.Backend_DistributionHand_onFulfill = function (
 //получить список DB ID адресов 
 //в виде строки 'idA,idB, ...'
 //используется как аргумент для некоторых методов back-end
-//порядок адресов = как они расположены на странице
-MapWithMarkerListClass.prototype.AddressList_getDbIdsJoined = function () {
+//порядок адресов 
+//по умолчанию = как они расположены на странице
+//если do_sort = true то сортировка по DB ID
+//сортировка требуется для защиты от повторных обращений к back-end
+//c тем-же набором адресов
+MapWithMarkerListClass.prototype.AddressList_getDbIdsJoined = function (do_sort) {
   var id_lst = this.AddressIndex_getList('actual');
   var db_id_lst = [];
   
   for (var i = 0; i < id_lst.length; i++) {
     var addr = this.address_list[id_lst[i]];
-    db_id_lst.push(addr.db_id);
+    db_id_lst.push(do_sort ? addr.db_id.toLowerCase() : addr.db_id);
+  }
+  
+  if (do_sort) {
+    db_id_lst.sort(function(a, b) {
+      if (a > b) {
+        return 1;
+      }
+      if (a < b) {
+        return -1;
+      }
+      return 0;
+    });
   }
 
   return db_id_lst.join(',');

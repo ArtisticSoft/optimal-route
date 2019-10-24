@@ -29,9 +29,13 @@ can have an arbitrary WH
   flex-direction: row;
   align-items: center;
 }
+.alert > header:nth-last-child(2) {
+  margin-right: 0.5rem;/*make a space between title and [X]*/
+}
 .alert .close-icon {
 /*  align-self: flex-end;/*poor*/
   margin-left: auto;
+  /*padding-left: 0.5rem;/*poor idea to make a space between title and [X]. makes [X] much smaller*/
 }
 
 /*---------------------------------------------------------------------------*/

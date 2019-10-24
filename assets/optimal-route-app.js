@@ -25,67 +25,23 @@ function RouteAppClass() {
   });
   this.PopoverEngine.log_enabled = this.log_enabled;
   
-  
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //сообщения, в том числе об ошибках
 
-  this.notificaitons_wrapper = document.getElementById('notificaitons-wrapper');
-  //this can't be done with simple .childNodes[0]
-  this.notificaiton_template = this.notificaitons_wrapper.getElementsByClassName('error-message')[0];
-  this.notification_close_delay = myUtils.datasetValConvert('int', this.notificaitons_wrapper.dataset.closeDelay);
-
-  this.notification_new = function (title, txt) {
-    title = title || 'Ошибка';
-    //-- new Notification = template.Clone
-    var notification = this.notificaiton_template.cloneNode(true);
-    //this.log('notification.constructor.name['+notification.constructor.name+']');
-
-    var notification_title = notification.getElementsByClassName('notification-title')[0];
-    notification_title.innerHTML = title;
-    var notification_text = notification.getElementsByClassName('notification-text')[0];
-    notification_text.innerHTML = txt;
-
-    notification.hidden = false;
-    //the first Notification will be appended below the Template
-    this.notificaitons_wrapper.appendChild(notification);
-    notification.addEventListener('click', this.notificationClickHandler.bind(this));
-    
-    //-- prevent overflow
-    var wrapper_style = window.getComputedStyle(this.notificaitons_wrapper);
-    //Note: getComputedStyle.height has String format '150px'
-    this.log('wrapper_style.height['+wrapper_style.height +'] window.innerHeight['+window.innerHeight+'] window.outerHeight['+window.outerHeight+']');
-    if (parseFloat(wrapper_style.height, 10) > window.innerHeight) {
-      //remove the Topmost child except the Template
-      var notifications = this.notificaitons_wrapper.getElementsByClassName('error-message');
-      this.notificaitons_wrapper.removeChild(notifications[1]);
-    }
-    
-    //требование заказчика
-    //После появления ошибки, скрыть ее через 3 секунды
-    //если задержка =0 или отсутствует то не скрывать
-    if (this.notification_close_delay > 0) {
-      window.setTimeout(
-        this.notification_close.bind(this, notification),
-        this.notification_close_delay 
-      );
-    }
-  };
-
-  //notification. close
-  this.notification_close = function (notification) {
-    notification.parentNode.removeChild(notification);
-  };
+  this.NotificationEngine = new NotificationEngineClass({
+    wrapper_id: 'notificaitons-wrapper',
+    notification_class: 'error-message',
+    close_btn_class: 'close-icon',
+    title_class: 'notification-title',
+    title_default: 'Ошибка',
+    text_class: 'notification-text'
+  });
+  this.NotificationEngine.log_enabled = this.log_enabled;
   
-  //сообщение. обработчик кликов общего назначения
-  this.notificationClickHandler = function (e) {
-    this.log('notificationClickHandler');
-    
-    //кнопка Закрыть [X]
-    if (e.target.classList.contains('close-icon')) {
-      this.notification_close(e.currentTarget);
-      e.preventDefault();
-    }
-  };
+  if (document.location.search.includes('debug_notification=1')) {
+    this.NotificationEngine.notificationNew('test title 1', 'test text 1');
+    this.NotificationEngine.notificationNew('test title 2', 'test text 2');
+  }
   
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //-----ключевые объекты
@@ -99,7 +55,7 @@ function RouteAppClass() {
   this.BackEnd.log_enabled = this.log_enabled;
   
   this.backend_onReject = function (xhr_obj, txt) {
-    this.notification_new('', txt);
+    this.NotificationEngine.notificationNew('', txt);
   };
   this.BackEnd.onReject = this.backend_onReject.bind(this);
   //this.OSRMBackEnd.onReject = this.backend_onReject.bind(this);
@@ -238,7 +194,7 @@ function RouteAppClass() {
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.LinkToShare.link_changeHandler.bind(this.LinkToShare);
-  this.MapWithMarkerList.UI_display_message_callback = this.notification_new.bind(this);
+  this.MapWithMarkerList.UI_display_message_callback = this.NotificationEngine.notificationNew.bind(this.NotificationEngine);
   this.MapWithMarkerList.log_enabled = this.log_enabled;
   //this.log('ok');
 
