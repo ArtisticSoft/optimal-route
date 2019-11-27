@@ -12,6 +12,19 @@
 }
 
 /*---------------------------------------------------------------------------*/
+
+.splash {
+  display: flex;
+  align-items: center;/*V centering*/
+  justify-content: center;
+  flex-direction: row;
+}
+
+.spinner {
+  margin-right: var(--regular-padding);
+}
+
+/*---------------------------------------------------------------------------*/
 /*
 an Alert layout
 can have an arbitrary WH
@@ -39,11 +52,13 @@ can have an arbitrary WH
 }
 
 /*---------------------------------------------------------------------------*/
+
 /*
 .popover {
 
 }
 */
+
 .popover-disable {
   background-color: rgba(255, 255, 255, 0.5);
 }

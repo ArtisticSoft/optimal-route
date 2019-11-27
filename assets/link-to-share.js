@@ -86,7 +86,6 @@ LinkToShareClass.prototype.link_changeHandler = function (link) {
   if (!this.popover.dom_element.hidden) {
     this.popover_updateAndShow();
   }
-  
 };
 
 //-----------------------------------------------------------------------------

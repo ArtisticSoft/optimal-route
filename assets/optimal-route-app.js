@@ -25,6 +25,10 @@ function RouteAppClass() {
   });
   this.PopoverEngine.log_enabled = this.log_enabled;
   
+  if (document.location.search.includes('debug_splash=1')) {
+    this.PopoverEngine.popoverShow("splash-route-optimization");
+  }
+  
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //сообщения, в том числе об ошибках
 
@@ -169,6 +173,17 @@ function RouteAppClass() {
   //this.log('ok');
   
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  //--- Splash. объект на странице
+  this.splash = document.getElementById('splash-route-optimization');
+  
+  this.onRouteOptimize_Handler = function (inProgress) {
+    this.log('onRouteOptimize_Handler inProgress ['+inProgress+']');
+    //Splash - open during link update
+    this.PopoverEngine.popoverSetVisible(this.splash, inProgress);
+  }
+
+
 //--- Ссылка-которой-можно-поделиться
 
   this.LinkToShare = new LinkToShareClass(
@@ -194,10 +209,11 @@ function RouteAppClass() {
     address_list_id: 'address-list', route_optimize_btn_id: 'route-optimize-btn'
   });
   this.MapWithMarkerList.onLinkToShareChanged = this.LinkToShare.link_changeHandler.bind(this.LinkToShare);
+  this.MapWithMarkerList.onRouteOptimize = this.onRouteOptimize_Handler.bind(this);
   this.MapWithMarkerList.UI_display_message_callback = this.NotificationEngine.notificationNew.bind(this.NotificationEngine);
   this.MapWithMarkerList.log_enabled = this.log_enabled;
   //this.log('ok');
-
+  
   //-- test cases
   this.test_ListFillFinish = function () {
     this.MapWithMarkerList.route_optimize_btn_onClick();

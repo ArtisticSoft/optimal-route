@@ -112,6 +112,9 @@ function MapWithMarkerListClass(options) {
     polyline: null
   };
   
+  //вызывается до и после оптимизации маршрута
+  this.onRouteOptimize = null;
+  
   //вызывается не только после оптимизации маршрута но и после других изменений списка адресов
   this.onLinkToShareChanged = null;
 
@@ -531,6 +534,9 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     //информировать приложение что ссылка недействительна
     this.LinkToShare_Set();
     
+    //информировать приложение что сортировка списка адресов началась 
+    this.onRouteOptimizeCall(true);
+    
     //запустить сортировку списка адресов. процесс включает в себя promise resolve
     //по завершении будет сформирована новая ссылка
     var query = {address: addr_lst_joined};
@@ -553,6 +559,12 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     this.address_lst_to_optimize_shadow = addr_lst_sorted;
   } else {
     this.log('ignored. input data looks the same as previous one');
+  }
+};
+
+MapWithMarkerListClass.prototype.onRouteOptimizeCall = function (inProgress = false) {
+  if (this.onRouteOptimize) {
+    this.onRouteOptimize(inProgress);
   }
 };
 
@@ -612,14 +624,11 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   //md_list из json будет сохранён
   this.AddressList_AfterChange(json);
 
-  //требование заказчика
-  //пока не завершён запрос к backEnd
-  //холодить и менять текст «Расчёт маршрута...»
-  this.route_optimize_btn.disabled = false;
-  this.route_optimize_btn.innerHTML = this.route_optimize_btn_caption;//restore the caption from saved
-  
   //test case. Works
   //window.setTimeout(this.Backend_OptimizeRoute_onReject.bind(this), 2000);
+  
+  //common actions
+  this.Backend_OptimizeRoute_onSettle();
 };
 
 //обновить состояние кнопки Оптимизировать
@@ -635,6 +644,21 @@ MapWithMarkerListClass.prototype.route_optimize_btn_state_update = function () {
 MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onReject = function () {
   //информировать приложение что формирование ссылки завершилось ошибкой
   this.LinkToShare_Set(null);
+  
+  //common actions
+  this.Backend_OptimizeRoute_onSettle();
+};
+
+//оптимизация завершилась. то что должно быть выполнено независимо от успешности
+MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onSettle = function () {
+  //требование заказчика
+  //пока не завершён запрос к backEnd
+  //холодить и менять текст «Расчёт маршрута...»
+  this.route_optimize_btn.disabled = false;
+  this.route_optimize_btn.innerHTML = this.route_optimize_btn_caption;//restore the caption from saved
+  
+  //информировать приложение что сортировка списка адресов завершена 
+  this.onRouteOptimizeCall();
 };
 
 //-----------------------------------------------------------------------------
