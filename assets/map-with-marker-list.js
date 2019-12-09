@@ -556,7 +556,7 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
     this.route_optimize_btn_caption = this.route_optimize_btn.innerHTML;//save the current caption
     this.route_optimize_btn.innerHTML = this.route_optimize_btn.dataset.captionDisabled;
     
-    this.address_lst_to_optimize_shadow = addr_lst_sorted;
+    this.address_lst_to_optimize_shadow = addr_lst_joined;
   } else {
     this.log('ignored. input data looks the same as previous one');
   }
@@ -623,6 +623,12 @@ MapWithMarkerListClass.prototype.Backend_OptimizeRoute_onFulfill = function (jso
   
   //md_list из json будет сохранён
   this.AddressList_AfterChange(json);
+
+  //sorta hack. set last-memorized address_lst to the just optimized 
+  //to avoid Optimize button to react at the first click right after optimization
+  //watch glosely: if value saved in route_optimize_btn_onClick changed
+  //it should be changed here too
+  this.address_lst_to_optimize_shadow = this.AddressList_getDbIdsJoined();
 
   //test case. Works
   //window.setTimeout(this.Backend_OptimizeRoute_onReject.bind(this), 2000);
