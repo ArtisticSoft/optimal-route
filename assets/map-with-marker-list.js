@@ -525,10 +525,10 @@ MapWithMarkerListClass.prototype.route_optimize_btn_onClick = function (e) {
   this.log_heading2('route_optimize_btn_onClick');
   
   var addr_lst_joined = this.AddressList_getDbIdsJoined();
-  var addr_lst_sorted = this.AddressList_getDbIdsJoined(true);
+//  var addr_lst_sorted = this.AddressList_getDbIdsJoined(true);//rejected by customer
   
   //защита от повторных кликов кнпоки Оптимизировать
-  if (this.address_lst_to_optimize_shadow != addr_lst_sorted && addr_lst_joined.length) {
+  if (addr_lst_joined.length && this.address_lst_to_optimize_shadow != addr_lst_joined) {
     this.log('addr_lst_joined ['+addr_lst_joined+']');
     
     //информировать приложение что ссылка недействительна
