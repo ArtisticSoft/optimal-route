@@ -65,13 +65,20 @@ function RouteAppClass() {
   //this.OSRMBackEnd.onReject = this.backend_onReject.bind(this);
 
 //-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//---сервис отслеживающий поворот экрана на смартфонах
+
+  this.ScreenOrientationService = new ScreenOrientationServiceClass();
+  this.ScreenOrientationService.log_enabled = this.log_enabled;
+
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
 //---навигация адаптивная
 //должна быть перед картой чтобы инициализация карты не задерживала адаптивное размeщение навигации
 
   this.NavigationOnDemand = new NavigationOnDemandClass({
   });
   //this.NavigationOnDemand.log_enabled = this.log_enabled;
-  this.NavigationOnDemand.NavPlaceResponsive();
+  this.NavigationOnDemand.PlaceResponsiveFirstTime();
+  this.ScreenOrientationService.event.addEventListener("orientationchange", this.NavigationOnDemand.onOrientationchange);
   
   this.navigation_items = {
     'nav-about': 'popover-about',
@@ -202,7 +209,16 @@ function RouteAppClass() {
   );
   this.LinkToShare.log_enabled = this.log_enabled;
 
-//--- список адресов
+//-   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   - 
+//Список адресов + карта
+
+  this.AddressListAdaptive = new AddressListAdaptiveClass({
+    ScreenOrientationService: this.ScreenOrientationService,
+    log_enabled: this.log_enabled
+  });
+
+//--- сам список+карта
+
   this.MapWithMarkerList = new MapWithMarkerListClass({
     back_end: this.BackEnd,
     map: {id: 'map'},
@@ -220,13 +236,21 @@ function RouteAppClass() {
     this.LinkToShare.open_btn_clickHandler();
   };
   //this.log('document.location.search ['+document.location.search+']');
-  if (document.location.search.includes('test_fill_list=1')) {
+  if (document.location.search.includes('test_fill_list=')) {
+    let params = new URLSearchParams(document.location.search.substring(1));
+    switch (params.get("test_fill_list")) {
+      case 'scroll':
+        this.MapWithMarkerList.test_AddSeveralMarkersD('PeterburgScroll');
+        break;
+      case '1':
+        this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
+        //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
+        //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
+        break;
+    }
     if (document.location.search.includes('test_link_to_share=1')) {
       this.MapWithMarkerList.test_ListFillFinish_callback = this.test_ListFillFinish.bind(this);
     }
-    this.MapWithMarkerList.test_AddSeveralMarkersD('Peterburg');
-    //this.MapWithMarkerList.test_AddSeveralMarkersD('Moscow');
-    //this.MapWithMarkerList.test_AddSeveralMarkersD('London');
   }
   
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -269,6 +293,9 @@ function RouteAppClass() {
 
     //вернуть фокус в поле ввода адреса
     this.SearchWithSuggestons.focus();
+    
+    //проскроллить до последнего эл-та
+    this.AddressListAdaptive.ScrollToEnd();
   };
 }
 //-----------------------------------------------------------------------------

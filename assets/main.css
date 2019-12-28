@@ -48,7 +48,7 @@
 переместить address-suggestions по вертикали вплотную к input
 для этого необходимо компенсировать label.margin-bottom = 0.5rem по умолчанию из bootstrap-reboot
 */
-.address-wrapper > .anchor-for-absolute-child {
+.address-input-wrapper > .anchor-for-absolute-child {
 /*  top: -0.5rem; */
 }
 
@@ -117,18 +117,23 @@ in a more abstract way
 /*список адресов*/
 /*---------------------------------------------------------------------------*/
 
+.address-list-wrapper {
+  margin-top: 0.7rem;
+}
+.address-list-wrapper .header {
+  text-transform: uppercase;
+  color: #565656;
+
+}
+
 /*разделитель*/
 .content-row .separator-h {
   /* margin-top: var(--regular-padding); */
 }
 
-.address-list {
-  margin-top: 0.7rem;
-}
-.address-list .header {
-  text-transform: uppercase;
-  color: #565656;
-
+/* max-height should be set for the scroll to work */
+.scrollable-y {
+  overflow-y: auto;
 }
 
 li.address {
@@ -153,7 +158,7 @@ li.address > img {
   /*padding-left:0.5rem;/*poor :(*/
 }
 
-.address-list .placeholder {
+.address-list-wrapper .placeholder {
   /*tre11o style*/
   background-color: rgba(9, 30, 66, .04);
 }
@@ -187,7 +192,7 @@ li.address > img {
 /*кнопки Оптимизировать маршрут, Поделиться*/
 /*---------------------------------------------------------------------------*/
 
-.address-list-buttons-wrapper {
+.address-buttons-wrapper {
   display: flex;
   
   /*на совсем небольших экранах поле ввода и кнопку можно расположить в одну линию 

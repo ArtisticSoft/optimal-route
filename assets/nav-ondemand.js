@@ -44,9 +44,8 @@ function NavigationOnDemandClass(options) {
   //обёртка позволяющая задавать % смещения навигации исходя из её размера а не размера nav-anchor
   this.nav_wrapper_offscreen = document.getElementById('nav-wrapper-offscreen');
   
-  //Portrait\Landscape orientation change events
-  window.addEventListener("orientationchange", this.window_onOrientationchange.bind(this));
-  this.orientationchange= {};
+  //pre-made binding to avoid .bind in the glue code
+  this.onOrientationchange = this.onOrientationchangeHandler.bind(this);
 }
 
 NavigationOnDemandClass.prototype = new GenericBaseClass();//inherit from
@@ -59,8 +58,8 @@ NavigationOnDemandClass.prototype.SuperClass = GenericBaseClass.prototype;
 //interface for external calls
 //the call Not included in the Constructor
 //to be able to Enable and See log messages
-NavigationOnDemandClass.prototype.NavPlaceResponsive = function () {
-  this.window_onOrientationchange();
+NavigationOnDemandClass.prototype.PlaceResponsiveFirstTime = function () {
+  this._NavPlaceResponsiveDetermine();
 };
 
 //close Navigation if it is opened as a popover
@@ -68,6 +67,10 @@ NavigationOnDemandClass.prototype.close = function () {
   if (!this.nav_hide_btn.hidden) {
     this.nav_hide_btn_onClick();
   }
+};
+
+NavigationOnDemandClass.prototype.onOrientationchangeHandler = function (evt) {
+  this._NavPlaceResponsiveDetermine();
 };
 
 //-----------------------------------------------------------------------------
@@ -241,112 +244,6 @@ NavigationOnDemandClass.prototype.h_scroll_enable = function (enable) {
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-/*
-поддержка адаптивности при повороте экрана Portrait\Landscape
-оказалась не совсем  проста
-существует непредсказуемая задержка между событием Orientationchange
-и выставлением браузером правильных значений для 
-document.documentElement.clientWidth  window.screen.width  window.screen.availWidth
-иногда правильные значения 
-выставлены к моменту Orientationchange
-иногда выставляются позже
-
-здесь реализован polling-style механизм 
-отслеживания изменений document.documentElement.clientWidth
-
-для страховки, если изменений не последовало в течении 1000мс после Orientationchange 
-то таймер останавливается. в теории так не должно случиться
-
---- after switch to Portrait
-ScreenOrientation
-​angle: 0
-​onchange: null
-​type: "portrait-primary"
-​
---- after switch to Landscape
-ScreenOrientation
-​angle: 90
-​onchange: null
-​type: "landscape-primary"
-​
-
---- Abandoned
-screen.orientation 
-- the support is Poor among browsers. Safari on iOS known not-supporter
-- not very useful
-
-  //this.log('screen.orientation');
-  //this.log(screen.orientation);
-
-  if (window.screen  && window.screen.orientation && window.screen.orientation.type) {
-    var t = window.screen.orientation.type;
-    if (t != this.orientation_type_shadow) {
-      this._NavPlaceResponsiveDetermine();
-      this.orientation_type_shadow = t;
-    }
-  }
-*/
-
-//Note: e might == null
-NavigationOnDemandClass.prototype.window_onOrientationchange = function (e) {
-  this.log_heading1('window_onOrientationchange');
-
-  //a shortcut to the context
-  var a = this.orientationchange;
-  
-  //get the current Target value
-  var v = this.screen_size_detect_value();
-  
-  //check if the Target value changed since the last Detect
-  if (v != a.target_val_shadow) {
-    this.log('target val differ at the moment of the event! val['+v+'] shadow['+a.target_val_shadow+']');
-    //remember the new value. might be used next time window.Orientationchange fired
-    a.target_val_shadow = v;
-    //call the payload
-    this._NavPlaceResponsiveDetermine();
-  } else {
-    //fall back to polling-style change detect
-    //get the current Target value
-    a.target_val_shadow = v;
-    a.tick_cnt = 0;
-    a.timer = window.setInterval(
-      this.window_Orientationchange_TimerTick.bind(this), this.C.orientationchange.interval
-    );
-  }
-};
-
-NavigationOnDemandClass.prototype.window_Orientationchange_TimerTick = function () {
-  this.log_heading2('window_Orientationchange_TimerTick');
-  
-  //a shortcut to the context
-  var a = this.orientationchange;
-  a.tick_cnt++;
-
-  //get the current Target value
-  var v = this.screen_size_detect_value();
-
-  //if the Target_value changed...
-  if (v != a.target_val_shadow) {
-    this.log('polling: target val changed. val['+v+'] shadow['+a.target_val_shadow+']');
-    window.clearInterval(a.timer);
-    //remember the new value. might be used next time window.Orientationchange fired
-    a.target_val_shadow = v;
-    //call the payload
-    this._NavPlaceResponsiveDetermine();
-  } else {
-    if (a.tick_cnt >= this.C.orientationchange.timeout) {
-      this.log('Warning: timeout waiting for value change. val shadow['+a.target_val_shadow+']');
-      window.clearInterval(a.timer);
-    }
-  }
-};
-
-NavigationOnDemandClass.prototype.screen_size_detect_value = function () {
-  //! important: this must be the same value used for screen size detect
-  //several values (W,H) might be concatenated
-  return document.documentElement.clientWidth;
-};
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 NavigationOnDemandClass.prototype._static_properties_init = function () {
   this.log('NavigationOnDemandClass._static_properties_init');
@@ -359,10 +256,6 @@ NavigationOnDemandClass.prototype._static_properties_init = function () {
   var opt = this.C.Options = {};
   opt.animation_enable = false;
   //opt.animation_enable = true;
-  
-  var orient = this.C.orientationchange = {};
-  orient.interval = 100;
-  orient.timeout = 10;//=1000ms / interval
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

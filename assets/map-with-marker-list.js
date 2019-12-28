@@ -321,8 +321,6 @@ MapWithMarkerListClass.prototype.Backend_Geocode_AddrFulfill = function (addr_id
       
       //this.AddressIndex_debug_Dump();
       
-      //this.Map_debug_Route_AllDump();
-      
       this.AddressList_AfterChange();
       break;
 
@@ -1976,7 +1974,7 @@ MapWithMarkerListClass.prototype.MapUpdate_AddressRemoveAfter = function (addr_i
       break;
       
     case 'crafted':
-      //реальный маршрут. более был то нарисовать что-нибудь взамен
+      //реальный маршрут. если был то нарисовать что-нибудь взамен
       this.MapUpdate_RouteReal_needFallback();
       break;
   }
@@ -2030,7 +2028,7 @@ MapWithMarkerListClass.prototype.MapUpdate_RouteReal_Invalidate = function (addr
   }
 };
 
-//реальный маршрут. более был то нарисовать что-нибудь взамен
+//реальный маршрут. если был то нарисовать что-нибудь взамен
 MapWithMarkerListClass.prototype.MapUpdate_RouteReal_needFallback = function (addr_id) {
   var rq = this.MapUpdate_RouteReal_rqFallback;
   if (rq) {
@@ -2479,7 +2477,6 @@ MapWithMarkerListClass.prototype.MapRoute_AllPublish = function () {
     }
   }
   
-  //this.Map_debug_Route_AllDump('After');
 };
 
 //удалить все линии маршрута
@@ -2513,7 +2510,6 @@ MapWithMarkerListClass.prototype.MapAddress_RoutePublish = function (addr_id) {
   
   //this.log(this.Address_debug_Id_ToStrMin(addr_id) + this.Address_debug_Id_ToStrMin(prev_id) + this.Address_debug_Id_ToStrMin(next_id));
   
-  //this.Map_debug_Route_AllDump('Before');
 
   //удалить линию предыдущий-следующий если она есть
   this.MapRoute_RemoveFromTo(prev_id, next_id);
@@ -2522,7 +2518,6 @@ MapWithMarkerListClass.prototype.MapAddress_RoutePublish = function (addr_id) {
   this.MapRoute_PublishFromTo(prev_id, addr_id);
   this.MapRoute_PublishFromTo(addr_id, next_id);
   
-  //this.Map_debug_Route_AllDump('After');
 };
 
 //удаление линий маршрута по одному ID. 
@@ -2539,8 +2534,6 @@ MapWithMarkerListClass.prototype.MapAddress_RouteRemove = function (addr_id) {
 
   //this.log(this.Address_debug_Id_ToStrMin(addr_id) + this.Address_debug_Id_ToStrMin(prev.addr_id) + this.Address_debug_Id_ToStrMin(next.addr_id));
 
-  //this.Map_debug_Route_AllDump('Before');
-
   //удалить две линии до предыдущего и следующего адресов
   this.MapRoute_RemoveFromToObjects(prev.addr, addr);
   this.MapRoute_RemoveFromToObjects(addr, next.addr);
@@ -2548,7 +2541,6 @@ MapWithMarkerListClass.prototype.MapAddress_RouteRemove = function (addr_id) {
   //создать новую линию между предыдущим и следующим адресом
   this.MapRoute_PublishFromTo(prev.addr_id, next.addr_id);
   
-  //this.Map_debug_Route_AllDump('After');
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2669,151 +2661,6 @@ MapWithMarkerListClass.prototype.MapLine_AllRemove = function () {
 
 MapWithMarkerListClass.prototype.Map_debug_Line_getId = function (polyline) {
   return polyline ? polyline._leaflet_id : null;
-};
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//debug
-
-//call from console
-//Application.MapWithMarkerList.Map_debug_Route_AllDump()
-MapWithMarkerListClass.prototype.Map_debug_Route_AllDump = function (comment) {
-  this.log_heading4('Map_debug_Route_AllDump comment['+comment+']');
-  var err_cnt = 0;
-
-  err_cnt += this.Map_debug_Polylines_AllDump();
-  
-  //Object.keys(this.address_list);//poor option
-  err_cnt += this.Map_debug_Routes_Dump_ForAddrIdList('actual', this.AddressIndex_getList('actual'));
-
-  err_cnt += this.Map_debug_Routes_Dump_ForAddrIdList('shadow', this.AddressIndex_getList('shadow'));
-
-  if (err_cnt) {
-    this.log('--- !!! errors found :( ['+err_cnt+']');
-  } else {
-    this.log('no errors :)');
-  }
-  return err_cnt;
-};
-
-MapWithMarkerListClass.prototype.Map_debug_Polylines_AllDump = function () {
-  var err_cnt = 0;
-  var txt = '---\n';
-
-  if (this.polylines_pool && this.polylines_pool.length) {
-    txt += 'polylines_pool.length['+this.polylines_pool.length+']\n';
-    
-    var lines_collected = this.Map_debug_Routes_Collect_ForAddrIdList(this.AddressIndex_getList('actual'));
-    var lines_collected_shadow = this.Map_debug_Routes_Collect_ForAddrIdList(this.AddressIndex_getList('shadow'));
-    
-    for (var i = 0; i < this.polylines_pool.length; i++) {
-      var line = this.polylines_pool[i];
-      txt += 'i['+i+'] polylines_pool[i].id['+this.Map_debug_Line_getId(line)+']\n';
-      
-      if (!lines_collected.includes(line)) {
-        txt += '! this line not found in [actual]index\n';
-        err_cnt++;
-      }
-      if (!lines_collected_shadow.includes(line)) {
-        txt += '! this line not found in [shadow]index\n';
-        err_cnt++;
-      }
-      
-    }
-  } else {
-    txt += 'polylines_pool empty\n';
-  }
-  
-  //if (true) {
-  if (err_cnt) {
-    this.log(txt);
-  }
-
-  return err_cnt;
-};
-
-MapWithMarkerListClass.prototype.Map_debug_Routes_Dump_ForAddrIdList = function (name, addr_id_lst) {
-  var err_cnt = 0;
-  var warn_cnt = 0;
-  var txt = '---['+name+']\n';
-
-  if (addr_id_lst && addr_id_lst.length) {
-    txt += 'list.length['+addr_id_lst.length+']\n';
-
-    for (var i = 0; i < addr_id_lst.length; i++) {
-      var id = addr_id_lst[i];
-      var addr = this.address_list[id];
-      var routes = addr.map_routes;
-      
-      if (routes.prev.line || routes.next.line) {
-        //txt += 'i['+i+'] addr_id['+id+']\n';
-
-        //txt += 'routes.prev.line.id['+this.Map_debug_Line_getId(routes.prev.line)+'] routes.next.line.id['+this.Map_debug_Line_getId(routes.next.line)+']\n';
-
-        var d = routes.prev;
-        if (d.line && !this.polylines_pool.includes(d.line)) {
-          txt += 'i['+i+'] addr_id['+id+']\n';
-          txt += '! line Not in polylines_pool .prev.line.id['+this.Map_debug_Line_getId(d.line)+'] .prev.addr_id['+d.addr_id+']\n';
-          err_cnt++;
-        }
-
-        var d = routes.next;
-        if (d.line && !this.polylines_pool.includes(d.line)) {
-          txt += 'i['+i+'] addr_id['+id+']\n';
-          txt += '! line Not in polylines_pool .next.line.id['+this.Map_debug_Line_getId(d.line)+'] .next.addr_id['+d.addr_id+']\n';
-          err_cnt++;
-        }
-
-      } else {
-        txt += 'i['+i+'] addr_id['+id+']\n';
-        txt += 'no lines\n';
-        warn_cnt++;
-      }
-    }
-  } else {
-    txt += 'list empty\n';
-  }
-  
-  //if (true) {
-  if (err_cnt || warn_cnt) {
-    txt += 'err_cnt['+err_cnt+'] warn_cnt['+warn_cnt+']\n';
-    this.log(txt);
-  }
-
-  return err_cnt;
-};
-
-MapWithMarkerListClass.prototype.Map_debug_Routes_Collect_ForAddrIdList = function (addr_id_lst) {
-  if (addr_id_lst && addr_id_lst.length) {
-    //this.log('addr_id_lst.length['+addr_id_lst.length+']');
-    
-    var lines_collected = [];
-
-    for (var i = 0; i < addr_id_lst.length; i++) {
-      var id = addr_id_lst[i];
-      var addr = this.address_list[id];
-      var routes = addr.map_routes;
-      //this.log('i['+i+'] addr_id['+id+']');
-
-      var d = routes.prev;
-      if (d.line) {
-        if (!lines_collected.includes(d.line)) {
-          lines_collected.push(d.line);
-        }
-      }
-
-      var d = routes.next;
-      if (d.line) {
-        if (!lines_collected.includes(d.line)) {
-          lines_collected.push(d.line);
-        }
-      }
-
-    }
-  } else {
-    //this.log('list empty');
-  }
-  
-  return lines_collected;
 };
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -3106,6 +2953,39 @@ MapWithMarkerListClass.test_address_sets = {
   }
   ,
 
+  'PeterburgScroll': {
+    latlng: [59.939095,30.315868],
+    type: 'strings',
+    addr_set_a: [
+      'Невский проспект, 3, Санкт-Петербург, Россия',
+      'Невский проспект, 5, Санкт-Петербург, Россия',
+      'Невский проспект, 17, Санкт-Петербург, Россия',
+      'Невский проспект, 19, Санкт-Петербург, Россия',
+      'Невский проспект, 21, Санкт-Петербург, Россия',
+      'Невский проспект, 23, Санкт-Петербург, Россия',
+      'Невский проспект, 25, Санкт-Петербург, Россия',
+      'Невский проспект, 27, Санкт-Петербург, Россия',
+      'Невский проспект, 33, Санкт-Петербург, Россия',
+      'Невский проспект, 51, Санкт-Петербург, Россия',
+      'Невский проспект, 53, Санкт-Петербург, Россия',
+      'Невский проспект, 55, Санкт-Петербург, Россия',
+      'Невский проспект, 57, Санкт-Петербург, Россия',
+      'Невский проспект, 59, Санкт-Петербург, Россия',
+      'Невский проспект, 61, Санкт-Петербург, Россия',
+      'Невский проспект, 63, Санкт-Петербург, Россия',
+      'Невский проспект, 65, Санкт-Петербург, Россия',
+      'Невский проспект, 67, Санкт-Петербург, Россия',
+      'Невский проспект, 69, Санкт-Петербург, Россия',
+      'Невский проспект, 71, Санкт-Петербург, Россия',
+      'Невский проспект, 77, Санкт-Петербург, Россия',
+      'Невский проспект, 79, Санкт-Петербург, Россия',
+      'Невский проспект, 81, Санкт-Петербург, Россия',
+      'Невский проспект, 83, Санкт-Петербург, Россия',
+      'Невский проспект, 91, Санкт-Петербург, Россия'
+    ]
+  }
+  ,
+  
   'Peterburg': {
     latlng: [59.939095,30.315868],
     type: 'strings',

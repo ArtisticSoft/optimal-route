@@ -108,7 +108,7 @@
     <!--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-->
     <!-- заголовок (header) -->
     
-      <div class="row">
+      <div id="header-row" class="row">
       
         <div id="nav-anchor" class="nav-anchor">
           <div id="nav-wrapper-offscreen" class="nav-wrapper-offscreen"></div>
@@ -128,10 +128,10 @@
     
       <main class="row content-row">
         <!-- не допустимы промежуточные обёртки между row и col-... -->
-        <div class="col-xs-12 col-sm-5">
+        <div id="address-section" class="col-xs-12 col-sm-5 address-section">
         
           <!-- необходимо для позиционирования address-suggestions-dropdown -->
-          <div class="address-wrapper">
+          <div class="address-input-wrapper">
           
             <div class="address">
               <!-- желательно size="..." больше чем ширина button 
@@ -155,20 +155,23 @@
             </div>
             
           </div>
-          <div class="address-list">
+          
+          <div class="address-list-wrapper">
             <p class="header">Адреса</p>
             <div class="separator-h"></div>
-            <ul id="address-list" data-crafted-drag-and-drop="droppable">
-              <!-- 
-              <li>1. садовая</li>
-              <li>2. егорова</li>
-              <li>3. невский</li>
-              -->
-            </ul>
+            <div id="address-list-scrollable" class="scrollable-y">
+              <ul id="address-list" data-crafted-drag-and-drop="droppable">
+                <!-- 
+                <li>1. садовая</li>
+                <li>2. егорова</li>
+                <li>3. невский</li>
+                -->
+              </ul>
+            </div>
           </div>
           
           <!-- для flex позиционирования кнопок -->
-          <div class="address-list-buttons-wrapper">
+          <div class="address-buttons-wrapper">
             <!-- is it good to use &nbsp; ? -->
             <button disabled id="route-optimize-btn" class="my-btn btn-regular width-grow" data-caption-disabled="Расчёт маршрута...">
               Оптимизировать маршрут
@@ -328,7 +331,9 @@
     <script src="./assets/common/myUtils.js"></script>
     <script src="./assets/common/base-classes.js"></script>
     <script src="./assets/common/XHRClass.js"></script>
+    <script src="./assets/common/screen-orientation-service.js"></script>
     
+    <script src="./assets/address-list-adaptive.js"></script>
     <script src="./assets/nav-ondemand.js"></script>
     <script src="./assets/back-end.js"></script>
     <script src="./assets/search-with-suggestons.js"></script>

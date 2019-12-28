@@ -312,6 +312,38 @@ myUtilsClass.prototype.datasetValConvert = function (type, val, val_default) {
   return output;
 };
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+myUtilsClass.Element_getFullHeight = {
+  properties: ['height', 'marginTop', 'marginBottom', 'paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
+};
+
+myUtilsClass.prototype.Element_getFullHeight = function (element) {
+    var style = getComputedStyle(element);
+    var properties = this.C.Element_getFullHeight.properties;
+    var sum = 0;
+    for (var j = 0; j < properties.length; j++) {
+      // this.log(`properties[${j}]=[${properties[j]}] = style[...]=[${style[properties[j]]}]`);
+      sum += Number.parseFloat(style[properties[j]].replace('px', ''));
+    }
+    return sum;
+};
+
+//TODO?: different post-processing depending on property name
+myUtilsClass.prototype.Element_getComputedProperty = function (element, property) {
+  var style = getComputedStyle(element);
+  return Number.parseFloat(style[property].replace('px', ''));
+};
+
+myUtilsClass.prototype.Element_getChildrenFullHeightSum = function (element) {
+    var sum = 0;
+    var children = element.children;
+    for (var i = 0; i < children.length; i++) {
+      sum += this.Element_getFullHeight(children[i]);
+    }
+    return sum;
+};
+
 //-----------------------------------------------------------------------------
 //HTML Element. рестарт анимации. удалить CSS класс и добавить его после задержки
 
